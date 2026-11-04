@@ -217,11 +217,11 @@ body { touch-action: pan-y; }
 
 .page { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; }
 
-/* Right-to-left pages mirror the layout (dir=rtl on the root), but the copy is English until it is
-   translated, and a sentence in the wrong direction puts its punctuation at the wrong end
-   ("!Not quite", "?Ready to dig in"). Every piece of text takes its own direction from its first
-   letter: English reads left to right, Arabic show names and the translated copy to come read
-   right to left, whatever the page does around them. */
+/* Right-to-left pages mirror the layout (dir=rtl on the root), but not everything on them is
+   right to left: show names can be English, and a sentence in the wrong direction puts its
+   punctuation at the wrong end ("!Not quite"). Every piece of text takes its own direction from
+   its first letter, whatever the page does around it, so a translated string must not start
+   with a Latin word (src/locales/README.md). */
 .pb-root :is(h1, h2, p, li, button, .share-bar span) { unicode-bidi: plaintext; }
 
 .story-title {
@@ -320,7 +320,9 @@ body { touch-action: pan-y; }
 .pb-root[data-page='top-podcast'] .stage { overflow: visible; }
 .page-top-podcast > * { position: absolute; margin: 0; }
 .tp-ask, .tp-verdict { top: calc(var(--chrome-top) + 60px); left: 18px; right: 18px; max-width: 357px; margin-inline: auto; }
-.tp-hint { top: calc(var(--chrome-top) + 124px); left: 0; right: 0; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
+/* Figma's place for the hint is under two lines of title; a longer translation moves it down
+   (--title-extra, ui/dom.js). */
+.tp-hint { top: calc(var(--chrome-top) + 124px + var(--title-extra, 0px)); left: 0; right: 0; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
 .tp-slot, .tp-cover { left: calc(50% + 0.5px - var(--size) / 2); top: calc(var(--cy) - var(--size) / 2); width: var(--size); height: var(--size); }
 .tp-slot { visibility: hidden; pointer-events: none; }
 /* The guess's logos are drawn by the backdrop in these boxes: Figma's for its two shader
@@ -465,6 +467,9 @@ body { touch-action: pan-y; }
 .top-count { font-weight: 600; letter-spacing: 0.1px; white-space: nowrap; }
 .top-names { margin-top: auto; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .top-author, .top-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* An English show on a right-to-left page reads left to right (dir=auto), cut at its end, but
+   stays on the page's side. */
+.pb-root[dir='rtl'] :is(.top-author, .top-title) { text-align: right; }
 .top-author { font: 600 calc(14px * var(--text-scale))/normal var(--pb-font); }
 .top-title { font: 800 calc(16px * var(--text-scale))/1.2 var(--pb-font); }
 /* The share button comes in last (0.866 s). Handed over from the top show, it first
@@ -510,8 +515,8 @@ body { touch-action: pan-y; }
 .tm-ask, .tm-verdict { top: calc(var(--chrome-top) + 60px); left: 0; right: 0; max-width: 361px; margin-inline: auto; }
 .tm-verdict { max-width: 357px; }
 .tm-verdict > span { display: block; }
-.tm-hint { top: calc(var(--chrome-top) + 124px); left: 0; right: 0; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
-.tm-grid { top: calc(var(--chrome-top) + 144px); bottom: calc(var(--share-bottom) + 42px); left: 0; right: 0; container-type: size; --u: 1px; }
+.tm-hint { top: calc(var(--chrome-top) + 124px + var(--title-extra, 0px)); left: 0; right: 0; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
+.tm-grid { top: calc(var(--chrome-top) + 144px + var(--title-extra, 0px)); bottom: calc(var(--share-bottom) + 42px); left: 0; right: 0; container-type: size; --u: 1px; }
 @supports (width: 1cqh) { .tm-grid { --u: min(1px, calc(100cqh / 566), calc(100cqw / 393)); } }
 .tm-month {
   --d: 80;
@@ -951,6 +956,12 @@ body { touch-action: pan-y; }
 .ou-copy .story-title { width: 100%; }
 .ou-body { margin: 0; max-width: 279px; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
 .ou-again { bottom: calc(var(--share-bottom) - 3.08px); left: calc(50% - 54.5px); }
+
+/* Figma sizes the buttons to its English labels. A longer label (a translation) widens its
+   button rather than wrapping, centred where Figma centres it; the English is unchanged. */
+:is(.pill, .tp-confirm, .tm-confirm) { min-width: 109px; }
+.sc-skip { min-width: 80px; }
+:is(.pill, .tp-confirm, .tm-confirm, .sc-skip) { width: max-content; padding-inline: 16px; white-space: nowrap; left: 0; right: 0; margin-inline: auto; }
 @keyframes ou-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ou-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
 .page-outro .story-title { --rise: 16.79px; animation: ou-in 0.214s linear calc(var(--in-at) + 0.2s) both, ou-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.2s) both; }

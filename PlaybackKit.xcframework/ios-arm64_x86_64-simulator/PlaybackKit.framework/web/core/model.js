@@ -5,6 +5,8 @@
 // every platform. `normalizePayload` is the single gate: whatever it returns is safe
 // for the rest of the code to assume.
 
+import { displayLocale } from './copy.js';
+
 export const PAYLOAD_VERSION = 1;
 
 /** What a show without a genre is filed under. The archetype rules treat it as unknown. */
@@ -82,6 +84,10 @@ export function normalizePayload(raw) {
     monthly = Array.from({ length: 12 }, (_, i) => monthly[i] || 0);
   }
 
+  // The page is in one language: one the bundle has no translation for is English throughout.
+  const locale = displayLocale(raw.locale);
+  if (typeof raw.locale === 'string' && raw.locale && locale === 'en' && !/^en\b/i.test(raw.locale)) warnings.push(`locale "${raw.locale}" has no translation: the page is in English`);
+
   const c = raw.completion;
   const completion =
     c && isNum(c.started) && isNum(c.completed) && c.started > 0
@@ -94,7 +100,7 @@ export function normalizePayload(raw) {
     payload: {
       version: PAYLOAD_VERSION,
       year: raw.year,
-      locale: typeof raw.locale === 'string' && raw.locale ? raw.locale : 'en',
+      locale,
       podcasts,
       monthlySeconds: monthly,
       previousYearSeconds: isNum(raw.previousYearSeconds) && raw.previousYearSeconds >= 0 ? raw.previousYearSeconds : null,

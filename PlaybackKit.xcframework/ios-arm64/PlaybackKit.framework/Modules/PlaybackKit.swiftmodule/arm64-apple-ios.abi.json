@@ -3151,18 +3151,28 @@
             "children": [
               {
                 "kind": "TypeNominal",
-                "name": "String",
-                "printedName": "Swift.String",
-                "usr": "s:SS"
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
               }
             ],
             "declKind": "Var",
-            "usr": "s:11PlaybackKit0A7PayloadV6localeSSvp",
-            "mangledName": "$s11PlaybackKit0A7PayloadV6localeSSvp",
+            "usr": "s:11PlaybackKit0A7PayloadV6localeSSSgvp",
+            "mangledName": "$s11PlaybackKit0A7PayloadV6localeSSSgvp",
             "moduleName": "PlaybackKit",
             "declAttributes": [
+              "HasInitialValue",
               "HasStorage",
-              "AccessControl"
+              "AccessControl",
+              "RawDocComment"
             ],
             "hasStorage": true,
             "accessors": [
@@ -3173,14 +3183,22 @@
                 "children": [
                   {
                     "kind": "TypeNominal",
-                    "name": "String",
-                    "printedName": "Swift.String",
-                    "usr": "s:SS"
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:11PlaybackKit0A7PayloadV6localeSSvg",
-                "mangledName": "$s11PlaybackKit0A7PayloadV6localeSSvg",
+                "usr": "s:11PlaybackKit0A7PayloadV6localeSSSgvg",
+                "mangledName": "$s11PlaybackKit0A7PayloadV6localeSSSgvg",
                 "moduleName": "PlaybackKit",
                 "implicit": true,
                 "accessorKind": "get"
@@ -3197,14 +3215,22 @@
                   },
                   {
                     "kind": "TypeNominal",
-                    "name": "String",
-                    "printedName": "Swift.String",
-                    "usr": "s:SS"
+                    "name": "Optional",
+                    "printedName": "Swift.String?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:Sq"
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:11PlaybackKit0A7PayloadV6localeSSvs",
-                "mangledName": "$s11PlaybackKit0A7PayloadV6localeSSvs",
+                "usr": "s:11PlaybackKit0A7PayloadV6localeSSSgvs",
+                "mangledName": "$s11PlaybackKit0A7PayloadV6localeSSSgvs",
                 "moduleName": "PlaybackKit",
                 "implicit": true,
                 "accessorKind": "set"
@@ -3221,8 +3247,8 @@
                   }
                 ],
                 "declKind": "Accessor",
-                "usr": "s:11PlaybackKit0A7PayloadV6localeSSvM",
-                "mangledName": "$s11PlaybackKit0A7PayloadV6localeSSvM",
+                "usr": "s:11PlaybackKit0A7PayloadV6localeSSSgvM",
+                "mangledName": "$s11PlaybackKit0A7PayloadV6localeSSSgvM",
                 "moduleName": "PlaybackKit",
                 "implicit": true,
                 "accessorKind": "_modify"
@@ -3822,10 +3848,18 @@
               },
               {
                 "kind": "TypeNominal",
-                "name": "String",
-                "printedName": "Swift.String",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
                 "hasDefaultArg": true,
-                "usr": "s:SS"
+                "usr": "s:Sq"
               },
               {
                 "kind": "TypeNominal",
@@ -3908,8 +3942,8 @@
               }
             ],
             "declKind": "Constructor",
-            "usr": "s:11PlaybackKit0A7PayloadV7version4year6locale8podcasts14monthlySeconds012previousYearI010completion7stringsACSi_SiSSSayAC7PodcastVGSaySdGSdSgAC10CompletionVSgSDySSAC11StringValueOGtcfc",
-            "mangledName": "$s11PlaybackKit0A7PayloadV7version4year6locale8podcasts14monthlySeconds012previousYearI010completion7stringsACSi_SiSSSayAC7PodcastVGSaySdGSdSgAC10CompletionVSgSDySSAC11StringValueOGtcfc",
+            "usr": "s:11PlaybackKit0A7PayloadV7version4year6locale8podcasts14monthlySeconds012previousYearI010completion7stringsACSi_SiSSSgSayAC7PodcastVGSaySdGSdSgAC10CompletionVSgSDySSAC11StringValueOGtcfc",
+            "mangledName": "$s11PlaybackKit0A7PayloadV7version4year6locale8podcasts14monthlySeconds012previousYearI010completion7stringsACSi_SiSSSgSayAC7PodcastVGSaySdGSdSgAC10CompletionVSgSDySSAC11StringValueOGtcfc",
             "moduleName": "PlaybackKit",
             "declAttributes": [
               "AccessControl"
@@ -5596,6 +5630,49 @@
             ]
           },
           {
+            "kind": "Var",
+            "name": "appLocale",
+            "printedName": "appLocale",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:11PlaybackKit0A7PayloadV9appLocaleSSvpZ",
+            "mangledName": "$s11PlaybackKit0A7PayloadV9appLocaleSSvpZ",
+            "moduleName": "PlaybackKit",
+            "static": true,
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:11PlaybackKit0A7PayloadV9appLocaleSSvgZ",
+                "mangledName": "$s11PlaybackKit0A7PayloadV9appLocaleSSvgZ",
+                "moduleName": "PlaybackKit",
+                "static": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
             "kind": "Function",
             "name": "jsonData",
             "printedName": "jsonData()",
@@ -6070,42 +6147,35 @@
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
       "kind": "IntegerLiteral",
-      "offset": 913,
+      "offset": 1139,
       "length": 1,
       "value": "1"
     },
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
-      "kind": "StringLiteral",
-      "offset": 960,
-      "length": 4,
-      "value": "\"en\""
-    },
-    {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
       "kind": "Dictionary",
-      "offset": 1153,
+      "offset": 1379,
       "length": 3,
       "value": "[]"
     },
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
       "kind": "StringLiteral",
-      "offset": 2026,
+      "offset": 2252,
       "length": 2,
       "value": "\"\""
     },
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
       "kind": "StringLiteral",
-      "offset": 2046,
+      "offset": 2272,
       "length": 7,
       "value": "\"Other\""
     },
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
       "kind": "BooleanLiteral",
-      "offset": 2199,
+      "offset": 2425,
       "length": 5,
       "value": "false"
     }

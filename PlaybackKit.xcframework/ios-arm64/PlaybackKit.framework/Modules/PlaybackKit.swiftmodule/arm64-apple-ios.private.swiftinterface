@@ -66,13 +66,13 @@ public enum PlaybackEvent : Swift::Equatable, Swift::Sendable {
 public struct PlaybackPayload : Swift::Codable, Swift::Equatable, Swift::Sendable {
   public var version: Swift::Int
   public var year: Swift::Int
-  public var locale: Swift::String
+  public var locale: Swift::String?
   public var podcasts: [PlaybackKit::PlaybackPayload.PlaybackKit::Podcast]
   public var monthlySeconds: [Swift::Double]
   public var previousYearSeconds: Swift::Double?
   public var completion: PlaybackKit::PlaybackPayload.PlaybackKit::Completion?
   public var strings: [Swift::String : PlaybackKit::PlaybackPayload.PlaybackKit::StringValue]
-  public init(version: Swift::Int = 1, year: Swift::Int, locale: Swift::String = "en", podcasts: [PlaybackKit::PlaybackPayload.PlaybackKit::Podcast], monthlySeconds: [Swift::Double], previousYearSeconds: Swift::Double? = nil, completion: PlaybackKit::PlaybackPayload.PlaybackKit::Completion? = nil, strings: [Swift::String : PlaybackKit::PlaybackPayload.PlaybackKit::StringValue] = [:])
+  public init(version: Swift::Int = 1, year: Swift::Int, locale: Swift::String? = nil, podcasts: [PlaybackKit::PlaybackPayload.PlaybackKit::Podcast], monthlySeconds: [Swift::Double], previousYearSeconds: Swift::Double? = nil, completion: PlaybackKit::PlaybackPayload.PlaybackKit::Completion? = nil, strings: [Swift::String : PlaybackKit::PlaybackPayload.PlaybackKit::StringValue] = [:])
   public struct Podcast : Swift::Codable, Swift::Equatable, Swift::Sendable {
     public var uuid: Swift::String
     public var title: Swift::String
@@ -102,6 +102,9 @@ public struct PlaybackPayload : Swift::Codable, Swift::Equatable, Swift::Sendabl
     public init(from decoder: any Swift::Decoder) throws
     public func encode(to encoder: any Swift::Encoder) throws
     public static func == (a: PlaybackKit::PlaybackPayload.PlaybackKit::StringValue, b: PlaybackKit::PlaybackPayload.PlaybackKit::StringValue) -> Swift::Bool
+  }
+  public static var appLocale: Swift::String {
+    get
   }
   public func jsonData() throws -> Foundation::Data
   public static func == (a: PlaybackKit::PlaybackPayload, b: PlaybackKit::PlaybackPayload) -> Swift::Bool

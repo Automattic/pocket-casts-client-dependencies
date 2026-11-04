@@ -9,6 +9,7 @@
 //   &page=top-shows     open on a page        &debug=1       show the HUD
 //   &autoplay=1500      a step every 1.5 s    &timeout=5000  auto-reveal timeout (ms)
 //   &log=1              mirror bridge messages to the console
+//   &locale=de          the page's language, over the scenario's (src/locales)
 //   &backdrop=0         no WebGL backdrop      &reduceMotion=1 the intro as one still
 //   &textScale=1.2      the system's text size (held to 1–1.2)   &boldText=1   &increaseContrast=1
 //   &perf=15            performance walk: every page watched for 15 s, then a table of
@@ -63,7 +64,10 @@ async function boot() {
   } catch (e) {
     env.loadError = String(e.message || e);
   }
-  if (env.locale && payload && !payload.locale) payload.locale = env.locale;
+  // The query's locale (the rig's language picker) wins over the scenario's; the host's
+  // PLAYBACK_ENV.locale only fills in a payload that has none.
+  const queryLocale = new URLSearchParams(location.search).get('locale');
+  if (payload && (queryLocale || (env.locale && !payload.locale))) payload.locale = queryLocale || env.locale;
   // The walk's tuning (what to change about the backdrop before measuring).
   const tune = env.perf ? parseTune(env.perfTune) : null;
   if (tune && env.backdrop !== false) env.backdrop = tune.backdrop;

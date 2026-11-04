@@ -96,8 +96,9 @@ const views = {
                 h('span', { class: 'top-rank' }, t('topShows.rank', { rank: i + 1 })),
                 h('span', { class: 'top-count' }, t('topShows.listened', { episodes: episodes(ctx, p.episodesPlayed) }))),
               h('div', { class: 'top-names' },
-                h('span', { class: 'top-author' }, p.author),
-                h('span', { class: 'top-title' }, p.title)),
+                // dir=auto: a show's own direction, so a long one is cut at its end on any page.
+                h('span', { class: 'top-author', dir: 'auto' }, p.author),
+                h('span', { class: 'top-title', dir: 'auto' }, p.title)),
             ),
           ),
         ),

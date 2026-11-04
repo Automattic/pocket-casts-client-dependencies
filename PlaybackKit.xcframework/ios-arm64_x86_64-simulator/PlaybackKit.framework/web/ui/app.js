@@ -23,7 +23,7 @@ import { coverImage } from './artwork.js';
 import { DECK_MAX } from './stack.js';
 import { renderPage } from './views.js';
 import { createSession } from '../core/session.js';
-import { createTranslator } from '../core/copy.js';
+import { createTranslator, displayLocale } from '../core/copy.js';
 import { createBridge } from '../host/bridge.js';
 
 const TICK_MS = 1000;
@@ -55,7 +55,11 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
 
   if (!session.ok) {
     if (env.loadError) session.errors = [env.loadError];
-    const t = createTranslator('en');
+    // The payload could not be read, but it may still say which language the app is in.
+    const locale = displayLocale(payload?.locale ?? env.locale);
+    const t = createTranslator(locale);
+    root.setAttribute('lang', locale);
+    root.setAttribute('dir', isRtl(locale) ? 'rtl' : 'ltr');
     root.append(h('main', { class: 'stage' }, h('article', { class: 'page page-error wireframe' }, h('h1', { class: 'title', 'data-testid': 'title' }, t('error.title')), h('pre', { 'data-testid': 'error-detail' }, session.errors.join('\n')), h('button', { type: 'button', class: 'btn primary', onClick: () => bridge.send({ type: 'close', reason: 'error', finished: false }) }, t('error.close')))));
     bridge.send({ type: 'error', errors: session.errors });
     return { ok: false, errors: session.errors, destroy() {} };

@@ -99,7 +99,7 @@ export function summaryView(ctx) {
   const stats = (k) => [
     h('div', { class: 'sc-top' },
       h('p', { class: 'sc-label' }, t('summary.topShows')),
-      h('ol', { class: 'sc-shows' }, d.top.map((p, i) => h('li', null, t('summary.rank', { rank: i + 1, title: p.title }))))),
+      h('ol', { class: 'sc-shows' }, d.top.map((p, i) => h('li', { dir: 'auto' }, t('summary.rank', { rank: i + 1, title: p.title }))))),
     h('div', { class: 'sc-minutes' },
       h('p', { class: 'sc-label' }, t('summary.minutes')),
       h('p', { class: 'sc-number', 'data-testid': k ? null : 'minutes' }, formatNumber(d.minutes, payload.locale))),

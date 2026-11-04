@@ -277,18 +277,21 @@ void main() {
 }`;
 
 // ── 3 · edge ───────────────────────────────────────────────────────────────────
-// A separable Gaussian, run at a reduced resolution so the taps are never more than a
-// pixel apart: spreading a fixed tap count over a large radius staircases hard edges.
-// The Gaussian does the reducing itself, reading the level one finer than it writes,
-// with weights taken at each texel's true distance. Reading the coarser level's own
-// box-filtered mips instead snaps a thin feature to a 2-pixel grid, so a seam sliding
-// a pixel a frame flickers on alternate frames. Pairs of taps are read through the
+// A separable Gaussian, written at a reduced resolution, so the taps are never more than
+// a pixel apart: spreading a fixed tap count over a large radius staircases hard edges.
+// The Gaussian does the reducing itself, reading every pixel of its source at full
+// resolution, with weights taken at each one's true distance. Reading a reduced copy
+// instead (a box-filtered mip level) puts all of a thin feature in its block's centre,
+// so a seam sliding across the blocks moves the blur a block at a time: the silhouette,
+// cut at half of it, swells and shrinks at the slide's pace over the block (the top show's
+// notches by 3 pt at 15 Hz, at 30 fps a shimmer from frame to frame), where the full
+// read slides it smoothly, as Creative Lab's does. Pairs of taps are read through the
 // bilinear filter, one fetch each. The edge blur is cut off 32 authored pixels out, as
 // measured: past a Rounding of about 20 the bevel stops widening and flattens towards
 // a straight ramp. Writes red.
 const FS_BLUR = HEADER + `
 uniform sampler2D uSrc;
-uniform float uLod, uSigma, uReach;
+uniform float uSigma, uReach;
 uniform vec2 uDir, uSrcSize;
 uniform int uChannel;
 float weight(float d) {
@@ -307,7 +310,7 @@ void main() {
     // Across the blur, this pixel sits on a source texel's centre: the read is linear
     // between j and j + 1 only.
     float at = (float(j) + 0.5 + w1 / w) / n;
-    vec4 t = textureLod(uSrc, uDir.x > 0.5 ? vec2(at, uv.y) : vec2(uv.x, at), uLod);
+    vec4 t = textureLod(uSrc, uDir.x > 0.5 ? vec2(at, uv.y) : vec2(uv.x, at), 0.0);
     acc += w * (uChannel == 3 ? t.a : t.r);
     wsum += w;
   }
@@ -466,6 +469,7 @@ export function createPatternEffect(kit, shared = null) {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, LATTICE_COLUMNS, LATTICE_ROWS, 0, gl.RED, gl.FLOAT, LATTICE);
   }
   let rampKey = '', rampStops = null;
+  // `levels`: how many times the canvas can be halved, plus one (what a blur can reduce to).
   let W = 0, H = 0, levels = 1;
   let shapeRT = null, refractRT = null;
   const blurRTs = new Map();
@@ -488,17 +492,16 @@ export function createPatternEffect(kit, shared = null) {
     for (const k of Object.keys(rasters)) delete rasters[k];
     levels = Math.min(MAX_BLUR_LEVEL + 1, Math.floor(Math.log2(Math.max(w, h))) + 1);
     shapeRT = kit.target(w, h);
-    refractRT = kit.target(w, h, { levels });
+    refractRT = kit.target(w, h);
   }
 
-  // A blur at `level` writes its first pass at that level's width but one level finer
-  // in height (a source level's row count, so its rows fall on texel centres), and its
-  // second at that level.
+  // A blur at `level` writes its first pass at that level's width but the source's full
+  // height (its rows on the source's rows), and its second at that level.
   function blurTarget(use, level, pass) {
     const key = `${use}:${level}:${pass}`;
     let rt = blurRTs.get(key);
     if (!rt) {
-      const h = pass === 0 ? mipSize(H, level - 1) : Math.ceil(H / 2 ** level);
+      const h = pass === 0 ? H : Math.ceil(H / 2 ** level);
       rt = kit.target(Math.max(1, Math.ceil(W / 2 ** level)), Math.max(1, h));
       blurRTs.set(key, rt);
     }
@@ -506,32 +509,28 @@ export function createPatternEffect(kit, shared = null) {
   }
 
   /**
-   * Gaussian blur of one channel of a mipmapped texture, cut off `reach` pixels out;
-   * returns the target holding it (red).
+   * Gaussian blur of one channel of a texture of the canvas's size, cut off `reach` pixels
+   * out; returns the target holding it (red), `level` times halved.
    */
   function blur(use, src, sigma, channel, reach = Infinity) {
     let level = Math.max(1, Math.min(MAX_BLUR_LEVEL, levels - 1, Math.ceil(Math.log2(Math.max(sigma, 1) / 3))));
     // Fine enough that the cut-off falls at least 8 taps out.
     if (Number.isFinite(reach)) level = Math.max(1, Math.min(level, Math.floor(Math.log2(reach / 8))));
-    // Read one level finer than the blur writes; sigma and reach in its texels.
-    const lod = level - 1;
-    const s = sigma / 2 ** lod, cut = Number.isFinite(reach) ? reach / 2 ** lod : 1e6;
+    const cut = Number.isFinite(reach) ? reach : 1e6;
     const a = blurTarget(use, level, 0), b = blurTarget(use, level, 1);
     kit.pass(P.blur, a, (loc, bind) => {
       bind('uSrc', src);
       gl.uniform2f(loc('uRes'), a.w, a.h);
-      gl.uniform1f(loc('uLod'), lod);
-      gl.uniform1f(loc('uSigma'), Math.max(s, 0.05));
+      gl.uniform1f(loc('uSigma'), Math.max(sigma, 0.05));
       gl.uniform1f(loc('uReach'), cut);
       gl.uniform2f(loc('uDir'), 1, 0);
-      gl.uniform2f(loc('uSrcSize'), mipSize(W, lod), mipSize(H, lod));
+      gl.uniform2f(loc('uSrcSize'), W, H);
       gl.uniform1i(loc('uChannel'), channel);
     });
     kit.pass(P.blur, b, (loc, bind) => {
       bind('uSrc', a.tex);
       gl.uniform2f(loc('uRes'), b.w, b.h);
-      gl.uniform1f(loc('uLod'), 0);
-      gl.uniform1f(loc('uSigma'), Math.max(s, 0.05));
+      gl.uniform1f(loc('uSigma'), Math.max(sigma, 0.05));
       gl.uniform1f(loc('uReach'), cut);
       gl.uniform2f(loc('uDir'), 0, 1);
       gl.uniform2f(loc('uSrcSize'), a.w, a.h);
@@ -540,16 +539,11 @@ export function createPatternEffect(kit, shared = null) {
     return b;
   }
 
-  /** Upload a Canvas2D raster (when it changed) with a mip chain, so it can be blurred. */
+  /** Upload a Canvas2D raster (when it changed). */
   function uploadRaster(name, draw) {
     const cache = (rasters[name] ||= rasterCache(W, H));
     const tex = (uploads[name] ||= kit.texture());
-    if (draw(cache)) {
-      kit.upload(tex, cache.canvas);
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-      gl.generateMipmap(gl.TEXTURE_2D);
-    }
+    if (draw(cache)) kit.upload(tex, cache.canvas);
     return tex;
   }
 
@@ -665,8 +659,6 @@ export function createPatternEffect(kit, shared = null) {
       gl.uniform4f(loc('uBounds'), ...(bounds ?? [-1e9, -1e9, 1e9, 1e9]));
     });
     if (stage === 'refract') return blit(refractRT.tex, 0);
-    gl.bindTexture(gl.TEXTURE_2D, refractRT.tex);
-    gl.generateMipmap(gl.TEXTURE_2D);
 
     // 3 · edge
     const sigma = Math.max(0, v.mRounding) * k * u;
@@ -737,9 +729,4 @@ export function createPatternEffect(kit, shared = null) {
 
 function clamp01(x) {
   return Math.max(0, Math.min(1, Number(x) || 0));
-}
-
-/** A mip level's size along one axis. */
-function mipSize(n, level) {
-  return Math.max(1, Math.floor(n / 2 ** level));
 }

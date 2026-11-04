@@ -10,47 +10,47 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		1X5RbLfFKiHiwTnX06uMu5VcrO4=
+		VLLM4favjtimNNeBf8Oq0n4PAY0=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/arm64-apple-ios-simulator.abi.json</key>
 		<data>
-		OeKmGv2vZrqbSTHFDA5MqN4Z+2M=
+		nCExNJtgb4is/+Sbf9pVwleSNBk=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/arm64-apple-ios-simulator.private.swiftinterface</key>
 		<data>
-		oqXHBQL/RMGvkq8Qw+EixVh/gr0=
+		X9WkbeT++2KpFLcEJr+7oAWaEHM=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		NidE9mFfqFHHDcVhXm1FR1leJYc=
+		VcyyccSUmatqiV1vI9gEjC9Sk+8=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/arm64-apple-ios-simulator.swiftinterface</key>
 		<data>
-		oqXHBQL/RMGvkq8Qw+EixVh/gr0=
+		X9WkbeT++2KpFLcEJr+7oAWaEHM=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		wqjBirmfD81RpLJtClycJl8lfsQ=
+		vcIEte7rA7xh68Nye0Tn7Vd0yxw=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<data>
-		OeKmGv2vZrqbSTHFDA5MqN4Z+2M=
+		nCExNJtgb4is/+Sbf9pVwleSNBk=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.private.swiftinterface</key>
 		<data>
-		kRNsb0rhUqns9oKxRGfYBMvcmIk=
+		Rvmvr3wM5Mg2pVW3vCr/V2EBHNo=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<data>
-		YYaWlehA2XQHAdrKXwon/4Wkbx4=
+		XQw1LQhHzkvp3P+NGtNCRXL8MD8=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.swiftinterface</key>
 		<data>
-		kRNsb0rhUqns9oKxRGfYBMvcmIk=
+		Rvmvr3wM5Mg2pVW3vCr/V2EBHNo=
 		</data>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<data>
-		EB89pSIBItgVCzzSwmwaqAV6diQ=
+		MjgDZKJ5VhzWdTLeulNbaIdqJQo=
 		</data>
 		<key>Modules/module.modulemap</key>
 		<data>
@@ -98,7 +98,7 @@
 		</data>
 		<key>web/core/copy.js</key>
 		<data>
-		8NCy+iW7apXQUHVPGgTlmJPiONE=
+		rO3FpKNPtXwJYxfkZjZPGQ13cP0=
 		</data>
 		<key>web/core/flow.js</key>
 		<data>
@@ -110,7 +110,7 @@
 		</data>
 		<key>web/core/model.js</key>
 		<data>
-		7RRxgSlQ10lb/b0Ok6B2sLM2/3o=
+		5iIXXlodIFYUN7jCgQifgyahhjI=
 		</data>
 		<key>web/core/pages.js</key>
 		<data>
@@ -282,7 +282,7 @@
 		</data>
 		<key>web/fx/pattern.js</key>
 		<data>
-		DGB17pIzySw1VICVYPMsIBTafM0=
+		4jgIRmXbFT60DtYUpttEavg+8M0=
 		</data>
 		<key>web/fx/ramp.js</key>
 		<data>
@@ -324,17 +324,101 @@
 		<data>
 		Gun2UfGpDZTQAi64/eSb+npKh/k=
 		</data>
+		<key>web/locales/README.md</key>
+		<data>
+		N3woD/WZdhrV5R66+vqT6YMdYkU=
+		</data>
+		<key>web/locales/ar.js</key>
+		<data>
+		jHFt5nFK8jAwc9Eia255WM5IR0I=
+		</data>
+		<key>web/locales/ca.js</key>
+		<data>
+		NeuYKTDhORu5NiFx2TIGNZXQG7g=
+		</data>
+		<key>web/locales/de.js</key>
+		<data>
+		aczchMJY3ZYEiJYy8C6KkHL37mw=
+		</data>
+		<key>web/locales/el.js</key>
+		<data>
+		8uKXKaAN4tVl/8npMqC6YX91kTg=
+		</data>
+		<key>web/locales/en-GB.js</key>
+		<data>
+		JuRbUzyeH7zqI+gEC/dDgZn9cL8=
+		</data>
+		<key>web/locales/es-MX.js</key>
+		<data>
+		E1jjgOTKAv7wLfKhCAxsCm/3HPQ=
+		</data>
+		<key>web/locales/es.js</key>
+		<data>
+		GUbMNCx3TKra1ZLG6+3ZT+zjT6Q=
+		</data>
+		<key>web/locales/fr-CA.js</key>
+		<data>
+		al8sPvVb0/fbJNO6jYlLY/65oN8=
+		</data>
+		<key>web/locales/fr.js</key>
+		<data>
+		GlFoaPDRb4Ogb8xf6fuTvZ+Skzg=
+		</data>
+		<key>web/locales/index.js</key>
+		<data>
+		qCg+DmA0rjMmzfyY0GR9PbEP6qU=
+		</data>
+		<key>web/locales/it.js</key>
+		<data>
+		IZcpkma+zyNZ3mQtST5dgZ0diCI=
+		</data>
+		<key>web/locales/ja.js</key>
+		<data>
+		iFeaDgD5sNU5E2V48sOgb0udZWQ=
+		</data>
+		<key>web/locales/ko.js</key>
+		<data>
+		YgslARocuIC563bxK7GD4fyC9vw=
+		</data>
+		<key>web/locales/nb.js</key>
+		<data>
+		mrNSGWTufnrRWqByuElp+wytzSo=
+		</data>
+		<key>web/locales/nl.js</key>
+		<data>
+		MMpz9bX9bts4qlaa90YZMYN/WyA=
+		</data>
+		<key>web/locales/pt-BR.js</key>
+		<data>
+		sGbl/mP3itEI1me4Xa2MF0bCVuk=
+		</data>
+		<key>web/locales/ru.js</key>
+		<data>
+		U5r6aga9g4uriQuDU6miFUU0274=
+		</data>
+		<key>web/locales/sv.js</key>
+		<data>
+		5Likc7WnZ9zWu5izic6k7VrXmFg=
+		</data>
+		<key>web/locales/zh-Hans.js</key>
+		<data>
+		JYbruSlVByonPm0XBv7KpFxacOk=
+		</data>
+		<key>web/locales/zh-Hant.js</key>
+		<data>
+		Z1XOSxNnR9miPUh/eT3z+nlXmoM=
+		</data>
 		<key>web/main.js</key>
 		<data>
-		xFcHLJpaZYZkhhJcxRAeOMQblOY=
+		HycNmPsnZ6r0sYLHyneu7joI1IQ=
 		</data>
 		<key>web/playback.css</key>
 		<data>
-		+AB4+bRESB+HQORcjCtIQRAaVfg=
+		pYC2xkRtSLQEzG8i1EUSQEIG+n8=
 		</data>
 		<key>web/ui/app.js</key>
 		<data>
-		7uNa5sh7Jr4ConBaH1R5xny96Uc=
+		KAB7YXppVA7ePcKRNBmfgy0XcfU=
 		</data>
 		<key>web/ui/artwork.js</key>
 		<data>
@@ -350,7 +434,7 @@
 		</data>
 		<key>web/ui/dom.js</key>
 		<data>
-		Ify+uD6gLQjImDbejB+2ora9nDI=
+		h7zmzwH3rtk/SMkfq1EOqWYsMnQ=
 		</data>
 		<key>web/ui/governor.js</key>
 		<data>
@@ -366,19 +450,19 @@
 		</data>
 		<key>web/ui/summary.js</key>
 		<data>
-		Vn2TBzIlyKDoftAPYXJ91BsFtn0=
+		OrjTYqm4Su465S+mZDsMZrba7so=
 		</data>
 		<key>web/ui/top-month.js</key>
 		<data>
-		pJUXDBE2HPohJAMtP5SVy3SApfo=
+		4/odjgb0Yu+gFwdHap91fNlIZbs=
 		</data>
 		<key>web/ui/top-show.js</key>
 		<data>
-		oPs0ZjdOdiU0PhnNFf0FklnW73Q=
+		f4IvtRRdK3b64nOBnPdNdCX0vqM=
 		</data>
 		<key>web/ui/views.js</key>
 		<data>
-		YgHOmfTgwXCWiruL+D0EEPBTRBU=
+		d+Zdc7bSMVYEacfF44gwaH8X3zo=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -394,70 +478,70 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Lkh2X5FDthLwN84VzIkDut4zmr4t2eF8dLu3t7ObSsE=
+			SuvHhOT26/kTNCF6juhrYOJZVmWyhdgR+gp0dI19XeQ=
 			</data>
 		</dict>
 		<key>Modules/PlaybackKit.swiftmodule/arm64-apple-ios-simulator.private.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			qBtMeG7ABixrTTZaENz7Dv1sqH3X4JvvgrWl/pJMVnE=
+			p7tZGsh6GeYF4ddIovcDD2Xu50l1s12lVneXLwdh0ks=
 			</data>
 		</dict>
 		<key>Modules/PlaybackKit.swiftmodule/arm64-apple-ios-simulator.swiftdoc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			H/AvX1WphxCf7bAKAQuiH2E6Cxi4TIfXJI1hJ9spG6s=
+			9EGYSqRKnf9K0P7caxgY5/6Te7ppS3BVpt8bM8cD1+s=
 			</data>
 		</dict>
 		<key>Modules/PlaybackKit.swiftmodule/arm64-apple-ios-simulator.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			qBtMeG7ABixrTTZaENz7Dv1sqH3X4JvvgrWl/pJMVnE=
+			p7tZGsh6GeYF4ddIovcDD2Xu50l1s12lVneXLwdh0ks=
 			</data>
 		</dict>
 		<key>Modules/PlaybackKit.swiftmodule/arm64-apple-ios-simulator.swiftmodule</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			oCeUwZuwR9fDk+9d5h+1jGOujkAEzaD0f1gfr/qYuzw=
+			vO2ov/nYWLA9nsx2KHoIDRx1TsuUAtmv0ofUSBm1nHg=
 			</data>
 		</dict>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.abi.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Lkh2X5FDthLwN84VzIkDut4zmr4t2eF8dLu3t7ObSsE=
+			SuvHhOT26/kTNCF6juhrYOJZVmWyhdgR+gp0dI19XeQ=
 			</data>
 		</dict>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.private.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			yU41F0MEC3JYjY5em7JU7aOr5Lb2HRqzSAVaSNGyaiE=
+			xvDsA+Wlp4V9S09/PpGjA31q8O6qvHybDXh6xE76cnU=
 			</data>
 		</dict>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.swiftdoc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			n6byCOQSJH5gas5qDUFiAWj+hBP+z8Q3iF/PrY6ddIY=
+			0ye7jIAm+2Naed/WQxSca8mHQonylTYVqH8A2FUVlxw=
 			</data>
 		</dict>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.swiftinterface</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			yU41F0MEC3JYjY5em7JU7aOr5Lb2HRqzSAVaSNGyaiE=
+			xvDsA+Wlp4V9S09/PpGjA31q8O6qvHybDXh6xE76cnU=
 			</data>
 		</dict>
 		<key>Modules/PlaybackKit.swiftmodule/x86_64-apple-ios-simulator.swiftmodule</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			4fq4OALBH3d5nTy9AyFz/yJrQmE5utl9zp0iMdi6A88=
+			0RXUL1anJNFkLGQXrx7dCtPptbNsXg+zxL7zku04dr0=
 			</data>
 		</dict>
 		<key>Modules/module.modulemap</key>
@@ -541,7 +625,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			vtSuP3EGDwjIzFyw8rEDSKSYrfC9l9fgQvZ9/ASosgs=
+			Jt7kLhB8XndnoY9FRFz8TsBpMHNymcaMujfsnqJwj6E=
 			</data>
 		</dict>
 		<key>web/core/flow.js</key>
@@ -562,7 +646,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			pBwbEu6wZif+KD6YDjxMIDh1z82QGvOEmId8mJRzYN4=
+			YFfFWIe1rWhi+IaULc3mqz8r5+aTbF4jIPBSs5c5JtU=
 			</data>
 		</dict>
 		<key>web/core/pages.js</key>
@@ -863,7 +947,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			8F6nPKJS0T0hunLop8vNTJTonWW997K2otE5pwH1VO4=
+			YKraeMYWHoX8SQDMN7TXLKh4vak7UmpeJwUtBYMKV3Y=
 			</data>
 		</dict>
 		<key>web/fx/ramp.js</key>
@@ -936,25 +1020,172 @@
 			MZkyqz5FTKr5mY/4KZlyeUgpKA1Qy5ptokaqpkFVs+w=
 			</data>
 		</dict>
+		<key>web/locales/README.md</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			YPe39dRbE6GtIqROJCqlgO7Mqh8SiO0F0eYkPgubRZg=
+			</data>
+		</dict>
+		<key>web/locales/ar.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			KLrhgvtOZPy86D4y3a3xSN+ov2tUrK0RTFvhj5CEjZ8=
+			</data>
+		</dict>
+		<key>web/locales/ca.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			92vH8cPsVFbQME4NP9ej7fp5e9MMKwY/XrvvjMouhtM=
+			</data>
+		</dict>
+		<key>web/locales/de.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			LwofrsbiodvhvvYEF8DjkIp4QRycsalYLF9G95GrAGw=
+			</data>
+		</dict>
+		<key>web/locales/el.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			3tKtYzPglUJ1VfFqhZF4hJCC3FtFJ4RX9V3zM5Lu7Sw=
+			</data>
+		</dict>
+		<key>web/locales/en-GB.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			yQHgshG6rlF8tHv203unWArjfyGk6SAt6wRCAInL6rI=
+			</data>
+		</dict>
+		<key>web/locales/es-MX.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			LU6Lz0uZPGrkBPrj4DRIfeaO+sw+rz/esEnn0sF29vE=
+			</data>
+		</dict>
+		<key>web/locales/es.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			CYVUVIOd8eSlLoIC2VnrItdlPYM0MfK2FEx5aLuRik8=
+			</data>
+		</dict>
+		<key>web/locales/fr-CA.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			X7kL57SKkDTf+i4cYTP3O9yMYOBIvLJkeqHTVmR7D1A=
+			</data>
+		</dict>
+		<key>web/locales/fr.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			muYEIGVt4w+ZmLcZcE787+s+PApfv9/DLc6joVD8PNg=
+			</data>
+		</dict>
+		<key>web/locales/index.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			BlKpYo+E34/Kr8sTQGml1umfOdGoexP/HmwC8/4/jI0=
+			</data>
+		</dict>
+		<key>web/locales/it.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			R6K8vU/OYXRXUNjXPfmdoixXHw369OAHj+DZlty1Kqo=
+			</data>
+		</dict>
+		<key>web/locales/ja.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Rx2l5tyM+QI0wdQScjIrKLhjAFrtt08mA4xXIO0npJk=
+			</data>
+		</dict>
+		<key>web/locales/ko.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			XpW203NpSomsZkQkcJWC9vQxqhTz6PRLuczLbXN8QJo=
+			</data>
+		</dict>
+		<key>web/locales/nb.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ka2W/WDfioO3zI0oDwnuQM4T2wJPF01LF5XD5dyUIms=
+			</data>
+		</dict>
+		<key>web/locales/nl.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			dGjj3rDixAm0DcOmOBrfBZDbvzTtnvp8KBmfMkgeCnY=
+			</data>
+		</dict>
+		<key>web/locales/pt-BR.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			JGSo27VT/T7hgzAh3XKlBYiPQ861aZXfvqEj585ztWE=
+			</data>
+		</dict>
+		<key>web/locales/ru.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			6j0Z9FSdwW3/azb+Osax/opMWxhqSJ1qU+7nuz0cqCk=
+			</data>
+		</dict>
+		<key>web/locales/sv.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			Onzq4QxTHv0SFx2AEp25AjwnhC+0ZV3cMI03nf9RLek=
+			</data>
+		</dict>
+		<key>web/locales/zh-Hans.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			NMuimugbgi+GiXS1A0WjDfOvxHygSUayFZC9TPjjT14=
+			</data>
+		</dict>
+		<key>web/locales/zh-Hant.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			hnh0TtMW8+9hz8nUP6bfFhszmosu2QBft5JZzBPd1x4=
+			</data>
+		</dict>
 		<key>web/main.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			PrjeDMqXNYIz+WYD/VcsfvtXCY24nJLsybltElkXWrE=
+			mz+3Qgyg+WFbR6PItWyzOn+lxB6rZNOA9MfIcK9r2ZU=
 			</data>
 		</dict>
 		<key>web/playback.css</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			+Z5JLE750crOMIL8+8jvMmOCJO9eFXgd/Jjq+Nn0oIM=
+			HFn+rskjibj40SY24JAnmFm6SWHSI3lTHJYRi7kkGic=
 			</data>
 		</dict>
 		<key>web/ui/app.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			hg0T5vsD/XfXj6W52qML9jTa8dEFrTH6k2Pk2Z5pnQ0=
+			NB0HzQblxCXqPNMT4APp7wm3yROSb6LExpQaMAclRu0=
 			</data>
 		</dict>
 		<key>web/ui/artwork.js</key>
@@ -982,7 +1213,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			YhYGxAh7zAOpX2poo8nKHg+y3ZVsZJSw1gz7+Ujyclg=
+			2lAQUZx7yse8vKFYpLuKl1psewWPMqsI17Yy+cFAcCc=
 			</data>
 		</dict>
 		<key>web/ui/governor.js</key>
@@ -1010,28 +1241,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			XcsLhfGQExtnxzH1QBxHYSf2NY1YkjPPIoqMzlQUSNY=
+			hFCFpTKZfP9bhO6yHL8oa0F9kaVQ6Yb/sZ6xpeQ9kRs=
 			</data>
 		</dict>
 		<key>web/ui/top-month.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			pgpl0bxX3918+Hwtg4ZYQi6H5FEGg1+bQwtKcYqcklw=
+			S/ayCcg/njBfPqKsL6x8XEg+HpJPV9CFlQtSq2DedQg=
 			</data>
 		</dict>
 		<key>web/ui/top-show.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			m5Krq5FG0u84KUToTTShM6RaHy72G6hxWyuekYVZBz0=
+			wd+JK84noh8sbWywt2GJ+3KYVOQKQwrXwhDQto1Cmz4=
 			</data>
 		</dict>
 		<key>web/ui/views.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			uDIjdnhSunphNdj0PwkSY6y52A+6HWbPTCaxeqOdTRM=
+			3KzJHnWk3rBD8ze9lZpiu/KjkT8R0uu5/WD90hVs8Gk=
 			</data>
 		</dict>
 	</dict>

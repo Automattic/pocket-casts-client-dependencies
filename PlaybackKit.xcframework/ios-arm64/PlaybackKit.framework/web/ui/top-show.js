@@ -8,7 +8,7 @@
 // in place (`update`), so the carousel, the cover and their motion carry across a pick
 // and into the reveal. The page's CSS times everything else (playback.css).
 
-import { h } from './dom.js';
+import { followTitle, h } from './dom.js';
 import { artwork } from './artwork.js';
 import { bezier, CAROUSEL_MOTION, topCarousel } from './carousel.js';
 
@@ -110,6 +110,7 @@ export function topShowView(ctx) {
   const article = h('article', { class: 'page page-top-podcast', 'data-page': page.id },
     ...glows, ask, hint, guessSlot, revealSlot, cover, verdict, details,
     quiz ? h('div', { class: 'tp-pick' }, carousel.surface, carousel.el, confirm) : null);
+  followTitle(article, ask);
 
   function setVerdict() {
     const a = ctx.answer;

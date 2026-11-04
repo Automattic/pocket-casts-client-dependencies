@@ -9,7 +9,7 @@
 // the view updates in place (`update`). The page's CSS times everything (playback.css),
 // from the per-month delays and sizes set here (MONTH_MOTION, core/pages.js).
 
-import { h } from './dom.js';
+import { followTitle, h } from './dom.js';
 import { monthName, monthShort } from '../core/format.js';
 import { MONTH_MOTION, MONTH_SIZE, monthAt } from '../core/pages.js';
 
@@ -61,6 +61,7 @@ export function topMonthView(ctx) {
   const confirm = quiz ? h('button', { type: 'button', class: 'tm-confirm', 'data-testid': 'confirm', onClick: () => dispatch({ type: 'confirm' }) }, t('bestMonth.confirm')) : null;
 
   const article = h('article', { class: 'page page-best-month', 'data-page': page.id }, ask, hint, grid, verdict, confirm);
+  followTitle(article, ask);
 
   /** The pick shows: the month picked turns, the one before turns back. */
   function setPick(id) {

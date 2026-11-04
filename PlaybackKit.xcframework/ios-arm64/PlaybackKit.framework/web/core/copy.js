@@ -2,10 +2,13 @@
 //
 // An entry is a template string with `{name}` placeholders, or a plural table
 // `{ one, other, ... }` selected by `params.count`. `{count}` is formatted for the
-// locale. The host can override any entry through `payload.strings` (that is how
-// translations arrive on each platform) and missing keys fall back to English here.
+// locale. Translations are bundled, one file per language in `../locales` (its README
+// says how a language is picked and how they are kept up to date); the host can still
+// override any entry through `payload.strings`, and a key no table has is English here.
+// After changing an entry here, re-translate it (`web/test/locales.test.js` names it).
 
 import { formatNumber } from './format.js';
+import { TRANSLATIONS } from '../locales/index.js';
 
 export const STRINGS = Object.freeze({
   'chrome.close': 'Close',
@@ -121,10 +124,49 @@ function pluralCategory(locale, n) {
   }
 }
 
+// Languages borrowed by a neighbour, as the apps do.
+const LANGUAGE_ALIASES = { no: 'nb', nn: 'nb' };
+/** English-speaking regions that spell as the US does; the rest read en-GB. */
+const US_ENGLISH = new Set(['US', 'AS', 'GU', 'MH', 'MP', 'PR', 'UM', 'VI']);
+
+function parseLocale(tag) {
+  try {
+    return new Intl.Locale(String(tag).replace(/_/g, '-'));
+  } catch {
+    return null;
+  }
+}
+
+/** The bundled translations for a BCP 47 tag, best first; none for US English or an unknown language. */
+export function translationChain(tag) {
+  const loc = parseLocale(tag)?.maximize();
+  if (!loc) return [];
+  const language = LANGUAGE_ALIASES[loc.language] ?? loc.language;
+  const { script, region } = loc;
+  const candidates = [`${language}-${region}`, `${language}-${script}`, language];
+  if (language === 'es' && region !== 'ES') candidates.splice(1, 0, 'es-MX');
+  if (language === 'pt') candidates.push('pt-BR');
+  if (language === 'en' && !US_ENGLISH.has(region)) candidates.push('en-GB');
+  return [...new Set(candidates)].filter((c) => Object.hasOwn(TRANSLATIONS, c));
+}
+
+/**
+ * The locale the page is shown in: the host's (normalised: `pt_BR` → `pt-BR`), unless its
+ * language has no translation here; then English, numbers, months and direction too, so
+ * the page is in one language.
+ */
+export function displayLocale(tag) {
+  const loc = typeof tag === 'string' && tag ? parseLocale(tag) : null;
+  if (!loc) return 'en';
+  return loc.language === 'en' || translationChain(tag).length ? loc.toString() : 'en';
+}
+
 /** Build a translator bound to a locale and a set of host overrides. */
 export function createTranslator(locale = 'en', overrides = {}) {
+  const tables = [overrides ?? {}, ...translationChain(locale).map((c) => TRANSLATIONS[c]), STRINGS];
   return function t(key, params = {}) {
-    let entry = overrides[key] ?? STRINGS[key];
+    let entry = null;
+    for (const table of tables) if ((entry = table[key]) != null) break;
     if (entry == null) return key;
     if (typeof entry === 'object') {
       const cat = pluralCategory(locale, params.count);
