@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en" class="on-ground">
+<head>
+  <meta charset="utf-8">
+  <title>Playback 2026</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="playback.css">
+</head>
+<body>
+  <!-- The WebGL backdrop: one canvas for the whole session, under the DOM layer. Shown on
+       pages whose motion is wired (the intro so far); elsewhere the body's light-red
+       placeholder (--pb-backdrop) marks where it will draw. -->
+  <canvas id="backdrop" aria-hidden="true"></canvas>
+  <div id="app"></div>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

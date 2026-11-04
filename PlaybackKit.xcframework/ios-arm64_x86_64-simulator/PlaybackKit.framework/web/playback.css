@@ -1,0 +1,1230 @@
+/* The story container and the overlays, from Figma ("Pocket Casts — Playback 2026").
+   Pages with a final design are the ones in FINAL (ui/views.js). Every other page is
+   still a wireframe, drawn as a white panel so it reads as unfinished. Pages whose
+   backdrop is wired (the intro through Play again) draw on the design's ground over the
+   WebGL canvas.
+   Safe areas: iOS reports them through env(); Android WebViews report zero, so the host
+   pushes measured insets into --inset-* through Playback.setInsets(). */
+
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url(fonts/archivo-latin-ext-wght-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url(fonts/archivo-latin-wght-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* PLACEHOLDER: where the WebGL backdrop will draw, on pages not wired to it yet. Light
+     red on purpose, so a missing effect is obvious. The design's ground under the effects
+     is --pb-ground (ui/backdrop.js reads it too). */
+  --pb-backdrop: #e57373;
+  --pb-ground: #2d0004;
+  --pb-text: #fff;
+  --pb-track: rgba(255, 255, 255, 0.33);
+  --pb-card: rgba(0, 0, 0, 0.26);
+  --pb-font: 'Archivo', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* The system's text size, held to the range the layout supports (host/accessibility.js). Every
+     font size and line height of the pages is multiplied by it. */
+  --text-scale: 1;
+
+  --inset-top: 0px;
+  --inset-right: 0px;
+  --inset-bottom: 0px;
+  --inset-left: 0px;
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--inset-top));
+  --safe-right: max(env(safe-area-inset-right, 0px), var(--inset-right));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--inset-bottom));
+  --safe-left: max(env(safe-area-inset-left, 0px), var(--inset-left));
+
+  /* Story chrome (Figma "Lines": progress, then the close button 12 px below it). */
+  --chrome-top: max(calc(var(--safe-top) + 8px), 12px);
+  --chrome-height: 36px;
+  --share-bottom: calc(var(--safe-bottom) + 15px);
+  --share-height: 34px;
+}
+
+/* iOS pads its top inset below the Dynamic Island (59 px on a 393 × 852 iPhone, where the
+   design puts the progress bar at 51). Android's status-bar inset is exact. */
+:root[data-platform='ios'] {
+  --chrome-top: max(calc(var(--safe-top) - 8px), min(calc(var(--safe-top) + 4px), 28px), 12px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--pb-backdrop);
+  color: var(--pb-text);
+  font: calc(16px * var(--text-scale))/1.4 var(--pb-font);
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* Cut at the screen's edges, not the column's (.pb-root): what reaches past the column on a
+   wider screen (the summary's side cards, the top show's outer covers) shows as far as their
+   backdrop does. Clipped, not hidden, so nothing can scroll the page sideways. */
+html { overflow: hidden; }
+body { overflow: clip; }
+
+#app { position: relative; height: 100%; touch-action: pan-y; }
+body { touch-action: pan-y; }
+
+/* The WebGL backdrop (ui/backdrop.js), under everything, shown while a page draws one.
+   Those pages sit on the design's ground; the rest keep the placeholder. */
+#backdrop { display: none; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: pan-y; }
+.has-backdrop #backdrop { display: block; }
+.on-ground body { background: var(--pb-ground); }
+
+.pb-root {
+  position: relative;
+  height: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  touch-action: pan-y;
+}
+
+/* ── chrome ─────────────────────────────────────────────────────────────────────── */
+
+.progress {
+  position: absolute;
+  z-index: 2;
+  top: var(--chrome-top);
+  left: calc(var(--safe-left) + 26px);
+  right: calc(var(--safe-right) + 27px);
+  display: flex;
+  gap: 2px;
+}
+/* The summary and Play again have none (Figma's chrome there is the close alone): it fades out
+   with the role's title on the way into the summary, and comes back with the intro once Play
+   again has gone (pages.js OUTRO_OUT). */
+.progress { transition: opacity 0.32s linear; }
+.pb-root:is([data-page='summary'], [data-page='outro']) .progress { opacity: 0; }
+.pb-root[data-page='summary'] .progress { transition-delay: 0.867s; }
+.pb-root[data-page='summary'][data-reduce-motion] .progress { transition: opacity 0.25s linear; }
+.pb-root[data-page='intro'] .progress { transition-delay: 0.32s; }
+.seg { flex: 1; height: 2px; border-radius: 800px; background: var(--pb-track); }
+.seg.done { background: var(--pb-text); }
+
+.close {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--chrome-top) + 2px);
+  right: calc(var(--safe-right) + 8px);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.close img { width: 24px; height: 24px; }
+
+.share-bar {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(var(--share-bottom) - 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 5px 8px;
+  border: 0;
+  background: none;
+  color: var(--pb-text);
+  font: 800 calc(14px * var(--text-scale))/normal var(--pb-font);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.share-icon {
+  width: var(--share-height);
+  height: var(--share-height);
+  border-radius: 90px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+.share-icon img { width: 20px; height: 20px; }
+.share-bar[hidden] { display: none; }
+/* With a page that fades out as it leaves (app.js), the share button fades with it. */
+.share-bar[data-leaving] { animation: page-leave 0.25s linear forwards; pointer-events: none; }
+
+/* Figma's white pill (the summary's Share, Play again). */
+.pill { width: 109px; height: 46px; padding: 0; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 100px; background: #fff; color: var(--pb-ground); font: 800 calc(14px * var(--text-scale))/normal var(--pb-font); cursor: pointer; }
+.pill:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Back / Next for keyboards and screen readers. Taps and swipes do the same on touch;
+   these stay out of sight until focused. */
+.step {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  padding: 0;
+  border: 0;
+}
+.step-back { inset-inline-start: calc(var(--safe-left) + 8px); }
+.step-next { inset-inline-end: calc(var(--safe-right) + 8px); }
+.step:focus-visible {
+  width: auto;
+  height: auto;
+  clip-path: none;
+  padding: 10px 16px;
+  border-radius: 99px;
+  background: #fff;
+  color: var(--pb-ground);
+  font: 800 calc(14px * var(--text-scale))/1 var(--pb-font);
+}
+.close:focus-visible, .share-bar:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 99px; }
+
+/* ── stage ──────────────────────────────────────────────────────────────────────── */
+
+/* A page laid out on the screen, not scrolled, makes it `overflow: visible`: nothing scrolls
+   on its account, and what it draws past the column is not cut at the column's edge. */
+.stage {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  /* Horizontal swipes are story navigation. Set here too, not only on .pb-root: a touch
+     only consults touch-action up to its nearest scroll container, which this is. */
+  touch-action: pan-y;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--chrome-top) + var(--chrome-height)) var(--safe-right) calc(var(--share-bottom) + var(--share-height) + 16px) var(--safe-left);
+}
+
+.page { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; }
+
+/* Right-to-left pages mirror the layout (dir=rtl on the root), but the copy is English until it is
+   translated, and a sentence in the wrong direction puts its punctuation at the wrong end
+   ("!Not quite", "?Ready to dig in"). Every piece of text takes its own direction from its first
+   letter: English reads left to right, Arabic show names and the translated copy to come read
+   right to left, whatever the page does around them. */
+.pb-root :is(h1, h2, p, li, button, .share-bar span) { unicode-bidi: plaintext; }
+
+.story-title {
+  margin: 0 auto;
+  font: 800 calc(20px * var(--text-scale))/1.3 var(--pb-font);
+  text-align: center;
+  outline: none;
+  overflow-wrap: anywhere;
+}
+
+/* Cover art: the image when there is one, else a generated tile with the title. */
+.art {
+  position: relative;
+  overflow: hidden;
+  container-type: inline-size;
+  background: linear-gradient(150deg, var(--art-a, #3d5a80), var(--art-b, #1d2d44));
+}
+.art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.art-fallback {
+  position: absolute;
+  inset: 0;
+  padding: 9cqw;
+  display: flex;
+  align-items: flex-start;
+  color: #fff;
+  font: 800 13cqw/1.05 var(--pb-font);
+  overflow-wrap: anywhere;
+  overflow: hidden;
+}
+.art-fallback span { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Shows and episodes: a stack of the top covers, front to back, in the space between the
+   title and the share button. Sizes and offsets are Figma's (393 × 852 frame) in --u,
+   which shrinks the whole stack when the space is shorter than designed. Every cover is
+   a front-sized box at the front slot, put in its slot by a transform (ui/stack.js
+   animates them through the deck, scaled about their top centre), so they move on the
+   compositor. The page comes in once the intro's tagline has gone (STACK_MOTION). */
+.page-shows-and-episodes { padding: 31.5px 22px 0; }
+.page-shows-and-episodes .story-title { max-width: 349px; animation: pb-fade-in 0.27s linear 0.56s both; }
+/* Moving on, it fades out (0.25 s) before the top show comes in over the same wave. */
+.page.page-shows-and-episodes[data-leaving] {
+  inset: calc(var(--chrome-top) + var(--chrome-height)) var(--safe-right) calc(var(--share-bottom) + var(--share-height) + 16px) var(--safe-left);
+  animation: page-leave 0.25s linear forwards;
+}
+/* The front cover drops out below the stack as it fades: no scrolling on its account. */
+.pb-root[data-page='shows-and-episodes'] .stage { overflow: visible; }
+.pb-root[data-page='shows-and-episodes'] .share-bar { animation: pb-fade-in 0.26s linear 0.75s both; }
+/* Figma centres the stack between the title and the share button (1.5 px above), not
+   above the stage's bottom padding: the wrap reaches down to the button. */
+.stack-wrap { flex: 1; min-height: 0; margin-bottom: -13.5px; display: grid; place-items: center; container-type: size; }
+.stack {
+  --u: 1px;
+  position: relative;
+  width: calc(234 * var(--u));
+  height: calc(var(--stack-h) * var(--u));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@supports (width: 1cqh) {
+  .stack { --u: min(1px, calc(100cqh / var(--stack-h)), calc(100cqw / 234)); }
+}
+.stack-item {
+  position: absolute;
+  left: 0;
+  top: calc(var(--front-top) * var(--u));
+  width: calc(234 * var(--u));
+  aspect-ratio: 1;
+  transform-origin: 50% 0;
+}
+.stack-card, .stack-item .art { width: 100%; height: 100%; border-radius: 2px; }
+.stack-item .art { box-shadow: 0 1.503px 26.01px rgba(0, 0, 0, 0.25); }
+
+@keyframes pb-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Top show (Figma "Top show 1" and "Top show 3", moving as the P2's "most listened"
+   video does, measured from it frame by frame; ui/top-show.js, ui/carousel.js). One page
+   for the guess and the reveal: `data-phase` is `guess`, then `reveal` once the answer
+   shows, or `result` when the page opens on it. Positions are Figma's (393 × 853): the
+   titles below the chrome, the cover on the screen's centre line (the shape behind it is
+   placed on `.tp-slot-reveal`), the carousel and "This one!" above the share line. The
+   big cover shrinks to fit a short screen. Every animation is the video's: an element
+   comes in fading linearly as it rises `--rise` on its own curve, and leaves drifting up
+   `--drift` on an ease-in as it fades. The page comes in 0.25 s after it is entered,
+   once the first stat has faded out (`--tp-in`). */
+.page-top-podcast {
+  position: absolute;
+  inset: 0 var(--safe-right) 0 var(--safe-left); width: auto;
+  container-type: size;
+  --tp-in: 0.25s;
+  /* The strip at each edge of the screen where a swipe is still the story's (back, forward), not the cover's. */
+  --tp-edge: 32px;
+  --tp-guess: min(234px, calc(100cqh - 428px));
+  --tp-reveal: min(222px, calc(100cqh - 446px));
+}
+.pb-root[data-page='top-podcast'] .stage { overflow: visible; }
+.page-top-podcast > * { position: absolute; margin: 0; }
+.tp-ask, .tp-verdict { top: calc(var(--chrome-top) + 60px); left: 18px; right: 18px; max-width: 357px; margin-inline: auto; }
+.tp-hint { top: calc(var(--chrome-top) + 124px); left: 0; right: 0; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
+.tp-slot, .tp-cover { left: calc(50% + 0.5px - var(--size) / 2); top: calc(var(--cy) - var(--size) / 2); width: var(--size); height: var(--size); }
+.tp-slot { visibility: hidden; pointer-events: none; }
+/* The guess's logos are drawn by the backdrop in these boxes: Figma's for its two shader
+   layers (B is turned there, and anchored to the right edge). */
+.tp-glow { visibility: hidden; pointer-events: none; }
+.tp-glow-a { left: -111px; top: -18px; width: 264.517px; height: 264px; }
+.tp-glow-b { left: calc(100% - 540.716px); top: -80.069px; width: 714.372px; height: 712.977px; }
+/* The answer's glide (ui/top-show.js) scales the cover from the guess's box about its top left. */
+.tp-cover { transform-origin: 0 0; }
+.tp-slot-guess, .page-top-podcast[data-phase='guess'] .tp-cover { --size: var(--tp-guess); --cy: calc(50% + 0.5px); }
+.tp-slot-reveal, .page-top-podcast:not([data-phase='guess']) .tp-cover { --size: var(--tp-reveal); --cy: calc(50% - 39.5px); }
+.tp-cover-inner, .tp-cover-inner .art { position: absolute; inset: 0; border-radius: 4px; }
+.tp-cover-inner .art { box-shadow: 0 2.444px 73.308px rgba(0, 0, 0, 0.2); }
+.tp-details {
+  top: calc(50% + 145.5px);
+  left: 0;
+  right: 0;
+  width: min(316px, calc(100% - 36px));
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.tp-author { margin: 0; font: 600 calc(16px * var(--text-scale))/normal var(--pb-font); }
+.tp-show { margin: 4px 0 0; max-width: 306px; font: 800 calc(24px * var(--text-scale))/1.2 var(--pb-font); overflow-wrap: anywhere; }
+.tp-listened { margin: 16px 0 0; font: 800 calc(14px * var(--text-scale))/normal var(--pb-font); opacity: 0.7; }
+/* The carousel: a point on the middle slot's centre; ui/carousel.js moves each cover from it. */
+.tp-pick { inset: 0; pointer-events: none; }
+.tp-swipe { position: absolute; left: var(--tp-edge); right: var(--tp-edge); top: calc(var(--chrome-top) + 150px); bottom: calc(var(--share-bottom) + 165px); pointer-events: auto; touch-action: none; }
+.tp-carousel { position: absolute; left: calc(50% + 0.5px); bottom: calc(var(--share-bottom) + 115px); width: 0; height: 0; pointer-events: auto; touch-action: none; }
+.tp-carousel::before { content: ''; position: absolute; left: -196px; width: 392px; top: -50px; height: 120px; }
+.tp-option { position: absolute; left: -36px; top: -36px; width: 72px; height: 72px; padding: 0; border: 0; background: none; cursor: pointer; }
+/* Figma blurs what is behind the frame (167 px), but that is the bare ground (the logos
+   are at the top, and the first stat's wave has faded out before the carousel comes in),
+   which a blur leaves as it is. So none: a backdrop blur reads back and blurs the WebGL
+   canvas under each cover at every frame, which took an Android WebView from 19 to 30 ms
+   a frame on the guess. */
+.tp-option-frame {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.5);
+}
+.tp-option .art { position: absolute; inset: 4px; border-radius: 2px; box-shadow: 0 2.444px 73.308px rgba(0, 0, 0, 0.2); }
+.tp-option:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 4px; }
+.tp-dot { position: absolute; left: -2px; top: 46px; width: 4px; height: 4px; border-radius: 50%; background: #fff; }
+.tp-confirm {
+  position: absolute;
+  left: calc(50% - 54.5px);
+  bottom: calc(var(--share-bottom) - 4px);
+  width: 109px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 100px;
+  background: #fff;
+  color: var(--pb-ground);
+  font: 800 calc(14px * var(--text-scale))/normal var(--pb-font);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.tp-confirm:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.page-top-podcast[data-phase='guess'] :is(.tp-verdict, .tp-details) { visibility: hidden; }
+.page-top-podcast[data-phase='result'] :is(.tp-ask, .tp-hint, .tp-pick) { display: none; }
+
+@keyframes tp-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+@keyframes tp-drift { from { translate: 0 0; } to { translate: 0 calc(-1 * var(--drift)); } }
+@keyframes tp-out { to { opacity: 0; } }
+/* The guess comes in: title, hint and cover together, the carousel from 0.11 s, "This one!" at 0.6 s. */
+.page-top-podcast[data-phase='guess'] .tp-ask { --rise: 6.37px; animation: pb-fade-in 0.203s linear var(--tp-in) both, tp-rise 0.377s cubic-bezier(0.012, 0.115, 0.174, 0.911) calc(var(--tp-in) + 0.043s) both; }
+.page-top-podcast[data-phase='guess'] .tp-hint { --rise: 7.96px; animation: pb-fade-in 0.202s linear calc(var(--tp-in) + 0.07s) both, tp-rise 0.404s cubic-bezier(0.13, 0.469, 0.327, 0.916) calc(var(--tp-in) + 0.075s) both; }
+.page-top-podcast[data-phase='guess'] .tp-cover { --rise: 21.01px; animation: pb-fade-in 0.198s linear var(--tp-in) both, tp-rise 0.396s cubic-bezier(0.208, 0.841, 0.716, 0.964) calc(var(--tp-in) + 0.024s) both; }
+.page-top-podcast[data-phase='guess'] .tp-carousel { --rise: 24.24px; animation: pb-fade-in 0.361s linear calc(var(--tp-in) + 0.108s) both, tp-rise 0.938s cubic-bezier(0.1, 0.821, 0.58, 0.97) calc(var(--tp-in) + 0.045s) both; }
+.page-top-podcast[data-phase='guess'] .tp-confirm { --rise: 10.27px; animation: pb-fade-in 0.266s linear calc(var(--tp-in) + 0.601s) both, tp-rise 0.493s cubic-bezier(0.008, 0.455, 0.264, 0.929) calc(var(--tp-in) + 0.605s) both; }
+/* The answer: what asked drifts up and fades (title, hint, carousel, button, in that
+   order), the verdict comes in as the title came in, at 0.4 s, the details at 0.57 s and
+   the share button as "This one!" came in, at 0.7 s. */
+.page-top-podcast[data-phase='reveal'] .tp-ask { --drift: 19.98px; animation: tp-drift 0.559s cubic-bezier(0.113, 0.011, 0.998, 0.027) both, tp-out 0.196s linear 0.337s both; }
+.page-top-podcast[data-phase='reveal'] .tp-hint { --drift: 8.54px; animation: tp-drift 0.567s cubic-bezier(0.594, 0.011, 0.838, 0.465) both, tp-out 0.197s linear 0.403s both; }
+.page-top-podcast[data-phase='reveal'] .tp-carousel { --drift: 18.77px; animation: tp-drift 0.584s cubic-bezier(0.476, -0.018, 0.821, 0.235) both, tp-out 0.2s linear 0.433s both; }
+.page-top-podcast[data-phase='reveal'] .tp-confirm { --drift: 10.49px; animation: tp-drift 0.839s cubic-bezier(0.208, 0.015, 0.999, -0.155) both, tp-out 0.167s linear 0.533s both; }
+.page-top-podcast[data-phase='reveal'] .tp-verdict { --rise: 6.37px; animation: pb-fade-in 0.203s linear 0.402s both, tp-rise 0.377s cubic-bezier(0.012, 0.115, 0.174, 0.911) 0.444s both; }
+.page-top-podcast[data-phase='reveal'] .tp-details { --rise: 6.37px; animation: pb-fade-in 0.203s linear 0.567s both, tp-rise 0.377s cubic-bezier(0.012, 0.115, 0.174, 0.911) 0.609s both; }
+.pb-root[data-page='top-podcast'] .share-bar:not([data-leaving]) { --rise: 10.27px; animation: pb-fade-in 0.266s linear 0.701s both, tp-rise 0.493s cubic-bezier(0.008, 0.455, 0.264, 0.929) 0.706s both; }
+/* Opened on the answer: it comes in as the guess does. */
+.page-top-podcast[data-phase='result'] .tp-verdict { --rise: 6.37px; animation: pb-fade-in 0.203s linear var(--tp-in) both, tp-rise 0.377s cubic-bezier(0.012, 0.115, 0.174, 0.911) calc(var(--tp-in) + 0.043s) both; }
+.page-top-podcast[data-phase='result'] .tp-cover { --rise: 21.01px; animation: pb-fade-in 0.198s linear var(--tp-in) both, tp-rise 0.396s cubic-bezier(0.208, 0.841, 0.716, 0.964) calc(var(--tp-in) + 0.024s) both; }
+.page-top-podcast[data-phase='result'] .tp-details { --rise: 6.37px; animation: pb-fade-in 0.203s linear calc(var(--tp-in) + 0.167s) both, tp-rise 0.377s cubic-bezier(0.012, 0.115, 0.174, 0.911) calc(var(--tp-in) + 0.21s) both; }
+[data-reduce-motion] .page-top-podcast *, [data-reduce-motion][data-page='top-podcast'] .share-bar { animation: none !important; }
+/* `animation: none` also drops the fill-forward exits above (tp-out), which are what take the
+   guess off the screen once the answer shows: with Reduce Motion the guess is hidden outright,
+   so the verdict and the details are not printed over it. */
+[data-reduce-motion] .page-top-podcast[data-phase='reveal'] :is(.tp-ask, .tp-hint, .tp-carousel, .tp-confirm) { visibility: hidden; }
+/* Moving on, the answer fades out (0.25 s) as the top 5 comes in over the wave. */
+.page.page-top-podcast[data-leaving] { animation: page-leave 0.25s linear forwards; }
+
+/* Top shows (Figma "Top 5", moving as the P2's top 5 video does, measured from it frame
+   by frame): one card per show. Cards shrink together when the screen is short. Every
+   element comes in as the video's do, fading in linearly as it rises `--rise` on its own
+   ease-out: the title at 0.2 s, the first card at 0.205 s, the next 0.1 s apart, each
+   card as one (its cover, its panel and its text), the share button last. Times are
+   from the page's start, when the wave starts to fade in and the top show to fade out. */
+.page-top-shows { padding-top: 23.5px; }
+.page-top-shows .story-title { max-width: 261px; --rise: 16.79px; animation: pb-fade-in 0.214s linear 0.2s both, tp-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) 0.2s both; }
+.top-list {
+  list-style: none;
+  margin: 32.5px 0 0;
+  padding: 0 29px 0 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-height: 0;
+}
+.top-card {
+  position: relative;
+  display: flex;
+  flex: 0 1 99px;
+  min-height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--pb-card);
+  -webkit-backdrop-filter: blur(77px);
+  backdrop-filter: blur(77px);
+  --rise: 36.99px;
+  animation: pb-fade-in 0.234s linear calc(0.205s + var(--i, 0) * 0.1s) both, tp-rise 0.854s cubic-bezier(0.087, 0.395, 0.238, 1.004) calc(0.217s + var(--i, 0) * 0.1s) both;
+}
+.top-card.is-first::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.top-card .art { flex: none; height: 100%; aspect-ratio: 1; }
+.top-body { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 12px 12px 17px; }
+.top-meta { display: flex; justify-content: space-between; gap: 8px; font-size: calc(10px * var(--text-scale)); line-height: normal; }
+.top-rank { font-weight: 800; }
+.top-count { font-weight: 600; letter-spacing: 0.1px; white-space: nowrap; }
+.top-names { margin-top: auto; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.top-author, .top-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-author { font: 600 calc(14px * var(--text-scale))/normal var(--pb-font); }
+.top-title { font: 800 calc(16px * var(--text-scale))/1.2 var(--pb-font); }
+/* The share button comes in last (0.866 s). Handed over from the top show, it first
+   fades out with it, where it is. Its own names, so it comes in again rather than carry
+   on from the top show's. */
+@keyframes tf-share-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tf-share-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+@keyframes tf-share-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 0; } }
+.pb-root[data-page='top-shows'] .share-bar:not([data-leaving]) { --rise: 7.48px; animation: tf-share-in 0.272s linear 0.866s both, tf-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) 0.931s both; }
+.pb-root[data-page='top-shows'] .share-bar[data-handover]:not([data-leaving]) { animation: tf-share-in 0.272s linear 0.866s both, tf-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) 0.931s both, tf-share-out 0.25s linear; }
+[data-reduce-motion] .page-top-shows *, [data-reduce-motion][data-page='top-shows'] .share-bar { animation: none !important; }
+
+/* Moving on to the top month, the top 5 falls away as its video's does (measured from its
+   way out, from the tap): the bottom card first, the share button with the third, the
+   title last, each falling on its own ease-in and fading out near the end of its fall,
+   while its wave dims to the ground (pages.js TOP_MONTH_GUESS_BACKDROP). The same on to
+   total minutes when there is no month to guess. */
+@keyframes tm-fall { from { translate: 0 0; } to { translate: 0 var(--fall); } }
+.page.page-top-shows[data-leaving] { inset: calc(var(--chrome-top) + var(--chrome-height)) var(--safe-right) calc(var(--share-bottom) + var(--share-height) + 16px) var(--safe-left); }
+.pb-root:is([data-page='best-month'], [data-page='total-minutes']) .page.page-top-shows[data-leaving] { animation: page-leave 0.01s linear 0.93s forwards; }
+.pb-root:is([data-page='best-month'], [data-page='total-minutes']) .page-top-shows[data-leaving] .story-title { --fall: 21.54px; animation: tm-fall 0.4275s cubic-bezier(0.363, 0.028, 0.977, 0.076) 0.3271s both, tp-out 0.1595s linear 0.5952s both; }
+.pb-root:is([data-page='best-month'], [data-page='total-minutes']) .page-top-shows[data-leaving] .top-card:nth-child(1) { --fall: 16.71px; animation: tm-fall 0.62s cubic-bezier(0.928, 0.031, 0.974, 1.409) 0.2772s both, tp-out 0.2763s linear 0.621s both; }
+.pb-root:is([data-page='best-month'], [data-page='total-minutes']) .page-top-shows[data-leaving] .top-card:nth-child(2) { --fall: 34.86px; animation: tm-fall 0.715s cubic-bezier(0.678, 0.017, 0.896, 0.441) 0.2108s both, tp-out 0.268s linear 0.6579s both; }
+.pb-root:is([data-page='best-month'], [data-page='total-minutes']) .page-top-shows[data-leaving] .top-card:nth-child(3) { --fall: 33.98px; animation: tm-fall 0.6966s cubic-bezier(0.506, 0.017, 0.891, 0.256) 0.1528s both, tp-out 0.2627s linear 0.5867s both; }
+.pb-root:is([data-page='best-month'], [data-page='total-minutes']) .page-top-shows[data-leaving] .top-card:nth-child(4) { --fall: 33.05px; animation: tm-fall 0.7606s cubic-bezier(0.809, -0.019, 0.916, 0.651) 0.0285s both, tp-out 0.2715s linear 0.5176s both; }
+.pb-root:is([data-page='best-month'], [data-page='total-minutes']) .page-top-shows[data-leaving] .top-card:nth-child(5) { --fall: 31.03px; animation: tm-fall 0.7154s cubic-bezier(0.837, 0.013, 0.905, 0.768) 0.0015s both, tp-out 0.2577s linear 0.4592s both; }
+.pb-root[data-page='best-month'] .share-bar[data-leaving] { --fall: 30.04px; animation: tm-fall 0.5286s cubic-bezier(0.642, 0.029, 0.891, 0.379) 0.1525s both, page-leave 0.2308s linear 0.4503s forwards; }
+[data-reduce-motion]:is([data-page='best-month'], [data-page='total-minutes']) .page.page-top-shows[data-leaving], [data-reduce-motion][data-page='best-month'] .share-bar[data-leaving] { animation: page-leave 0.25s linear forwards !important; }
+
+/* Top month (Figma "Top month 1–3", moving as the P2's best-months video does, measured
+   from it frame by frame; ui/top-month.js). One page for the guess and the answer:
+   `data-phase` is `guess`, then `reveal` once the answer shows, or `result` when the page
+   opens on it. Positions are Figma's (393 × 853): the titles below the chrome, the grid
+   between "Pick one" and "This one!" (Figma's 566 pt; on a shorter or narrower screen it
+   scales down whole, in --u), "This one!" above the share line. Every month is a flat disc
+   (the DOM's) over a slot where the backdrop draws its bubble (ui/backdrop.js), 80 pt on
+   the guess and its listening's size on the answer (core/pages.js monthSizes); a disc
+   gives way to its bubble once picked, or on the answer. Every animation is the video's;
+   the page comes in 0.7 s after it is entered, once the top 5 has fallen away (`--tm-in`, pages.js TOP_MONTH_IN). */
+.page-best-month { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --tm-in: 0.7s; }
+.pb-root[data-page='best-month'] .stage { overflow: visible; }
+.page-best-month > * { position: absolute; margin: 0; }
+.tm-ask, .tm-verdict { top: calc(var(--chrome-top) + 60px); left: 0; right: 0; max-width: 361px; margin-inline: auto; }
+.tm-verdict { max-width: 357px; }
+.tm-verdict > span { display: block; }
+.tm-hint { top: calc(var(--chrome-top) + 124px); left: 0; right: 0; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
+.tm-grid { top: calc(var(--chrome-top) + 144px); bottom: calc(var(--share-bottom) + 42px); left: 0; right: 0; container-type: size; --u: 1px; }
+@supports (width: 1cqh) { .tm-grid { --u: min(1px, calc(100cqh / 566), calc(100cqw / 393)); } }
+.tm-month {
+  --d: 80;
+  position: absolute;
+  left: calc(50% + (var(--x) - 40) * var(--u));
+  top: calc(50% + (var(--y) - 40) * var(--u));
+  width: calc(80 * var(--u));
+  height: calc(80 * var(--u));
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.page-best-month:not([data-phase='guess']) .tm-month { --d: var(--size); }
+.tm-disc, .tm-slot { position: absolute; left: 50%; top: 50%; width: calc(var(--d) * var(--u)); height: calc(var(--d) * var(--u)); margin: calc(var(--d) * var(--u) / -2) 0 0 calc(var(--d) * var(--u) / -2); border-radius: 50%; }
+/* The unpicked month's label on its disc. Figma's #e8349d is 2.68:1 on #7a173e (WCAG asks 4.5:1 for
+   11 to 14 pt text); this tint of it is 4.96:1. */
+.page-best-month { --tm-label: #ff8fc9; }
+.tm-disc { background: #7a173e; }
+.tm-slot { visibility: hidden; pointer-events: none; }
+.tm-label { position: absolute; inset: 0; display: grid; place-items: center; font: 600 calc(14px * var(--text-scale))/normal var(--pb-font); color: var(--tm-label); white-space: nowrap; }
+.tm-month:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+/* "This one!": Figma's pill at 0.4 until a month is picked. */
+.tm-confirm { z-index: 0; left: calc(50% - 54.5px); bottom: calc(var(--share-bottom) - 4px); width: 109px; height: 46px; padding: 0; border: 0; background: none; color: #000; font: 800 calc(14px * var(--text-scale))/normal var(--pb-font); cursor: pointer; }
+.tm-confirm::before { content: ''; position: absolute; inset: 0; z-index: -1; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 100px; background: #fff; opacity: 0.4; }
+.tm-confirm[data-ready] { color: var(--pb-ground); }
+.tm-confirm[data-ready]::before { opacity: 1; }
+.tm-confirm:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 100px; }
+.page-best-month[data-phase='guess'] .tm-verdict { visibility: hidden; }
+.page-best-month[data-phase='result'] :is(.tm-ask, .tm-hint, .tm-confirm) { display: none; }
+/* Turned: the flat disc gives way to its bubble, the label turns white. */
+.page-best-month:not([data-phase='guess']) .tm-disc, .tm-month[aria-pressed='true'] .tm-disc { opacity: 0; }
+.page-best-month:not([data-phase='guess']) .tm-label, .tm-month[aria-pressed='true'] .tm-label { color: #fff; }
+
+@keyframes tm-grow { from { scale: 0.7609; } to { scale: 1; } }
+@keyframes tm-resize { from { scale: var(--from); } to { scale: 1; } }
+@keyframes tm-flat-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes tm-flat-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tm-white { from { color: var(--tm-label); } to { color: #fff; } }
+@keyframes tm-pink { from { color: #fff; } to { color: var(--tm-label); } }
+@keyframes tm-ready { from { opacity: 0.4; } to { opacity: 1; } }
+@keyframes tm-press { 45% { scale: 0.962; } }
+/* The guess comes in: the title, the months one after another (rows top to bottom, right
+   to left in a row: --in), each fading in as it grows, "This one!", then "Pick one". */
+.page-best-month[data-phase='guess'] .tm-ask { --rise: 5.62px; animation: pb-fade-in 0.3697s linear calc(var(--tm-in) + 0.216s) both, tp-rise 0.7829s cubic-bezier(0, 0.184, 0.201, 1) calc(var(--tm-in) + 0.2753s) both; }
+.page-best-month[data-phase='guess'] .tm-hint { --rise: 3.37px; animation: pb-fade-in 0.3246s linear calc(var(--tm-in) + 0.3926s) both, tp-rise 0.8s cubic-bezier(0.087, 0.404, 0.188, 1) calc(var(--tm-in) + 0.4333s) both; }
+.page-best-month[data-phase='guess'] .tm-confirm { animation: pb-fade-in 0.3269s linear calc(var(--tm-in) + 0.2322s) both; }
+.page-best-month[data-phase='guess'] .tm-month { animation: pb-fade-in 0.1932s linear calc(var(--tm-in) + var(--in)) both, tm-grow 0.677s cubic-bezier(0.04, 1.122, 0.821, 0.988) calc(var(--tm-in) + var(--in)) both; }
+/* A pick: the disc gives way as the bubble's Depth comes up underneath, the label turns
+   white and "This one!" lights up; another pick turns the last one back. */
+.page-best-month[data-phase='guess'] .tm-month[aria-pressed='true'] .tm-disc { animation: tm-flat-out 0.3s linear 0.067s both; }
+.page-best-month[data-phase='guess'] .tm-month[aria-pressed='true'] .tm-label { animation: tm-white 0.1s linear 0.05s both; }
+.page-best-month[data-phase='guess'] .tm-month[data-unpicked] .tm-disc { animation: tm-flat-in 0.3s linear both; }
+.page-best-month[data-phase='guess'] .tm-month[data-unpicked] .tm-label { animation: tm-pink 0.1s linear both; }
+.page-best-month[data-phase='guess'] .tm-confirm[data-ready]::before { animation: tm-ready 0.063s linear 0.075s both; }
+/* The answer: "This one!" gives under the finger, and 0.042 s on what asked drifts up and
+   fades (title, "Pick one"), "This one!" fades; every month resizes to its listening one
+   after another (--reveal), its disc giving way to its bubble 0.4 s in; the verdict comes
+   in, the minutes under it, and the share button. */
+.page-best-month[data-phase='reveal'] .tm-ask { --drift: 11.79px; animation: tp-drift 0.4336s cubic-bezier(0.906, 0, 0.894, 0.761) 0.3424s both, tp-out 0.2478s linear 0.5732s both; }
+.page-best-month[data-phase='reveal'] .tm-hint { --drift: 16.23px; animation: tp-drift 0.473s cubic-bezier(0.837, 0.037, 0.755, 0.609) 0.4239s both, tp-out 0.2628s linear 0.6298s both; }
+.page-best-month[data-phase='reveal'] .tm-confirm { animation: tm-press 0.17s linear both, tp-out 0.1947s linear 0.4934s both; }
+.page-best-month[data-phase='reveal'] .tm-verdict-head { --rise: 13.48px; animation: pb-fade-in 0.3324s linear 0.7752s both, tp-rise 0.8079s cubic-bezier(0.092, 0.457, 0.189, 1) 0.8051s both; }
+.page-best-month[data-phase='reveal'] .tm-verdict-detail { --rise: 6.86px; animation: pb-fade-in 0.3282s linear 0.8615s both, tp-rise 0.7098s cubic-bezier(0.128, 0.685, 0.422, 0.95) 0.9127s both; }
+.page-best-month[data-phase='reveal'] .tm-disc { animation: tm-resize 0.8606s cubic-bezier(0.839, -0.042, 0.213, 1) var(--reveal) both, tm-flat-out 0.3s linear calc(var(--reveal) + 0.4s) both; }
+.page-best-month[data-phase='reveal'] .tm-month[aria-pressed='true'] .tm-disc { animation: tm-resize 0.8606s cubic-bezier(0.839, -0.042, 0.213, 1) var(--reveal) both; }
+.page-best-month[data-phase='reveal'] .tm-label { animation: tm-white 0.1s linear calc(var(--reveal) + 0.45s) both; }
+.page-best-month[data-phase='reveal'] .tm-month[aria-pressed='true'] .tm-label { animation: none; }
+.pb-root[data-page='best-month'] .share-bar:not([data-leaving]) { animation: tf-share-in 0.4667s cubic-bezier(0.715, 1.174, 0.218, 0.864) 0.6515s both; }
+/* Opened on the answer: it comes in as the guess does, the bubbles in their places. */
+.page-best-month[data-phase='result'] .tm-verdict { --rise: 5.62px; animation: pb-fade-in 0.3697s linear calc(var(--tm-in) + 0.216s) both, tp-rise 0.7829s cubic-bezier(0, 0.184, 0.201, 1) calc(var(--tm-in) + 0.2753s) both; }
+.page-best-month[data-phase='result'] .tm-month { animation: pb-fade-in 0.1932s linear calc(var(--tm-in) + var(--in)) both, tm-grow 0.677s cubic-bezier(0.04, 1.122, 0.821, 0.988) calc(var(--tm-in) + var(--in)) both; }
+[data-reduce-motion] .page-best-month *, [data-reduce-motion] .page-best-month *::before, [data-reduce-motion][data-page='best-month'] .share-bar:not([data-leaving]) { animation: none !important; }
+/* As the top show's (above): without the exits' fill-forward, the guess is hidden outright once the answer shows. */
+[data-reduce-motion] .page-best-month[data-phase='reveal'] :is(.tm-ask, .tm-hint, .tm-confirm) { visibility: hidden; }
+
+/* Moving on to total minutes, the top month fades out, everything together, linearly
+   over 0.32 s, as the best-months video's way out does (its bubbles under it: pages.js
+   minutesBackdrop), and its share button with it, handed over. */
+.pb-root[data-page='total-minutes'] .page.page-best-month[data-leaving] { animation: page-leave 0.32s linear forwards; }
+
+/* Total minutes (Figma "Total minutes listened"; the P2's minutes video opens on it
+   settled). Figma's copy below the chrome, and under it the space Figma leaves the number
+   (`.mn-number`, its whole width: 53 pt below the copy, 76 pt above the share button),
+   where the backdrop draws Creative Lab's 06 with the user's minutes (ui/backdrop.js
+   anchors it there, pages.js minutesBackdrop). The page comes in as the top 5 does, from
+   `--in-at` (0.32 s after the tap, once the top month has gone; 0.7 s after the top 5,
+   `data-after`, pages.js MINUTES_IN and TOP_MONTH_IN):
+   the number fading in from the ground (the backdrop's), the copy, the share button last. */
+.page-total-minutes { padding: 24px 22px 0; }
+.page-total-minutes .story-title { max-width: 349px; --rise: 16.79px; animation: pb-fade-in 0.214s linear calc(var(--in-at) + 0.2s) both, tp-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.2s) both; }
+.mn-number { flex: 1; min-height: 0; margin: 53px -22px 60px; }
+.pb-root[data-page='total-minutes'] { --in-at: 0.32s; }
+.pb-root[data-page='total-minutes']:has(.page-total-minutes[data-after='top-shows']) { --in-at: 0.7s; }
+/* Keyframes of its own: under the top month's names (the top 5's) it would carry on from
+   there, finished, rather than come in again. */
+@keyframes mn-share-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mn-share-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+@keyframes mn-share-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 0; } }
+.pb-root[data-page='total-minutes'] .share-bar:not([data-leaving]) { --rise: 7.48px; animation: mn-share-in 0.272s linear calc(var(--in-at) + 0.866s) both, mn-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both; }
+/* Handed over from the top month, it first fades out with it, where it is, held there over
+   the rise's start (from the top 5, as the top 5's falls, fading out from 0.45 s). */
+.pb-root[data-page='total-minutes'] .share-bar[data-handover]:not([data-leaving]) { animation: mn-share-in 0.272s linear calc(var(--in-at) + 0.866s) both, mn-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both, mn-share-out 0.32s linear backwards; }
+.pb-root[data-page='total-minutes']:has(.page-total-minutes[data-after='top-shows']) .share-bar[data-handover]:not([data-leaving]) { animation: mn-share-in 0.272s linear calc(var(--in-at) + 0.866s) both, mn-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both, mn-share-out 0.2308s linear 0.4503s backwards; }
+[data-reduce-motion] .page-total-minutes *, [data-reduce-motion][data-page='total-minutes'] .share-bar:not([data-leaving]) { animation: none !important; }
+
+/* Moving on to the year comparison, total minutes fades out, everything together, linearly
+   over 0.32 s, as the comparing video's own way out does (its number under it: pages.js
+   comparisonBackdrop), and its share button with it, handed over. */
+.pb-root[data-page='year-comparison'] .page.page-total-minutes[data-leaving] { animation: page-leave 0.32s linear forwards; }
+
+/* Year comparison (Figma "Year comparison", moving as the P2's comparing video does,
+   measured from it frame by frame; pages.js COMPARISON_MOTION). Figma's copy below the
+   chrome; under it, in the space between the copy and the share button (Figma's 163–769 pt;
+   on a smaller screen it scales down whole, in --u, as the video's 375 pt phone draws it), a
+   circle a year, sized by its listening and placed by pages.js comparisonLayout: a box the
+   backdrop draws 07 in (`.yc-slot`, ui/backdrop.js anchors it), with the year and its
+   listening on it, and Figma's two shades at the screen's edges, darkening the circles where
+   they leave it. The page comes in from `--in-at` (0.32 s after the tap, once total minutes
+   has gone: pages.js COMPARISON_IN): each label with its circle, fading in as it scales up
+   about its centre (each shade with the circle it darkens), then the copy rising in, the share button
+   last. */
+.page-year-comparison { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; }
+.pb-root[data-page='year-comparison'] { --in-at: 0.32s; }
+.pb-root[data-page='year-comparison'] .stage { overflow: visible; }
+.page-year-comparison > * { position: absolute; margin: 0; }
+.page-year-comparison .story-title { z-index: 1; top: calc(var(--chrome-top) + 60px); left: 0; right: 0; max-width: 349px; margin-inline: auto; --rise: 7.676px; animation: yc-in 0.8913s cubic-bezier(0.567, 1.117, 0.105, 0.954) calc(var(--in-at) + 0.6187s) both, yc-rise 0.9199s cubic-bezier(0.236, -0.444, 0.088, 1.004) calc(var(--in-at) + 0.5372s) both; }
+.yc-pair { top: calc(var(--chrome-top) + 112px); bottom: calc(var(--share-bottom) + 34px); left: 0; right: 0; container-type: size; --u: 1px; }
+@supports (width: 1cqh) { .yc-pair { --u: min(1px, calc(100cqw / 393), calc(100cqh / 606)); } }
+.yc-circle { position: absolute; left: calc(50% + (var(--x) - var(--r)) * var(--u)); top: calc(50% + (var(--y) - var(--r)) * var(--u)); width: calc(2 * var(--r) * var(--u)); height: calc(2 * var(--r) * var(--u)); }
+.yc-slot { position: absolute; inset: 0; border-radius: 50%; visibility: hidden; pointer-events: none; }
+.yc-label { position: absolute; z-index: 1; left: calc(50% + var(--lx) * var(--u)); top: 50%; translate: -50% -50%; display: flex; flex-direction: column; gap: 2px; margin: 0; text-align: center; white-space: nowrap; animation: yc-in 0.8174s cubic-bezier(0.475, -0.265, 0.472, 1) calc(var(--in-at) + 0.25s) both, yc-grow 0.7275s cubic-bezier(0.723, 1.232, 0.741, 0.927) calc(var(--in-at) + 0.506s) both; }
+.yc-year { font: 800 calc(22px * var(--text-scale))/1.2 var(--pb-font); }
+.yc-time { font: 600 calc(14px * var(--text-scale))/calc(18px * var(--text-scale)) var(--pb-font); unicode-bidi: plaintext; }
+.yc-shade { position: absolute; top: 0; bottom: 0; pointer-events: none; }
+.yc-shade-left { left: 0; width: calc(80 * var(--u)); background: linear-gradient(to right, rgb(45 0 4 / 0.99), rgb(45 0 4 / 0)); animation: yc-in 0.6971s cubic-bezier(0.837, 0.077, 0.77, 0.531) calc(var(--in-at) + 0.2792s) both; }
+.yc-shade-right { right: 0; width: calc(138 * var(--u)); background: linear-gradient(to left, rgb(45 0 4 / 0.82), rgb(45 0 4 / 0)); animation: yc-in 0.8329s cubic-bezier(0.446, 0, 0.926, 1) calc(var(--in-at) + 0.2535s) both; }
+/* Keyframes of its own, so nothing carries on from the page before. */
+@keyframes yc-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes yc-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+@keyframes yc-grow { from { scale: 0.9334; } to { scale: 1; } }
+@keyframes yc-share-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes yc-share-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+@keyframes yc-share-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 0; } }
+.pb-root[data-page='year-comparison'] .share-bar:not([data-leaving]) { --rise: 8.19px; animation: yc-share-in 0.3429s linear calc(var(--in-at) + 0.6851s) both, yc-share-rise 0.7952s cubic-bezier(0.075, 0.364, 0.183, 1.019) calc(var(--in-at) + 0.7325s) both; }
+/* Handed over from total minutes, it first fades out with it, where it is. */
+.pb-root[data-page='year-comparison'] .share-bar[data-handover]:not([data-leaving]) { animation: yc-share-in 0.3429s linear calc(var(--in-at) + 0.6851s) both, yc-share-rise 0.7952s cubic-bezier(0.075, 0.364, 0.183, 1.019) calc(var(--in-at) + 0.7325s) both, yc-share-out 0.32s linear backwards; }
+[data-reduce-motion] .page-year-comparison *, [data-reduce-motion][data-page='year-comparison'] .share-bar:not([data-leaving]) { animation: none !important; }
+
+/* Moving on to the completion rate, the year comparison (or total minutes, without one) fades
+   out, everything together, linearly over 0.32 s, as the comparing video's own way out does
+   (what it drew under it: pages.js completionBackdrop), and its share button with it, handed
+   over. */
+.pb-root[data-page='completion-rate'] .page:is(.page-year-comparison, .page-total-minutes)[data-leaving] { animation: page-leave 0.32s linear forwards; }
+
+/* Completion rate (Figma "Completion rate", node 1002-9133, moving as the P2's percentage video
+   does, measured from it frame by frame). Figma's copy below the chrome, the line under the
+   title 12 pt below it; under them, in the space between the copy and the share button (Figma's
+   215–769 pt; on a smaller screen it scales down whole, in --u, as the comparison's does),
+   Figma's box for the shape (`.cr-slot`, 361 × 362 pt, 39 pt above the middle of that space),
+   where the backdrop draws 08 lit to the rate (ui/backdrop.js anchors it there, pages.js
+   completionBackdrop). The page comes in from `--in-at` (0.32 s after the tap, once the page
+   before has gone: pages.js COMPLETION_IN), as the video does: the shape whole fading in (the
+   backdrop's), the title, the share button and the line under the title fading in, the copy
+   rising a little; then the shape is lit (the backdrop's). */
+.page-completion-rate { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; }
+.pb-root[data-page='completion-rate'] { --in-at: 0.32s; }
+.page-completion-rate > * { position: absolute; margin: 0; }
+.cr-copy { z-index: 1; top: calc(var(--chrome-top) + 60px); left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 22px; text-align: center; }
+.page-completion-rate .story-title { max-width: 349px; --rise: 4.68px; animation: cr-in 0.4781s cubic-bezier(0.325, 0.243, 0.78, 1) calc(var(--in-at) + 0.4155s) both, cr-rise 0.7261s cubic-bezier(0.161, 0.5, 0.334, 0.909) calc(var(--in-at) + 0.5012s) both; }
+.cr-detail { max-width: 349px; margin: 0; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); overflow-wrap: anywhere; --rise: 4.79px; animation: cr-in 0.4283s cubic-bezier(0.336, 0.267, 0, -0.042) calc(var(--in-at) + 0.563s) both, cr-rise 1.0712s cubic-bezier(0.21, 1.201, 0.756, 0.968) calc(var(--in-at) + 0.6395s) both; }
+.cr-area { top: calc(var(--chrome-top) + 164px); bottom: calc(var(--share-bottom) + var(--share-height)); left: 0; right: 0; container-type: size; --u: 1px; pointer-events: none; }
+@supports (width: 1cqh) { .cr-area { --u: min(1px, calc(100cqw / 393), calc(100cqh / 554)); } }
+.cr-slot { position: absolute; left: 50%; top: calc(50% - 39 * var(--u)); width: calc(361 * var(--u)); height: calc(362 * var(--u)); translate: -50% -50%; visibility: hidden; }
+/* Keyframes of its own, so nothing carries on from the page before. */
+@keyframes cr-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cr-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+@keyframes cr-share-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cr-share-out { from { opacity: 1; } to { opacity: 0; } }
+.pb-root[data-page='completion-rate'] .share-bar:not([data-leaving]) { animation: cr-share-in 0.368s cubic-bezier(0.559, 0.472, 0.723, 0.739) calc(var(--in-at) + 0.4577s) both; }
+/* Handed over from the page before, it first fades out with it, where it is. */
+.pb-root[data-page='completion-rate'] .share-bar[data-handover]:not([data-leaving]) { animation: cr-share-in 0.368s cubic-bezier(0.559, 0.472, 0.723, 0.739) calc(var(--in-at) + 0.4577s) both, cr-share-out 0.32s linear backwards; }
+[data-reduce-motion] .page-completion-rate *, [data-reduce-motion][data-page='completion-rate'] .share-bar:not([data-leaving]) { animation: none !important; }
+
+/* Moving on to roles intro, the page before (the completion rate, or the year comparison or
+   total minutes without one) fades out, everything together, linearly over 0.32 s, as the
+   percentage video's own way out does, what it drew fading out under it (pages.js
+   ROLES_INTRO_BACKDROP), and its share button with it (roles intro shares nothing). */
+.pb-root[data-page='roles-intro'] .page:is(.page-completion-rate, .page-year-comparison, .page-total-minutes)[data-leaving] { animation: page-leave 0.32s linear forwards; }
+.pb-root[data-page='roles-intro'] .share-bar[data-leaving] { animation: page-leave 0.32s linear forwards; }
+
+/* Roles intro and the role (Figma "Roles intro", node 1031-32538, and "Role 1–5"): Figma's two
+   logos, drawn by the backdrop in Figma's boxes for them (`.rl-glow`, ui/backdrop.js anchors them,
+   pages.js ROLE_LOGOS): A, 243 pt square at the left; B, 714.4 × 713 pt at the right, turned
+   -58.69° there (the backdrop turns it), only its refracted edge on screen. Figma's frame centres
+   its copy, so the boxes are placed from the screen's middle, as Figma's are on its 853 pt frame. */
+.rl-glows { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
+.rl-glow { position: absolute; }
+.rl-glow-a { left: -115px; top: calc(50% + 83.5px); width: 243px; height: 243px; }
+.rl-glow-b { left: calc(100% - 616.006px); top: calc(50% - 488.568px); width: 714.372px; height: 712.977px; }
+
+/* Roles intro: centred on the screen, not between the chrome and the share button. It comes in
+   once the page before has gone (0.32 s, pages.js ROLES_IN), the logos growing in as the role
+   video's do, then the title and the line under it as that video's title comes in, the line
+   0.116 s after it, as the video's share button follows its title (designed: no video has this
+   page). */
+.page-roles-intro {
+  position: absolute;
+  inset: 0 var(--safe-right) 0 var(--safe-left); width: auto;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 0 calc(var(--safe-right) + 18px) 0 calc(var(--safe-left) + 18px);
+  text-align: center;
+}
+.page-roles-intro .story-title { max-width: 357px; --rise: 3.968px; animation: ri-in 0.3548s linear 0.7558s both, ri-rise 0.8775s cubic-bezier(0.0814, 0.4313, 0.2156, 1.0558) 0.82s both; }
+.roles-body { margin: 0; max-width: 357px; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); --rise: 3.968px; animation: ri-in 0.3548s linear 0.8718s both, ri-rise 0.8775s cubic-bezier(0.0814, 0.4313, 0.2156, 1.0558) 0.936s both; }
+@keyframes ri-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ri-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+[data-reduce-motion] .page-roles-intro * { animation: none !important; }
+/* Moving on to the role, its copy fades out, linearly over 0.32 s, as the logos carry on. */
+.pb-root[data-page='archetype'] .page.page-roles-intro[data-leaving] { animation: page-leave 0.32s linear forwards; }
+
+/* The role (Figma "Role 1–5", moving as the P2's role video does, measured from it frame by
+   frame; its clock is the page's). "Your personality is.." below the chrome, as every title is;
+   the name and its line centred on the screen, in Figma's box for each role (its width, so its
+   lines break as Figma's), the name in Figma's gradient (a picture of a metal disc, cropped to
+   what its fill shows), the line in Figma's magenta. Over Figma's two logos, carried on from
+   roles intro (or growing in, opened here).
+   As the video's: the title fades in as it rises, then the share button; the name, then the
+   line, sweep in from the left (each column on its own linear fade, the left first) to 0.93 and
+   0.84 of themselves; a light band crosses them, left to right, 302 pt a second, every 2.8 s
+   from 2.544 s, the first one lifting them the rest of the way. The way out (from the tap) is the
+   video's: the name, then the line, sweep out from the left; the logos shrink back; then the
+   title and the share button fade out. */
+@property --ar-in { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --ar-out { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --ar-lift { syntax: '<length>'; inherits: false; initial-value: -200px; }
+@property --ar-shine { syntax: '<length>'; inherits: false; initial-value: -200px; }
+.page-archetype { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; }
+.page-archetype > :not(.rl-glows) { position: absolute; margin: 0; }
+.page-archetype .story-title { z-index: 1; top: calc(var(--chrome-top) + 60px); left: 0; right: 0; max-width: 269px; margin-inline: auto; --rise: 3.968px; animation: ar-fade-in 0.3548s linear 0.4358s both, ar-rise 0.8775s cubic-bezier(0.0814, 0.4313, 0.2156, 1.0558) 0.5s both; }
+.ar-role { z-index: 1; left: 50%; top: calc(50% - 0.5px); width: min(var(--w, 323px), calc(100% - 36px)); translate: -50% -50%; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.ar-role[data-role='avantGardist'] { --w: 343px; }
+.ar-role:is([data-role='aficionado'], [data-role='flaneur']) { --w: 317px; }
+/* The shine: a band, measured on the video, over the fill and clipped to the type: a light
+   orchid core in a magenta wing, 300 px across, its centre at `--ar-shine`. */
+.ar-name, .ar-body {
+  --shine: linear-gradient(90deg, rgb(245 25 235 / 0) 0, rgb(245 25 235 / calc(0.45 * var(--a))) 20%, rgb(245 30 235 / calc(0.85 * var(--a))) 31.7%, rgb(250 90 242 / calc(0.97 * var(--a))) 40%, rgb(255 135 250 / var(--a)) 50%, rgb(250 90 242 / calc(0.97 * var(--a))) 60%, rgb(245 30 235 / calc(0.85 * var(--a))) 68.3%, rgb(245 25 235 / calc(0.45 * var(--a))) 80%, rgb(245 25 235 / 0) 100%);
+  margin: 0;
+  color: transparent;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--ar-in) - var(--sweep)), transparent var(--ar-in)), linear-gradient(90deg, #000 calc(var(--ar-lift) - 100px), rgb(0 0 0 / var(--lo)) var(--ar-lift));
+  mask-image: linear-gradient(90deg, #000 calc(var(--ar-in) - var(--sweep)), transparent var(--ar-in)), linear-gradient(90deg, #000 calc(var(--ar-lift) - 100px), rgb(0 0 0 / var(--lo)) var(--ar-lift));
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.ar-name {
+  --sweep: 838.4px; --lo: 0.9315; --a: 1;
+  max-width: 100%;
+  font: 600 calc(36px * var(--text-scale))/calc(42px * var(--text-scale)) var(--pb-font);
+  white-space: nowrap;
+  background-image: var(--shine), url(assets/role-name.jpg);
+  background-size: 300px 100%, 100% 100%;
+  background-position: calc(var(--ar-shine) - 150px) 0, 0 0;
+  animation: ar-in 2.648s linear 0.7182s both, ar-lift 3.311s linear 1.8818s both, ar-shine 2.8s linear 1.8818s infinite;
+}
+/* Figma's Collector name fills its box, so its gradient spans the box, not the name. */
+.ar-role[data-role='collector'] .ar-name { align-self: stretch; }
+.ar-body {
+  --sweep: 1465.7px; --lo: 0.8395; --a: 1;
+  font: 600 calc(18px * var(--text-scale))/normal var(--pb-font);
+  background-image: var(--shine), linear-gradient(#f807d2, #f807d2);
+  background-size: 300px 100%, 100% 100%;
+  background-position: calc(var(--ar-shine) - 150px) 0, 0 0;
+  /* Its band is where the name's is on the screen: its box starts about 30 pt further left. */
+  animation: ar-in 1.476s linear 0.9322s both, ar-lift 3.311s linear 1.7825s both, ar-shine 2.8s linear 1.7825s infinite;
+}
+@keyframes ar-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ar-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes ar-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+@keyframes ar-in { from { --ar-in: 0px; } to { --ar-in: 3000px; } }
+@keyframes ar-lift { from { --ar-lift: -200px; } to { --ar-lift: 800px; } }
+@keyframes ar-shine { from { --ar-shine: -200px; } to { --ar-shine: 645.6px; } }
+@keyframes ar-out { from { --ar-out: 0px; } to { --ar-out: 3000px; } }
+@keyframes ar-share-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ar-share-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+.pb-root[data-page='archetype'] .share-bar:not([data-leaving]) { --rise: 7.347px; animation: ar-share-in 0.3544s linear 0.5518s both, ar-share-rise 0.7273s cubic-bezier(0.116, 0.6145, 0.3939, 0.9601) 0.62s both; }
+[data-reduce-motion] .page-archetype *, [data-reduce-motion][data-page='archetype'] .share-bar:not([data-leaving]) { animation: none !important; }
+[data-reduce-motion] :is(.ar-name, .ar-body) { -webkit-mask-image: none; mask-image: none; }
+
+/* The way out (on to the summary), the video's, from the tap: the name sweeps out from the left
+   (each column over 0.44 s, 719 pt a second across), the line 0.21 s after it; the logos shrink
+   back under the summary's cards (pages.js SUMMARY_BACKDROP); the title and the share button fade out
+   linearly over 0.32 s from 0.867 s. The summary shows once it has gone. */
+.page.page-archetype[data-leaving] { animation: page-leave 0.01s linear 1.18s forwards; }
+.page-archetype[data-leaving] .ar-name { --sweep: 319.6px; -webkit-mask-image: linear-gradient(90deg, transparent calc(var(--ar-out) - var(--sweep)), #000 var(--ar-out)); mask-image: linear-gradient(90deg, transparent calc(var(--ar-out) - var(--sweep)), #000 var(--ar-out)); animation: ar-out 4.173s linear both, ar-shine 2.8s linear 1.8818s infinite; }
+.page-archetype[data-leaving] .ar-body { --sweep: 295.2px; -webkit-mask-image: linear-gradient(90deg, transparent calc(var(--ar-out) - var(--sweep)), #000 var(--ar-out)); mask-image: linear-gradient(90deg, transparent calc(var(--ar-out) - var(--sweep)), #000 var(--ar-out)); animation: ar-out 4.303s linear 0.2098s both, ar-shine 2.8s linear 1.7825s infinite; }
+.page-archetype[data-leaving] .story-title { animation: ar-fade-out 0.32s linear 0.867s both; }
+/* The summary has a share button of its own: the story's fades out with the role, and stays out. */
+.pb-root[data-page='summary'] .share-bar[data-leaving] { animation: page-leave 0.32s linear 0.867s forwards; }
+.pb-root[data-page='summary']:has(.page-archetype[data-leaving]) .page-summary:not([data-leaving]) { visibility: hidden; }
+[data-reduce-motion] .page.page-archetype[data-leaving], [data-reduce-motion] .page-archetype[data-leaving] * { animation: page-leave 0.25s linear forwards !important; }
+
+/* The summary (Figma "Summary 1–3", nodes 1002-9410, 9673, 9766; ui/summary.js). The logo and
+   "Playback 2026" below the chrome; three cards on a carousel between them and the dots, Figma's
+   265 × 469 pt, 8 pt apart, the one showing in the middle (on a shorter screen the deck scales
+   down whole, in --u); Share and Skip at the bottom. Each card is see-through: its background
+   is the backdrop's, drawn in its box and following it (pages.js SUMMARY_BACKDROP), with a
+   picture of it standing in when there is no WebGL. Positions in a card are Figma's, in pt from
+   its top left. The way in is designed (the video opens on the page settled): once the role has
+   gone (`--in-at`, pages.js SUMMARY_IN) it comes in as the top 5 does, the title, then the cards
+   as one, their backgrounds fading in with them, then the dots, Share and Skip. */
+.page-summary { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --in-at: 1.18s; }
+.pb-root[data-page='summary'] .stage { overflow: visible; }
+.page-summary > * { position: absolute; margin: 0; }
+.sc-logo { top: calc(var(--chrome-top) + 12px); left: calc(50% - 15.5px); width: 31px; height: 31px; }
+.sc-title {
+  top: calc(var(--chrome-top) + 59px);
+  left: 0;
+  right: 0;
+  width: max-content;
+  margin-inline: auto;
+  font: 600 calc(33.879px * var(--text-scale))/calc(35.318px * var(--text-scale)) var(--pb-font);
+  white-space: nowrap;
+  color: transparent;
+  /* Figma's gradient texture, cropped to the part its fill shows behind the text. */
+  background: url(assets/summary-title.jpg) 0 0 / 100% 100% no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+/* Only the cards take a pointer: a tap on a side card turns to it, one on the ground around them moves the story. */
+.sc-deck { top: calc(var(--chrome-top) + 119px); bottom: calc(var(--share-bottom) + 165px); left: 0; right: 0; container-type: size; outline: none; pointer-events: none; --u: 1px; }
+@supports (width: 1cqh) { .sc-deck { --u: min(1px, calc(100cqh / 469)); } }
+.sc-deck:focus-visible .sc-card[data-current] { outline: 2px solid #fff; outline-offset: 3px; }
+.sc-track { position: absolute; top: calc(50% - 234.5 * var(--u)); inset-inline-start: 50%; width: 0; height: calc(469 * var(--u)); }
+.sc-card {
+  position: absolute;
+  top: 0;
+  inset-inline-start: calc((var(--k) * 273 - 132.5) * var(--u));
+  width: calc(265 * var(--u));
+  height: calc(469 * var(--u));
+  border-radius: 4px;
+  color: #fff;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+.sc-card[data-current] { cursor: default; }
+.sc-card > * { position: absolute; margin: 0; }
+/* No WebGL: a picture of each background instead (its look, roughly). */
+:root:not(.has-backdrop) .sc-card { overflow: hidden; }
+:root:not(.has-backdrop) .sc-card[data-card='a'] { background: linear-gradient(150deg, #d4007a, #8a0016 45%, #f0057d); }
+:root:not(.has-backdrop) .sc-card[data-card='b'] { background: linear-gradient(165deg, #c4006e, #fa0a3c 40%, #ff0a52); }
+:root:not(.has-backdrop) .sc-card[data-card='c'] { background: #42070c; }
+.sc-cover .art { position: absolute; inset: 0; border-radius: 2px; }
+.sc-grid, .sc-stack, .sc-bubbles { inset: 0; pointer-events: none; }
+.sc-grid .sc-cover { position: absolute; left: calc((6 + var(--c) * 86.676) * var(--u)); top: calc((6 + var(--r) * 86) * var(--u)); width: calc(79.648 * var(--u)); height: calc(79.648 * var(--u)); }
+/* The stack: Figma's four covers, back to front, centred 0.3 pt right of the card's middle. */
+.sc-stack .sc-cover { position: absolute; left: calc((132.8 - var(--d) / 2) * var(--u)); top: calc(var(--y) * var(--u)); width: calc(var(--d) * var(--u)); height: calc(var(--d) * var(--u)); }
+.sc-stack [data-slot='0'] { --d: 58.267; --y: 28; }
+.sc-stack [data-slot='1'] { --d: 74.622; --y: 54.578; }
+.sc-stack [data-slot='2'] { --d: 97.111; --y: 80.644; }
+.sc-stack [data-slot='3'] { --d: 119.6; --y: 115.4; }
+.sc-stack [data-slot='3'] .art { box-shadow: 0 1.617px 48.51px rgba(0, 0, 0, 0.2); }
+/* Where the backdrop draws the third card's bubbles: Figma's boxes. */
+.sc-bubble { position: absolute; left: calc(var(--x) * var(--u)); top: calc(var(--y) * var(--u)); width: calc(var(--d) * var(--u)); height: calc(var(--d) * var(--u)); visibility: hidden; }
+.sc-label { font: 500 calc(10 * var(--u) * var(--text-scale))/normal var(--pb-font); }
+.sc-top { inset-inline-start: calc(18 * var(--u)); top: calc(274 * var(--u)); width: calc(121 * var(--u)); display: flex; flex-direction: column; gap: calc(8 * var(--u)); }
+.sc-top > * { margin: 0; }
+.sc-shows { list-style: none; padding: 0; display: flex; flex-direction: column; gap: calc(3 * var(--u)); font: 700 calc(10 * var(--u) * var(--text-scale))/1.2 var(--pb-font); }
+.sc-shows li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-minutes, .sc-role { inset-inline-start: calc(153 * var(--u)); width: calc(96 * var(--u)); display: flex; flex-direction: column; }
+.sc-minutes > *, .sc-role > * { margin: 0; }
+.sc-minutes { top: calc(274 * var(--u)); gap: calc(4 * var(--u)); }
+.sc-role { top: calc(332 * var(--u)); gap: calc(2 * var(--u)); }
+/* The number and the role keep to their column: a longer one is drawn smaller (`--fit`, ui/summary.js). */
+.sc-number { font: 600 calc(29.898 * var(--u) * var(--fit, 1) * var(--text-scale))/normal var(--pb-font); letter-spacing: -0.04em; white-space: nowrap; unicode-bidi: plaintext; }
+.sc-role-name { font: 700 calc(19 * var(--u) * var(--fit, 1) * var(--text-scale))/1.2 var(--pb-font); white-space: nowrap; }
+.sc-mark { inset-inline-start: calc(16 * var(--u)); top: calc(437 * var(--u)); width: calc(20.946 * var(--u)); height: calc(20.918 * var(--u)); }
+.sc-footer { inset-inline-end: calc(16 * var(--u)); top: calc(439 * var(--u)); font: 600 calc(14.267 * var(--u) * var(--text-scale))/calc(18.402 * var(--u) * var(--text-scale)) var(--pb-font); white-space: nowrap; }
+.sc-dots { bottom: calc(var(--share-bottom) + 108px); left: calc(50% - 17.5px); display: flex; gap: 6px; }
+.sc-dot { width: 8px; height: 8px; border-radius: 50%; background: #d9d9d9; opacity: 0.3; }
+.sc-dot[data-on] { background: #fff; opacity: 1; }
+.sc-share { bottom: calc(var(--share-bottom) + 36px); left: calc(50% - 54.5px); }
+.sc-skip { bottom: calc(var(--share-bottom) - 18px); left: calc(50% - 40px); width: 80px; height: 44px; padding: 0; border: 0; background: none; color: #fff; font: 800 calc(14px * var(--text-scale))/normal var(--pb-font); cursor: pointer; }
+.sc-skip:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 100px; }
+@keyframes sc-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sc-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+.page-summary :is(.sc-logo, .sc-title) { --rise: 16.79px; animation: sc-in 0.214s linear calc(var(--in-at) + 0.2s) both, sc-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.2s) both; }
+/* The cards as one, as the top 5's come in (their backgrounds fade in with them: SUMMARY_CARD_IN). */
+.page-summary .sc-deck { --rise: 36.99px; animation: sc-in 0.234s linear calc(var(--in-at) + 0.205s) both, sc-rise 0.854s cubic-bezier(0.087, 0.395, 0.238, 1.004) calc(var(--in-at) + 0.217s) both; }
+.page-summary :is(.sc-dots, .sc-share, .sc-skip) { --rise: 7.48px; animation: sc-in 0.272s linear calc(var(--in-at) + 0.866s) both, sc-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both; }
+.page-summary .sc-skip { animation-delay: calc(var(--in-at) + 0.966s), calc(var(--in-at) + 1.031s); }
+[data-reduce-motion] .page-summary * { animation: none !important; }
+/* The way out, on to Play again: everything fades out linearly over 0.32 s (pages.js
+   SUMMARY_OUT), the cards' backgrounds under Play again's wave (OUTRO_BACKDROP); Play again
+   comes in once the summary has gone. */
+.pb-root[data-page='outro'] .page.page-summary[data-leaving] { animation: page-leave 0.32s linear forwards; }
+.pb-root[data-page='outro']:has(.page-summary[data-leaving]) .page-outro:not([data-leaving]) { visibility: hidden; }
+
+/* Play again (Figma "Repeate or close", node 1002-9098, moving as the P2's outro video does;
+   pages.js OUTRO_BACKDROP). The copy in the middle of the screen, Figma's 291 pt block (its
+   line 279 pt), over Figma's dark disc (356 pt, on the screen's centre), drawn as the video
+   draws it: the ground, feathered into the wave on a Gaussian edge (σ 27 pt, half way at
+   Figma's radius; to 1.6 pt and 0.016 of the wave's contrast on the video's). Play again where
+   Figma has it, 3 pt below the share line. The close is the story's; no progress (above).
+   The way in is designed (the video opens on the page settled): once the summary has gone
+   (`--in-at`, pages.js OUTRO_IN), the title comes in as total minutes' does, the line 0.116 s
+   after it (as roles intro's), Play again as the share button does. */
+.page-outro { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --in-at: 0.32s; }
+.pb-root[data-page='outro'] .stage { overflow: visible; }
+.page-outro > * { position: absolute; margin: 0; }
+.ou-disc {
+  left: calc(50% - 0.5px - 260px);
+  top: calc(50% - 0.5px - 260px);
+  width: 520px;
+  height: 520px;
+  pointer-events: none;
+  /* The ground (#2d0004) at 0.5·erfc((r − 178) / (27√2)), every half σ from 97 to 259 pt. */
+  background: radial-gradient(closest-side, rgb(45 0 4) 97px, rgb(45 0 4 / 0.9938) 110.5px, rgb(45 0 4 / 0.9772) 124px, rgb(45 0 4 / 0.9332) 137.5px, rgb(45 0 4 / 0.8413) 151px, rgb(45 0 4 / 0.6915) 164.5px, rgb(45 0 4 / 0.5) 178px, rgb(45 0 4 / 0.3085) 191.5px, rgb(45 0 4 / 0.1587) 205px, rgb(45 0 4 / 0.0668) 218.5px, rgb(45 0 4 / 0.0228) 232px, rgb(45 0 4 / 0.0062) 245.5px, rgb(45 0 4 / 0) 259px);
+}
+.ou-copy {
+  left: 50%;
+  top: calc(50% - 0.5px);
+  width: min(291px, calc(100% - 36px));
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.ou-copy .story-title { width: 100%; }
+.ou-body { margin: 0; max-width: 279px; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
+.ou-again { bottom: calc(var(--share-bottom) - 3.08px); left: calc(50% - 54.5px); }
+@keyframes ou-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ou-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+.page-outro .story-title { --rise: 16.79px; animation: ou-in 0.214s linear calc(var(--in-at) + 0.2s) both, ou-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.2s) both; }
+.page-outro .ou-body { --rise: 16.79px; animation: ou-in 0.214s linear calc(var(--in-at) + 0.316s) both, ou-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.316s) both; }
+.page-outro .ou-again { --rise: 7.48px; animation: ou-in 0.272s linear calc(var(--in-at) + 0.866s) both, ou-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both; }
+[data-reduce-motion] .page-outro * { animation: none !important; }
+/* Play again's way out (pages.js OUTRO_OUT): everything fades out linearly over 0.32 s, the wave
+   under the intro's bare ground; the intro starts once it has gone (its clock starts then, so
+   its animations wait for it: `--step-t`). */
+.pb-root[data-page='intro'] .page.page-outro[data-leaving] { animation: page-leave 0.32s linear forwards; }
+
+/* Intro (Figma "Intro 1–4", moving as the P2's intro video does, timed from it frame
+   by frame): every element is there from the start and the step shows it. The logo is
+   at the centre, where the rings and the blob are centred; the tagline sits on the
+   blob. Animations run on the step's clock: `--step-t` offsets them when a step was
+   entered late. Sizes are the video's (its phone is 375 px wide at 1:1): the logo is
+   96 px there, not Figma's 80. */
+.page-intro { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --step-t: 0ms; }
+.page-intro > * {
+  position: absolute;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  text-align: center;
+  opacity: 0;
+}
+.intro-logo { top: 50%; width: 96px; height: 96px; transform: translate(-50%, -50%); }
+/* Hidden until a step's animation shows them, so no frame shows them early. */
+.intro-logo img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+.intro-title {
+  top: calc(var(--chrome-top) + 67.5px);
+  font: 600 calc(34px * var(--text-scale))/calc(35.318px * var(--text-scale)) var(--pb-font);
+  white-space: nowrap;
+  color: transparent;
+  /* Figma's gradient texture, cropped to the part its fill shows behind the text. */
+  background: url(assets/intro-title.jpg) 0 0 / 100% 100% no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  outline: none;
+}
+.intro-tagline { top: calc(50% - 29.5px); width: min(339px, calc(100% - 36px)); font: 800 calc(20px * var(--text-scale))/1.3 var(--pb-font); }
+.intro-body { bottom: calc(var(--safe-bottom) + 39.5px); width: min(349px, calc(100% - 36px)); font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
+
+@keyframes intro-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes intro-out { from { opacity: 1; } to { opacity: 0; } }
+/* The hole the light logo opens into as it becomes a ring, as a share of its radius. */
+@property --intro-hole { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+
+/* 1 · the logo on the ground (1.8 s): in at 0.1–0.33 s, a beat, then 92% (1.3–1.57 s). */
+@keyframes intro-logo {
+  0%, 5.6% { opacity: 0; scale: 0.958; animation-timing-function: linear; }
+  18.5% { opacity: 1; scale: 1; }
+  72.2% { scale: 1; animation-timing-function: ease-in-out; }
+  87%, 100% { opacity: 1; scale: 0.917; }
+}
+/* 2 · the rings (4.75 s). The light logo opens out of the middle of the red one
+   (0–0.15 s) as the first disc comes out from under it; the red one swells behind it
+   and goes (0.19 s). The light one settles at 0.885 of the red, eases to 0.8 at
+   3.55–3.83 s, then turns into a ring: a hole opens from its middle as it swells, and it
+   fades as the hole reaches its rim (4.05–4.33 s), onto the sphere. */
+@keyframes intro-logo-dark {
+  0% { opacity: 1; scale: 0.917; animation-timing-function: ease-out; }
+  2.8% { scale: 1; }
+  3.85% { opacity: 1; }
+  3.9%, 100% { opacity: 0; scale: 1; }
+}
+@keyframes intro-logo-light {
+  0% { opacity: 1; scale: 0.76; clip-path: circle(0% at 50% 50%); animation-timing-function: linear; }
+  2.8% { scale: 0.78; }
+  3.2% { clip-path: circle(50% at 50% 50%); }
+  4.2% { scale: 0.823; }
+  6.3% { scale: 0.854; }
+  8.4% { scale: 0.885; }
+  74.7% { scale: 0.885; animation-timing-function: ease-in-out; }
+  80.7% { scale: 0.8; }
+  85.3% { scale: 0.8; --intro-hole: 0%; animation-timing-function: linear; }
+  86.3% { scale: 0.854; --intro-hole: 12%; }
+  87% { scale: 0.896; --intro-hole: 23%; }
+  87.7% { scale: 0.979; --intro-hole: 47%; }
+  88.4% { scale: 1.06; --intro-hole: 49%; }
+  89.1% { opacity: 1; scale: 1.19; --intro-hole: 79%; }
+  89.8% { opacity: 0.55; scale: 1.29; --intro-hole: 81%; }
+  90.5% { opacity: 0.15; scale: 1.46; --intro-hole: 88%; }
+  91.2%, 100% { opacity: 0; scale: 1.55; clip-path: circle(50% at 50% 50%); --intro-hole: 100%; }
+}
+
+.page-intro:is([data-step='logo'], [data-step='ring']) .intro-logo { opacity: 1; }
+.page-intro[data-step='logo'] .logo-dark { animation: intro-logo 1.8s var(--step-t) both; }
+.page-intro[data-step='ring'] .logo-dark { animation: intro-logo-dark 4.75s var(--step-t) both; }
+.page-intro[data-step='ring'] .logo-light {
+  -webkit-mask-image: radial-gradient(closest-side, transparent var(--intro-hole), #000 calc(var(--intro-hole) + 1%));
+  mask-image: radial-gradient(closest-side, transparent var(--intro-hole), #000 calc(var(--intro-hole) + 1%));
+  animation: intro-logo-light 4.75s var(--step-t) both;
+}
+/* 3 · the title and the line at the bottom arrive as the rings finish opening (0.4 s),
+   the tagline 1.5 s later (0.3 s). The title and the line leave with the blob, which
+   fades as it breaks up (6.87–7.47 s); the tagline stays for the wave. */
+.page-intro[data-step='title'] .intro-tagline { animation: intro-in 0.3s linear calc(1.5s + var(--step-t)) both; }
+.page-intro[data-step='title'] :is(.intro-title, .intro-body) {
+  animation: intro-in 0.4s linear var(--step-t) both, intro-out 0.6s cubic-bezier(0.33, 0, 0.67, 1) calc(6.87s + var(--step-t)) forwards;
+}
+/* The intro's clock starts with the first frames on screen, not at mount (ui/app.js),
+   and stops while the app is in the background: its animations wait for it, and so do
+   the other pages' (the cover stack, the share button coming in). */
+[data-paused] :is(.page, .share-bar), [data-paused] .page * { animation-play-state: paused !important; }
+/* 4 · the wave washes in under the tagline. Arriving here early fades what was showing. */
+.page-intro[data-step='wave'] > * { transition: opacity 0.5s; }
+.page-intro[data-step='wave'] .intro-tagline { opacity: 1; }
+/* Reduced Motion: one still composition. */
+.page-intro[data-step='still'] :is(.intro-title, .intro-tagline, .intro-body) { opacity: 1; }
+/* Moving on: what is showing fades as the first stat comes in over the same wave. */
+@keyframes page-leave { to { opacity: 0; } }
+.page-intro[data-leaving] { animation: page-leave 0.25s linear forwards; }
+.page[data-leaving] { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; pointer-events: none; }
+
+/* ── wireframes (pages without a final design yet) ─────────────────────────────── */
+
+.wireframe {
+  --ink: #111;
+  --paper: #fff;
+  --line: #111;
+  --fill: #e6e6e6;
+  --muted: #555;
+  position: relative;
+  flex: none;
+  width: auto;
+  margin: auto 16px;
+  padding: 30px 16px 16px;
+  gap: 14px;
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.4 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+.wireframe::before {
+  content: 'Wireframe';
+  position: absolute;
+  top: 10px;
+  inset-inline-start: 16px;
+  font: 600 10px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+}
+.wireframe > .btn { align-self: stretch; }
+.wireframe .title { font-size: 28px; line-height: 1.15; margin: 0; outline: none; overflow-wrap: anywhere; }
+.wireframe .subtitle { margin: 0; color: var(--muted); }
+.wireframe .body { margin: 0; }
+.wireframe .verdict { margin: 0; font-weight: 700; border: 1px dashed var(--line); padding: 6px 10px; align-self: flex-start; }
+.wireframe .why { margin: 0; font-size: 14px; color: var(--muted); }
+
+.wireframe .btn {
+  font: inherit; color: var(--ink); background: var(--paper);
+  border: 2px solid var(--line); border-radius: 0; padding: 12px 16px; min-height: 44px;
+  cursor: pointer;
+}
+.wireframe .btn.primary { background: var(--ink); color: var(--paper); }
+.wireframe .btn:disabled { opacity: 0.35; cursor: default; }
+.wireframe .btn[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+.wireframe .btn:focus-visible, .wireframe .option:focus-visible { outline: 3px solid #06f; outline-offset: 2px; }
+
+.wireframe .cover { border: 2px solid var(--line); background: var(--fill); display: grid; place-items: center; font-weight: 700; flex: none; }
+.wireframe .cover-s { width: 44px; height: 44px; font-size: 14px; }
+.wireframe .cover-l { width: 160px; height: 160px; font-size: 40px; align-self: center; }
+
+.wireframe .options { display: grid; gap: 8px; }
+.wireframe .options.cols-2 { grid-template-columns: 1fr 1fr; }
+.wireframe .options.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.wireframe .option {
+  font: inherit; color: var(--ink); background: var(--paper); border: 2px solid var(--line);
+  padding: 8px; min-height: 44px; display: flex; align-items: center; gap: 8px; text-align: start; cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.wireframe .option.selected { background: var(--ink); color: var(--paper); }
+.wireframe .option.selected .cover { background: var(--paper); color: var(--ink); }
+.wireframe .cols-3 .option { justify-content: center; text-align: center; }
+
+.wireframe .card { border: 2px solid var(--line); padding: 14px; background: var(--fill); }
+.wireframe .card.variant-b { background: repeating-linear-gradient(45deg, var(--fill) 0 8px, var(--paper) 8px 16px); }
+.wireframe .card.variant-c { background: var(--paper); border-style: dashed; }
+.wireframe .card dl { margin: 0; display: grid; gap: 8px; }
+.wireframe .stat { display: flex; justify-content: space-between; gap: 12px; }
+.wireframe .stat dt { color: var(--muted); }
+.wireframe .stat dd { margin: 0; font-weight: 700; text-align: end; overflow-wrap: anywhere; }
+.wireframe .variants { display: flex; gap: 8px; }
+.wireframe .variants .btn { flex: 1; padding: 8px; }
+
+.hud {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  bottom: var(--safe-bottom);
+  padding: 2px 6px;
+  font: 11px/1.3 ui-monospace, Menlo, monospace;
+  background: #ffeb3b;
+  color: #000;
+}
+
+/* The quiz questions keep the design's size: they are the longest titles (the best month's is two full
+   lines at 393 px) and "Pick one" sits at a fixed distance under them, so one more line over it. */
+.tp-ask, .tm-ask { --text-scale: 1; }
+/* The summary's cards are one composition, as the share image is: their type stays at the design's size (it is
+   sized with the card, and the cards' columns hold what Figma drew). */
+.sc-card { --text-scale: 1; }
+/* Display type (34 to 36 px) is already larger than what Dynamic Type's own large titles stop at. */
+.ar-name, .sc-title, .intro-title { --text-scale: 1; }
+
+/* ── system accessibility settings (host/accessibility.js) ─────────────────────────── */
+
+/* Bold Text: what is set lighter than the titles goes to their weight. */
+[data-bold-text] :is(.tp-hint, .tp-author, .top-count, .top-author, .tm-hint, .tm-label, .yc-time, .cr-detail, .roles-body, .ar-name, .ar-body, .sc-title, .sc-label, .sc-number, .sc-footer, .ou-body, .intro-title, .intro-body) { font-weight: 800; }
+
+/* Increase Contrast: the translucent surfaces and the dimmed states get more opaque, and the
+   month labels go white. */
+[data-increase-contrast] { --pb-track: rgba(255, 255, 255, 0.6); --pb-card: rgba(0, 0, 0, 0.5); }
+[data-increase-contrast] .page-best-month { --tm-label: #fff; }
+[data-increase-contrast] .tm-confirm::before { opacity: 0.7; }
+[data-increase-contrast] .sc-dot { opacity: 0.6; }
+
+/* While the host takes a share image (setCaptureMode), the story is laid out as the image: a 9:16
+   box as wide as the screen allows, centred, on no insets, its chrome and share button gone and
+   Figma's Pocket Casts badge where the button was (Role 7, node 1003:18010). The host crops
+   that box and scales it to 1080 × 1920. */
+:root.capture {
+  --share-box: min(100vw, calc(100vh * 9 / 16));
+  --share-box-h: calc(var(--share-box) * 16 / 9);
+  --safe-top: 0px;
+  --safe-right: 0px;
+  --safe-bottom: 0px;
+  --safe-left: 0px;
+  --chrome-top: 51px;
+}
+.capture { --text-scale: 1 !important; } /* the image is the same whatever the user's text size */
+.capture #backdrop {
+  inset: auto;
+  top: calc((100vh - var(--share-box-h)) / 2);
+  left: calc((100vw - var(--share-box)) / 2);
+  width: var(--share-box);
+  height: var(--share-box-h);
+}
+.capture #app {
+  top: calc((100vh - var(--share-box-h)) / 2);
+  width: var(--share-box);
+  height: var(--share-box-h);
+  max-width: none;
+  overflow: clip;
+}
+.capture .progress, .capture .close, .capture .share-bar, .capture .step, .capture .hud, .capture .wireframe > .btn,
+.capture .page-summary :is(.sc-dots, .sc-share, .sc-skip) { visibility: hidden; }
+/* The summary's image is of the card being shared alone: the others, which peek in on both sides
+   of it in the carousel, are taken out (their backgrounds are the backdrop's, placed from the
+   card's box, so they go with it). They keep their place in the layout (the carousel measures its pitch from
+   them) and lose their size, which is what the backdrop looks for. */
+.capture .page-summary .sc-card:not([data-current]) { width: 0; height: 0; overflow: hidden; visibility: hidden; }
+.share-badge { display: none; }
+.capture .share-badge {
+  position: absolute;
+  z-index: 5;
+  bottom: calc(var(--share-bottom) + 3px);
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 10.3px;
+  height: 36px;
+  padding: 0 18.7px 0 5.14px;
+  border-radius: 30.429px;
+  background: #f43e37;
+  color: #fff;
+  font: 600 16.29px/normal -apple-system, 'SF Pro Display', system-ui, Roboto, sans-serif;
+  white-space: nowrap;
+}
+.share-badge img { width: 25.714px; height: 25.714px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .wireframe .btn, .wireframe .option { transition: background-color 0.12s, color 0.12s; }
+}

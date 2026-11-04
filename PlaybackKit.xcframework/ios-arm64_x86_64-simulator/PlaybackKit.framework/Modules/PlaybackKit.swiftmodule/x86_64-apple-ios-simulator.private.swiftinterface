@@ -1,0 +1,120 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+// swift-module-flags: -target x86_64-apple-ios16.0-simulator -enable-objc-interop -enable-library-evolution -language-mode 6 -O -enable-experimental-feature DebugDescriptionMacro -module-name PlaybackKit
+// swift-module-flags-ignorable: -no-verify-emitted-module-interface -formal-cxx-interoperability-mode=off -interface-compiler-version 6.4
+import Foundation
+import Swift
+import SwiftUI
+import UIKit
+import WebKit
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+import _WebKit_SwiftUI
+public struct PlaybackConfiguration : Swift::Sendable {
+  public var startAt: Swift::String?
+  public var restoredAnswers: [Swift::String : PlaybackKit::PlaybackAnswer]
+  public var revealTimeout: Foundation::TimeInterval?
+  public var debug: Swift::Bool
+  public var autoplayInterval: Foundation::TimeInterval?
+  public var perfDwell: Foundation::TimeInterval?
+  public var perfLoops: Swift::Int?
+  public var perfTune: Swift::String?
+  public init(startAt: Swift::String? = nil, restoredAnswers: [Swift::String : PlaybackKit::PlaybackAnswer] = [:], revealTimeout: Foundation::TimeInterval? = nil, debug: Swift::Bool = false, autoplayInterval: Foundation::TimeInterval? = nil, perfDwell: Foundation::TimeInterval? = nil, perfLoops: Swift::Int? = nil, perfTune: Swift::String? = nil)
+}
+public struct PlaybackAnswer : Swift::Equatable, Swift::Sendable {
+  public var selectedID: Swift::String?
+  public var revealed: Swift::Bool
+  public init(selectedID: Swift::String?, revealed: Swift::Bool)
+  public static func == (a: PlaybackKit::PlaybackAnswer, b: PlaybackKit::PlaybackAnswer) -> Swift::Bool
+}
+@objc @_Concurrency::MainActor final public class PlaybackController : ObjectiveC::NSObject {
+  @_Concurrency::MainActor final public var onEvent: ((PlaybackKit::PlaybackEvent) -> Swift::Void)?
+  @_Concurrency::MainActor final public var webView: WebKit::WKWebView {
+    get
+  }
+  @_Concurrency::MainActor public init(payload: Foundation::Data, configuration: PlaybackKit::PlaybackConfiguration = .init())
+  @objc deinit
+  @_Concurrency::MainActor convenience public init(payload: PlaybackKit::PlaybackPayload, configuration: PlaybackKit::PlaybackConfiguration = .init()) throws
+  @_Concurrency::MainActor final public func load()
+  @_Concurrency::MainActor final public func goTo(pageID: Swift::String)
+  @_Concurrency::MainActor final public func handleBack() async -> Swift::Bool
+  @discardableResult
+  @_Concurrency::MainActor final public func setCaptureMode(_ on: Swift::Bool) async -> CoreFoundation::CGRect?
+  @_Concurrency::MainActor public static let shareImageSize: CoreFoundation::CGSize
+  @_Concurrency::MainActor final public func snapshotPNG() async -> Foundation::Data?
+}
+extension PlaybackKit::PlaybackController : WebKit::WKNavigationDelegate {
+  @_Concurrency::MainActor @preconcurrency @objc final public func webView(_ webView: WebKit::WKWebView, decidePolicyFor action: WebKit::WKNavigationAction) async -> WebKit::WKNavigationActionPolicy
+  @_Concurrency::MainActor @preconcurrency @objc final public func webViewWebContentProcessDidTerminate(_ webView: WebKit::WKWebView)
+}
+public enum PlaybackEvent : Swift::Equatable, Swift::Sendable {
+  case ready(pages: [Swift::String], archetype: Swift::String)
+  case page(pageID: Swift::String, index: Swift::Int, count: Swift::Int, revisit: Swift::Bool)
+  case select(pageID: Swift::String, optionID: Swift::String)
+  case reveal(pageID: Swift::String, selectedID: Swift::String?, answerID: Swift::String, correct: Swift::Bool?, reason: Swift::String)
+  case share(pageID: Swift::String, variant: Swift::String?)
+  case finished
+  case restart
+  case close(reason: Swift::String, pageID: Swift::String?, finished: Swift::Bool)
+  case error(messages: [Swift::String])
+  case warning(message: Swift::String)
+  case unknown(type: Swift::String)
+  public init?(message: Any)
+  public static func == (a: PlaybackKit::PlaybackEvent, b: PlaybackKit::PlaybackEvent) -> Swift::Bool
+}
+public struct PlaybackPayload : Swift::Codable, Swift::Equatable, Swift::Sendable {
+  public var version: Swift::Int
+  public var year: Swift::Int
+  public var locale: Swift::String
+  public var podcasts: [PlaybackKit::PlaybackPayload.PlaybackKit::Podcast]
+  public var monthlySeconds: [Swift::Double]
+  public var previousYearSeconds: Swift::Double?
+  public var completion: PlaybackKit::PlaybackPayload.PlaybackKit::Completion?
+  public var strings: [Swift::String : PlaybackKit::PlaybackPayload.PlaybackKit::StringValue]
+  public init(version: Swift::Int = 1, year: Swift::Int, locale: Swift::String = "en", podcasts: [PlaybackKit::PlaybackPayload.PlaybackKit::Podcast], monthlySeconds: [Swift::Double], previousYearSeconds: Swift::Double? = nil, completion: PlaybackKit::PlaybackPayload.PlaybackKit::Completion? = nil, strings: [Swift::String : PlaybackKit::PlaybackPayload.PlaybackKit::StringValue] = [:])
+  public struct Podcast : Swift::Codable, Swift::Equatable, Swift::Sendable {
+    public var uuid: Swift::String
+    public var title: Swift::String
+    public var author: Swift::String
+    public var genre: Swift::String
+    public var artworkUrl: Swift::String?
+    public var playedSeconds: Swift::Double
+    public var episodesPlayed: Swift::Int
+    public var listenerCount: Swift::Int?
+    public var earlyFollower: Swift::Bool
+    public init(uuid: Swift::String, title: Swift::String, author: Swift::String = "", genre: Swift::String = "Other", artworkUrl: Swift::String? = nil, playedSeconds: Swift::Double, episodesPlayed: Swift::Int, listenerCount: Swift::Int? = nil, earlyFollower: Swift::Bool = false)
+    public static func == (a: PlaybackKit::PlaybackPayload.PlaybackKit::Podcast, b: PlaybackKit::PlaybackPayload.PlaybackKit::Podcast) -> Swift::Bool
+    public func encode(to encoder: any Swift::Encoder) throws
+    public init(from decoder: any Swift::Decoder) throws
+  }
+  public struct Completion : Swift::Codable, Swift::Equatable, Swift::Sendable {
+    public var started: Swift::Int
+    public var completed: Swift::Int
+    public init(started: Swift::Int, completed: Swift::Int)
+    public static func == (a: PlaybackKit::PlaybackPayload.PlaybackKit::Completion, b: PlaybackKit::PlaybackPayload.PlaybackKit::Completion) -> Swift::Bool
+    public func encode(to encoder: any Swift::Encoder) throws
+    public init(from decoder: any Swift::Decoder) throws
+  }
+  public enum StringValue : Swift::Codable, Swift::Equatable, Swift::Sendable {
+    case plain(Swift::String)
+    case plural([Swift::String : Swift::String])
+    public init(from decoder: any Swift::Decoder) throws
+    public func encode(to encoder: any Swift::Encoder) throws
+    public static func == (a: PlaybackKit::PlaybackPayload.PlaybackKit::StringValue, b: PlaybackKit::PlaybackPayload.PlaybackKit::StringValue) -> Swift::Bool
+  }
+  public func jsonData() throws -> Foundation::Data
+  public static func == (a: PlaybackKit::PlaybackPayload, b: PlaybackKit::PlaybackPayload) -> Swift::Bool
+  public func encode(to encoder: any Swift::Encoder) throws
+  public init(from decoder: any Swift::Decoder) throws
+}
+@_Concurrency::MainActor @preconcurrency public struct PlaybackView : SwiftUI::UIViewRepresentable {
+  @_Concurrency::MainActor @preconcurrency public init(controller: PlaybackKit::PlaybackController)
+  @_Concurrency::MainActor @preconcurrency public func makeUIView(context: PlaybackKit::PlaybackView.SwiftUI::Context) -> WebKit::WKWebView
+  @_Concurrency::MainActor @preconcurrency public func updateUIView(_ webView: WebKit::WKWebView, context: PlaybackKit::PlaybackView.SwiftUI::Context)
+  public typealias Body = Swift::Never
+  public typealias Coordinator = Swift::Void
+  public typealias UIViewType = WebKit::WKWebView
+}
+extension PlaybackKit::PlaybackController : Swift::Sendable {}
+extension PlaybackKit::PlaybackView : Swift::Sendable {}
