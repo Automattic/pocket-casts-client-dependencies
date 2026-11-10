@@ -1,8 +1,9 @@
 // Boot. Reads what the host injected before first paint, mounts, installs the API.
 //
-//   window.PLAYBACK_DATA   the payload (facts)
+//   window.PLAYBACK_DATA   the payload (facts); absent with PLAYBACK_ENV.pending, when the
+//                          host gives it later through Playback.setData (PCIOS-1324)
 //   window.PLAYBACK_ENV    host settings: platform, locale, startAt, rules, answers,
-//                          debug, backdrop, reduceMotion
+//                          debug, backdrop, reduceMotion, pending
 //
 // With neither present (a plain browser) the query string stands in for the host:
 //   ?scenario=typical   load fixtures/scenarios/typical.json from `fixturesBase`
@@ -16,6 +17,8 @@
 //                       frame times (&loops=2 walks the flow twice, cold against hot)
 //   &tune=samples=2,res=1,fps=30,sharp=0,backdrop=0,only=archetype|summary
 //                       with the walk: change one lever and run again (see host/perf.js)
+//   &delay=6000         the data comes late, as the apps' does (PCIOS-1324): the story opens
+//                       on the intro and the scenario arrives this many ms later (setData)
 
 import { mountPlayback } from './ui/app.js';
 import { connectBackdrop } from './ui/backdrop.js';
@@ -41,6 +44,10 @@ function envFromQuery() {
   if (q.has('perf') && q.get('perf') !== '0') env.perf = Number(q.get('perf')) || true;
   if (q.has('loops')) env.perfLoops = Number(q.get('loops'));
   if (q.has('tune')) env.perfTune = q.get('tune');
+  if (q.has('delay')) {
+    env.pending = true;
+    env.dataDelay = Number(q.get('delay')) || 0;
+  }
   return env;
 }
 
@@ -59,8 +66,10 @@ async function boot() {
   const env = { ...envFromQuery(), ...(globalThis.PLAYBACK_ENV || {}) };
   const root = document.getElementById('app');
   let payload = null;
+  // The rig's late data (`&delay=`): the scenario is read now and handed over later, as an app would.
+  const late = env.pending && env.dataDelay != null && !globalThis.PLAYBACK_DATA ? loadPayload(env) : null;
   try {
-    payload = await loadPayload(env);
+    if (!late) payload = await loadPayload(env);
   } catch (e) {
     env.loadError = String(e.message || e);
   }
@@ -74,8 +83,12 @@ async function boot() {
   applyAccessibility(document, env);
   const controller = mountPlayback(root, { payload, env });
   if (controller.ok) {
-    const fx = connectBackdrop(controller, document.getElementById('backdrop'), env);
+    const canvas = document.getElementById('backdrop');
+    const fx = connectBackdrop(controller, canvas, env);
+    // A late payload the page cannot read: the error state shows on the bare page.
+    controller.onFail = () => { fx.destroy(); canvas?.remove(); };
     installApi(controller, env, fx.ok ? fx.backdrop : null);
+    late?.then((data) => setTimeout(() => globalThis.Playback.setData(data), env.dataDelay), (e) => setTimeout(() => globalThis.Playback.setData({ error: String(e.message || e) }), env.dataDelay));
     if (env.perf) {
       // The performance walk (PCIOS-1257) plays the flow itself; nothing else may.
       const progress = showProgress();

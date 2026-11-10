@@ -21,6 +21,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'Aquí tens el teu any en pòdcasts. Som-hi?',
+  'intro.loading': 'Carregant la teva experiència…',
   'intro.body': 'El que has escoltat. Els pòdcasts que t’han encantat. El que et fa diferent de la resta.',
 
   'count.shows': { one: '{count} pòdcast', other: '{count} pòdcasts' },
@@ -87,6 +88,7 @@ export default {
   'archetype.flaneur.body': 'Tens una gana insaciable d’escoltar: vas d’aquí cap allà per trobar el teu proper pòdcast preferit entre milers.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'El meu Playback {year}',
   'summary.cards': 'Les teves targetes de Playback',
   'summary.card': 'Targeta {index} de {count}',
   'summary.topShows': 'Top pòdcasts',

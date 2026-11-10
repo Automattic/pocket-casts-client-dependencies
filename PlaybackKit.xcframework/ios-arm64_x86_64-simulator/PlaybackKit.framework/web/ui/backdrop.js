@@ -30,8 +30,9 @@
 // (`radius`) and cut at another element's box (`within`: a bubble at its card's edge); a
 // `sharp` backdrop is drawn at the screen's density, until what it replaces has faded out; an
 // entry that `fit`s `'cover'` draws its document's whole canvas as large as the screen (Play
-// again's 12, as the P2's video shows it). Transitions between effects are not specified yet
-// (PCIOS-1258).
+// again's 12, as the P2's video shows it). Going back (PCIOS-1258), what the page come back to
+// draws shows as it was once in, its way in done, and crossfades in as what the page left drew
+// fades out where it was.
 //
 // Opt out with PLAYBACK_ENV.backdrop = false (or ?backdrop=0). An object tunes it:
 // {resolution, samples, fps} (see fx/backdrop.js). Reduced Motion (the controller's,
@@ -42,6 +43,7 @@ import { loadBundledDocument } from '../fx/documents/index.js';
 import { fadeLevel, holdTime } from '../fx/document.js';
 import { readyRamp, showRamp } from './palette.js';
 import { formatNumber } from '../core/format.js';
+import { BACK_FADE, BACK_SETTLED } from '../core/pages.js';
 import { createGovernor, quality, LAST_RUNG } from './governor.js';
 
 // The most buffer pixels a point a `sharp` backdrop is drawn at (see connectBackdrop).
@@ -56,7 +58,8 @@ export function connectBackdrop(controller, canvas, env = {}) {
   const settings = env.backdrop === false ? null : { ...(typeof env.backdrop === 'object' ? env.backdrop : {}) };
   const entries = (spec) => spec?.stack?.layers ?? (spec ? [spec] : []);
   const specs = (p) => [...(p.steps || []).map((s) => s.backdrop), p.backdrop, ...(p.pickBackdrop?.options ? Object.values(p.pickBackdrop.options) : [p.pickBackdrop]), p.revealBackdrop];
-  const ids = controller.ok ? [...new Set(controller.flow.pages.flatMap(specs).flatMap(entries).map((e) => e.document))] : [];
+  const documentsOf = (pages) => [...new Set(pages.flatMap(specs).flatMap(entries).map((e) => e.document))];
+  const ids = controller.ok ? documentsOf(controller.flow.pages) : [];
   // No probe for WebGL2 first: a context costs hundreds of milliseconds, and
   // createBackdrop reports a missing one itself (as a warning, below).
   if (!settings || !ids.length || !canvas) {
@@ -74,7 +77,7 @@ export function connectBackdrop(controller, canvas, env = {}) {
     return { ok: false, destroy() {} };
   }
   const root = document.documentElement;
-  const locale = controller.session.payload.locale;
+  const locale = controller.locale;
   const ground = getComputedStyle(root).getPropertyValue('--pb-ground').trim() || '#2d0004';
   // A `sharp` backdrop (hard-edged shapes: the top show's) is drawn at the screen's
   // density, up to 1.25: drawn at 1 and scaled up, their rims smear and the notches
@@ -111,16 +114,22 @@ export function connectBackdrop(controller, canvas, env = {}) {
     ladder = requestAnimationFrame(watch);
   }
 
-  // Loaded up front, so a step never waits on an import.
+  // Loaded up front, so a step never waits on an import. With the host's data still to come,
+  // the intro's now and the rest's once the flow has them (`load`, below).
   const docs = new Map();
   let loaded = false;
-  const loading = Promise.all(ids.map(async (id) => {
-    try {
-      docs.set(id, await loadBundledDocument(id));
-    } catch (e) {
-      controller.bridge.send({ type: 'warning', message: `backdrop: ${e.message}` });
-    }
-  })).then(() => { loaded = true; });
+  let loading = null;
+  const preload = (wanted) => {
+    loaded = false;
+    const done = loading = Promise.all([loading, ...wanted.filter((id) => !docs.has(id)).map(async (id) => {
+      try {
+        docs.set(id, await loadBundledDocument(id));
+      } catch (e) {
+        controller.bridge.send({ type: 'warning', message: `backdrop: ${e.message}` });
+      }
+    })]).then(() => { if (loading === done) loaded = true; });
+  };
+  preload(ids);
 
   // What is showing, for carrying a document on into the next show and for showing the
   // same again when the layout moves or a cover's colours arrive.
@@ -167,7 +176,7 @@ export function connectBackdrop(controller, canvas, env = {}) {
   const moodOf = (doc) => doc.screens[0]?.layers.find((L) => L.statics?.coverOn)?.statics.coverMood ?? 2;
   const coverRampFor = (page, doc) => (page.data?.podcast ? showRamp(page.data.podcast, moodOf(doc)) : null);
 
-  function sync() {
+  function sync(action) {
     const { flow } = controller;
     const page = flow.getPage();
     const step = flow.step();
@@ -208,6 +217,10 @@ export function connectBackdrop(controller, canvas, env = {}) {
     const clock = backdrop.clock();
     const own = (e) => clock - (e.delay ?? 0) + (e.from ?? 0);
     if (motion != null) motions.set(lone.id, { motion, at: performance.now() });
+    // One showing on its own over what it replaced, still fading out under it, and carried on
+    // by what shows now (the intro's wave, washed in as the blob went, under the first stat):
+    // where its motion is, from its own clock.
+    else if (current?.lone && own(current.lone) >= 0 && layers.some((e) => e.document === current.lone.document)) motions.set(current.lone.document.id, { motion: own(current.lone) + (current.lone.phase ?? 0), at: performance.now() });
     // The document that was showing, carrying on into the next page: its waves go on
     // from where they were. One that showed before, further back, carries them on from
     // where they would be had they kept moving. Stills stay the same every time.
@@ -219,12 +232,14 @@ export function connectBackdrop(controller, canvas, env = {}) {
     // So does one carried on into the next page, when both pages' backdrops say so
     // (`carries`: roles intro's logos into the role's).
     const carried = new Set();
+    const carriedOn = new Set();
     if ((sameVisit || (spec?.carries && current?.carries)) && !step && !controller.reduceMotion) {
       for (const e of drawn) {
         // Not one on its way out (fading to nothing: a pick before the last).
         const was = current.entries.find((c) => c.document === e.document && c.anchor?.selector === e.anchor?.selector && !(c.fade?.[2] === 0) && !carried.has(c));
         if (!was) continue;
         carried.add(was);
+        carriedOn.add(e);
         const t = own(was);
         const shift = t - since + (e.delay ?? 0) - (e.from ?? 0);
         Object.assign(e, { delay: 0, from: t - since, phase: was.phase });
@@ -232,11 +247,23 @@ export function connectBackdrop(controller, canvas, env = {}) {
         if (e.size) e.size = [e.size[0] + shift, e.size[1] + shift, ...e.size.slice(2)];
       }
     }
+    // Going back, the page come back to draws what it showed once in, crossfading in over
+    // what the page left drew (what carries on between them carries on).
+    const backward = action?.type === 'back' && !sameVisit && !step && Boolean(current) && !controller.reduceMotion;
+    if (backward) {
+      for (const e of drawn) {
+        if (carriedOn.has(e)) continue;
+        const settled = BACK_SETTLED - (e.delay ?? 0) + (e.from ?? 0);
+        const level = fadeLevel(e.fade, settled);
+        Object.assign(e, { delay: 0, from: settled - at, fade: [settled, settled + BACK_FADE, level, 0] });
+      }
+    }
     // What was showing makes way (`replaces`), on its own clock: to its document's exit
-    // where it has one (the logos shrinking back), or fading out underneath.
+    // where it has one (the logos shrinking back), or fading out underneath; going back,
+    // fading out as it comes in (BACK_FADE).
+    const [a, b] = backward ? [0, BACK_FADE] : spec?.replaces ?? [];
     let replaced = 0;
-    if (spec?.replaces && current && !controller.reduceMotion) {
-      const [a, b] = spec.replaces;
+    if (b != null && current && !controller.reduceMotion) {
       const out = [];
       for (const c of current.entries) {
         const t = own(c), exit = c.document.exit;
@@ -244,10 +271,14 @@ export function connectBackdrop(controller, canvas, env = {}) {
         const shown = c.hold ? holdTime(t, c.hold) : t;
         // Gone already: faded out, or through its exit.
         if (carried.has(c) || (c.fade?.[2] === 0 && t >= c.fade[1]) || (Number.isFinite(exit) && shown >= c.document.duration)) continue;
-        if (Number.isFinite(exit) && shown < exit) {
-          out.push({ ...c, delay: 0, from: exit - since, hold: null, loop: false, drift: c.drift && { ...c.drift, since: c.drift.since + (exit - t) } });
+        // Where it was last placed, not where its anchor is now: the page it was placed on
+        // may be gone already (going back, it leaves at once).
+        const gone = c.anchor && !placeOf(c.anchor);
+        const frozen = gone && c.lastPlace ? { anchor: null, place: { ...c.lastPlace, track: undefined } } : {};
+        if (Number.isFinite(exit) && shown < exit && !backward) {
+          out.push({ ...c, ...frozen, delay: 0, from: exit - since, hold: null, loop: false, drift: c.drift && { ...c.drift, since: c.drift.since + (exit - t) } });
         } else {
-          out.push({ ...c, delay: 0, from: t - since, fade: [t + a, t + b, 0, fadeLevel(c.fade, t)] });
+          out.push({ ...c, ...frozen, delay: 0, from: t - since, fade: [t + a, t + b, 0, fadeLevel(c.fade, t)] });
         }
       }
       drawn.unshift(...out);
@@ -256,15 +287,15 @@ export function connectBackdrop(controller, canvas, env = {}) {
     for (const e of drawn) if (e.ramp === 'cover' && page.data?.podcast) e.colours = readyRamp(page.data.podcast, moodOf(e.document));
     // What a sharp backdrop replaces stays sharp while it makes way underneath.
     const sharp = Boolean(spec?.sharp) || (replaced > 0 && Boolean(current?.sharp));
-    current = { key, visit, page, lone: drawn.length === 1 ? drawn[0] : null, entries: drawn, sharp: Boolean(spec?.sharp), carries: Boolean(spec?.carries) };
+    current = { key, visit, page, lone: drawn.length - replaced === 1 ? drawn[replaced] : null, entries: drawn, sharp: Boolean(spec?.sharp), carries: Boolean(spec?.carries) };
     // Visible before the first frame, so the buffer is sized from the laid-out canvas.
     // A step without a document is the bare ground, which the page's CSS draws.
     root.classList.toggle('has-backdrop', drawn.length > 0);
     clearTimeout(lowering);
     backdrop.setQuality({ resolution: resolutionFor({ sharp }) });
-    if (sharp && !spec.sharp) {
+    if (sharp && !spec?.sharp) {
       const mine = current;
-      lowering = setTimeout(() => { if (current === mine) backdrop.setQuality({ resolution: resolutionFor(spec) }); }, spec.replaces[1] * 1000);
+      lowering = setTimeout(() => { if (current === mine) backdrop.setQuality({ resolution: resolutionFor(spec) }); }, b * 1000);
     }
     show(at);
     // A cover's colours arrive once its pixels are read: show the same with them.
@@ -279,6 +310,8 @@ export function connectBackdrop(controller, canvas, env = {}) {
       place: e.anchor ? placed(e.anchor) : e.place,
       ramp: e.ramp === 'cover' ? e.colours ?? null : e.ramp,
     }));
+    // Where each was placed, for when it makes way and its anchor has gone.
+    list.forEach((e, i) => { if (e.place) current.entries[i].lastPlace = e.place; });
     backdrop.show(list.length ? list : null, { ground, at });
   }
 
@@ -291,7 +324,10 @@ export function connectBackdrop(controller, canvas, env = {}) {
   };
   window.addEventListener('resize', onResize);
 
-  const unsubscribe = controller.flow.subscribe(() => sync());
+  const unsubscribe = controller.flow.subscribe((state, effects, action) => {
+    if (action.type === 'load') preload(documentsOf(controller.flow.pages));
+    sync(action);
+  });
   sync();
   return {
     ok: true,

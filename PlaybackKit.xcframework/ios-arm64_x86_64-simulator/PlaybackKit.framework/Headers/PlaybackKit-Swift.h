@@ -380,6 +380,11 @@ extern "C" {
 ///
 /// \endcodeThe Android library implements the same two channels, and the page cannot tell which
 /// host it is running in.
+/// The payload can come late: open the story with <code>init(configuration:)</code> as soon as the user
+/// asks for it, read their listening history while the intro plays, and hand the payload over
+/// with <code>setPayload(_:)-(PlaybackPayload)</code>. Moving on from the intro before then holds it on its
+/// title, “Loading your experience…” in the tagline’s place, and the story moves on as soon as the
+/// payload is there.
 SWIFT_CLASS("_TtC11PlaybackKit18PlaybackController")
 @interface PlaybackController : NSObject
 - (nonnull instancetype)init SWIFT_UNAVAILABLE;
@@ -784,6 +789,11 @@ extern "C" {
 ///
 /// \endcodeThe Android library implements the same two channels, and the page cannot tell which
 /// host it is running in.
+/// The payload can come late: open the story with <code>init(configuration:)</code> as soon as the user
+/// asks for it, read their listening history while the intro plays, and hand the payload over
+/// with <code>setPayload(_:)-(PlaybackPayload)</code>. Moving on from the intro before then holds it on its
+/// title, “Loading your experience…” in the tagline’s place, and the story moves on as soon as the
+/// payload is there.
 SWIFT_CLASS("_TtC11PlaybackKit18PlaybackController")
 @interface PlaybackController : NSObject
 - (nonnull instancetype)init SWIFT_UNAVAILABLE;

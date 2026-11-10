@@ -26,6 +26,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'إليك عامك في عالم البودكاست. هل نبدأ؟',
+  'intro.loading': 'جارٍ تحميل تجربتك…',
   'intro.body': 'ما استمعت إليه. البرامج التي أحببتها. وما يميّزك عن غيرك.',
 
   'count.shows': {
@@ -156,6 +157,7 @@ export default {
   'archetype.flaneur.body': 'شهيتك للاستماع لا تشبع، وجولاتك تمتد بعيدًا بحثًا عن برنامجك المفضل التالي بين الآلاف.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'إليكم Playback {year} الخاص بي',
   'summary.cards': 'بطاقات Playback الخاصة بك',
   'summary.card': 'البطاقة {index} من {count}',
   'summary.topShows': 'أبرز البرامج',

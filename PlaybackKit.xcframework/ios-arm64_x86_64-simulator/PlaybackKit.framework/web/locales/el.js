@@ -22,6 +22,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'Η χρονιά σου στα podcasts. Πάμε να βουτήξουμε;',
+  'intro.loading': 'Φόρτωση της εμπειρίας σου…',
   'intro.body': 'Τι άκουσες. Τα podcasts που αγάπησες. Τι σε κάνει να ξεχωρίζεις.',
 
   'count.shows': { one: '{count} podcast', other: '{count} podcasts' },
@@ -88,6 +89,7 @@ export default {
   'archetype.flaneur.body': 'Ακούς αχόρταγα και περιπλανιέσαι παντού για να βρεις το επόμενο αγαπημένο σου ανάμεσα σε χιλιάδες.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'Το Playback {year} μου',
   'summary.cards': 'Οι κάρτες Playback σου',
   'summary.card': 'Κάρτα {index} από {count}',
   'summary.topShows': 'Κορυφαία podcasts',

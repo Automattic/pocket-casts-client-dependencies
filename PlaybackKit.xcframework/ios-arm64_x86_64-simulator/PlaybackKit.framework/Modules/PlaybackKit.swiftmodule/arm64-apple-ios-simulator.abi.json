@@ -27,6 +27,3835 @@
       },
       {
         "kind": "TypeDecl",
+        "name": "PlaybackAnalyticsEvent",
+        "printedName": "PlaybackAnalyticsEvent",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "archetypeAssigned",
+            "printedName": "archetypeAssigned",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Type) -> (PlaybackKit.PlaybackAnalyticsEvent.Archetype) -> PlaybackKit.PlaybackAnalyticsEvent",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Archetype) -> PlaybackKit.PlaybackAnalyticsEvent",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(archetype: PlaybackKit.PlaybackAnalyticsEvent.Archetype)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Archetype",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO17archetypeAssignedyA2C9ArchetypeO_tcACmF",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO17archetypeAssignedyA2C9ArchetypeO_tcACmF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "RawDocComment"
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "storyShown",
+            "printedName": "storyShown",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Type) -> (PlaybackKit.PlaybackAnalyticsEvent.Story, Swift.Int, Swift.Int, Swift.Bool) -> PlaybackKit.PlaybackAnalyticsEvent",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story, Swift.Int, Swift.Int, Swift.Bool) -> PlaybackKit.PlaybackAnalyticsEvent",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(story: PlaybackKit.PlaybackAnalyticsEvent.Story, index: Swift.Int, count: Swift.Int, revisit: Swift.Bool)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Int",
+                            "printedName": "Swift.Int",
+                            "usr": "s:Si"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Int",
+                            "printedName": "Swift.Int",
+                            "usr": "s:Si"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Bool",
+                            "printedName": "Swift.Bool",
+                            "usr": "s:Sb"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO10storyShownyA2C5StoryO_S2iSbtcACmF",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10storyShownyA2C5StoryO_S2iSbtcACmF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "RawDocComment"
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "quizRevealed",
+            "printedName": "quizRevealed",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Type) -> (PlaybackKit.PlaybackAnalyticsEvent.Story, PlaybackKit.PlaybackAnalyticsEvent.QuizResult, PlaybackKit.PlaybackAnalyticsEvent.RevealReason) -> PlaybackKit.PlaybackAnalyticsEvent",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story, PlaybackKit.PlaybackAnalyticsEvent.QuizResult, PlaybackKit.PlaybackAnalyticsEvent.RevealReason) -> PlaybackKit.PlaybackAnalyticsEvent",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(story: PlaybackKit.PlaybackAnalyticsEvent.Story, correct: PlaybackKit.PlaybackAnalyticsEvent.QuizResult, reason: PlaybackKit.PlaybackAnalyticsEvent.RevealReason)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "QuizResult",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "RevealReason",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO12quizRevealedyA2C5StoryO_AC10QuizResultOAC12RevealReasonOtcACmF",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12quizRevealedyA2C5StoryO_AC10QuizResultOAC12RevealReasonOtcACmF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "RawDocComment"
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "storyShare",
+            "printedName": "storyShare",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Type) -> (PlaybackKit.PlaybackAnalyticsEvent.Story, PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant?) -> PlaybackKit.PlaybackAnalyticsEvent",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story, PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant?) -> PlaybackKit.PlaybackAnalyticsEvent",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(story: PlaybackKit.PlaybackAnalyticsEvent.Story, variant: PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant?)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "SummaryVariant",
+                                "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                                "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO10storyShareyA2C5StoryO_AC14SummaryVariantOSgtcACmF",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10storyShareyA2C5StoryO_AC14SummaryVariantOSgtcACmF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "RawDocComment"
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "storyShared",
+            "printedName": "storyShared",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Type) -> (PlaybackKit.PlaybackAnalyticsEvent.Story, PlaybackKit.PlaybackAnalyticsEvent.ShareSource, Swift.String?, PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant?) -> PlaybackKit.PlaybackAnalyticsEvent",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story, PlaybackKit.PlaybackAnalyticsEvent.ShareSource, Swift.String?, PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant?) -> PlaybackKit.PlaybackAnalyticsEvent",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(story: PlaybackKit.PlaybackAnalyticsEvent.Story, from: PlaybackKit.PlaybackAnalyticsEvent.ShareSource, activity: Swift.String?, variant: PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant?)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ShareSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "Swift.String?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "String",
+                                "printedName": "Swift.String",
+                                "usr": "s:SS"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "SummaryVariant",
+                                "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                                "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO11storySharedyA2C5StoryO_AC11ShareSourceOSSSgAC14SummaryVariantOSgtcACmF",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO11storySharedyA2C5StoryO_AC11ShareSourceOSSSgAC14SummaryVariantOSgtcACmF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "RawDocComment"
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "replayButtonTapped",
+            "printedName": "replayButtonTapped",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Type) -> PlaybackKit.PlaybackAnalyticsEvent",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "PlaybackAnalyticsEvent",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO18replayButtonTappedyA2CmF",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO18replayButtonTappedyA2CmF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "RawDocComment"
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "storiesDismissed",
+            "printedName": "storiesDismissed",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Type) -> (PlaybackKit.PlaybackAnalyticsEvent.DismissSource, PlaybackKit.PlaybackAnalyticsEvent.Story?, Swift.Bool) -> PlaybackKit.PlaybackAnalyticsEvent",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.DismissSource, PlaybackKit.PlaybackAnalyticsEvent.Story?, Swift.Bool) -> PlaybackKit.PlaybackAnalyticsEvent",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(source: PlaybackKit.PlaybackAnalyticsEvent.DismissSource, story: PlaybackKit.PlaybackAnalyticsEvent.Story?, finished: Swift.Bool)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DismissSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Story",
+                                "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Bool",
+                            "printedName": "Swift.Bool",
+                            "usr": "s:Sb"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO16storiesDismissedyA2C13DismissSourceO_AC5StoryOSgSbtcACmF",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO16storiesDismissedyA2C13DismissSourceO_AC5StoryOSgSbtcACmF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "RawDocComment"
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "storiesFailedToLoad",
+            "printedName": "storiesFailedToLoad",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Type) -> PlaybackKit.PlaybackAnalyticsEvent",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "PlaybackAnalyticsEvent",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO19storiesFailedToLoadyA2CmF",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO19storiesFailedToLoadyA2CmF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "RawDocComment"
+            ]
+          },
+          {
+            "kind": "TypeDecl",
+            "name": "Story",
+            "printedName": "Story",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "notEnoughData",
+                "printedName": "notEnoughData",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO13notEnoughDatayA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO13notEnoughDatayA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "cover",
+                "printedName": "cover",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO5coveryA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO5coveryA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "numberOfShows",
+                "printedName": "numberOfShows",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO13numberOfShowsyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO13numberOfShowsyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "top1Show",
+                "printedName": "top1Show",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO8top1ShowyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO8top1ShowyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "top5Shows",
+                "printedName": "top5Shows",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO9top5ShowsyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO9top5ShowsyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "bestMonth",
+                "printedName": "bestMonth",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO9bestMonthyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO9bestMonthyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "totalTime",
+                "printedName": "totalTime",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO9totalTimeyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO9totalTimeyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "yearVsYear",
+                "printedName": "yearVsYear",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO10yearVsYearyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO10yearVsYearyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "completionRate",
+                "printedName": "completionRate",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO14completionRateyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO14completionRateyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "rolesIntro",
+                "printedName": "rolesIntro",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO10rolesIntroyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO10rolesIntroyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "archetype",
+                "printedName": "archetype",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO9archetypeyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO9archetypeyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "summary",
+                "printedName": "summary",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO7summaryyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO7summaryyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "ending",
+                "printedName": "ending",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO6endingyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO6endingyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "unknown",
+                "printedName": "unknown",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Story.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO7unknownyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO7unknownyA2EmF",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "RawDocComment"
+                ]
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init(pageID:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Story",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO6pageIDAESS_tcfc",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO6pageIDAESS_tcfc",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "AccessControl",
+                  "RawDocComment"
+                ],
+                "init_kind": "Designated"
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init(rawValue:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO8rawValueAESgSS_tcfc",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO8rawValueAESgSS_tcfc",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "init_kind": "Designated"
+              },
+              {
+                "kind": "Var",
+                "name": "rawValue",
+                "printedName": "rawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO8rawValueSSvp",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO8rawValueSSvp",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO8rawValueSSvg",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO8rawValueSSvg",
+                    "moduleName": "PlaybackKit",
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "allCases",
+                "printedName": "allCases",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.Story]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Story",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO8allCasesSayAEGvpZ",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO8allCasesSayAEGvpZ",
+                "moduleName": "PlaybackKit",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Nonisolated"
+                ],
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.Story]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO8allCasesSayAEGvgZ",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO8allCasesSayAEGvgZ",
+                    "moduleName": "PlaybackKit",
+                    "static": true,
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO5StoryO",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "enumRawTypeName": "String",
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Hashable",
+                "printedName": "Hashable",
+                "usr": "s:SH",
+                "mangledName": "$sSH"
+              },
+              {
+                "kind": "Conformance",
+                "name": "RawRepresentable",
+                "printedName": "RawRepresentable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "RawValue",
+                    "printedName": "RawValue",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:SY",
+                "mangledName": "$sSY"
+              },
+              {
+                "kind": "Conformance",
+                "name": "CaseIterable",
+                "printedName": "CaseIterable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "AllCases",
+                    "printedName": "AllCases",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.Story]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Story",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Story",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO5StoryO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:s12CaseIterableP",
+                "mangledName": "$ss12CaseIterableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              }
+            ]
+          },
+          {
+            "kind": "TypeDecl",
+            "name": "Archetype",
+            "printedName": "Archetype",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "collector",
+                "printedName": "collector",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Archetype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Archetype",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO9collectoryA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO9collectoryA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "avantGardist",
+                "printedName": "avantGardist",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Archetype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Archetype",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO12avantGardistyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO12avantGardistyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "aficionado",
+                "printedName": "aficionado",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Archetype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Archetype",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO10aficionadoyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO10aficionadoyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "anthologist",
+                "printedName": "anthologist",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Archetype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Archetype",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO11anthologistyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO11anthologistyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "flaneur",
+                "printedName": "flaneur",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Archetype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Archetype",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO7flaneuryA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO7flaneuryA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "unknown",
+                "printedName": "unknown",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type) -> PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Archetype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Archetype",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO7unknownyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO7unknownyA2EmF",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "RawDocComment"
+                ]
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init(id:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Archetype",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO2idAESS_tcfc",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO2idAESS_tcfc",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "AccessControl",
+                  "RawDocComment"
+                ],
+                "init_kind": "Designated"
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init(rawValue:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Archetype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO8rawValueAESgSS_tcfc",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO8rawValueAESgSS_tcfc",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "init_kind": "Designated"
+              },
+              {
+                "kind": "Var",
+                "name": "rawValue",
+                "printedName": "rawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO8rawValueSSvp",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO8rawValueSSvp",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO8rawValueSSvg",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO8rawValueSSvg",
+                    "moduleName": "PlaybackKit",
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "allCases",
+                "printedName": "allCases",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.Archetype]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Archetype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO8allCasesSayAEGvpZ",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO8allCasesSayAEGvpZ",
+                "moduleName": "PlaybackKit",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Nonisolated"
+                ],
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.Archetype]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Archetype",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO8allCasesSayAEGvgZ",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO8allCasesSayAEGvgZ",
+                    "moduleName": "PlaybackKit",
+                    "static": true,
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO9ArchetypeO",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "enumRawTypeName": "String",
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Hashable",
+                "printedName": "Hashable",
+                "usr": "s:SH",
+                "mangledName": "$sSH"
+              },
+              {
+                "kind": "Conformance",
+                "name": "RawRepresentable",
+                "printedName": "RawRepresentable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "RawValue",
+                    "printedName": "RawValue",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:SY",
+                "mangledName": "$sSY"
+              },
+              {
+                "kind": "Conformance",
+                "name": "CaseIterable",
+                "printedName": "CaseIterable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "AllCases",
+                    "printedName": "AllCases",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.Archetype]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Archetype",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.Archetype",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO9ArchetypeO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:s12CaseIterableP",
+                "mangledName": "$ss12CaseIterableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              }
+            ]
+          },
+          {
+            "kind": "TypeDecl",
+            "name": "QuizResult",
+            "printedName": "QuizResult",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "correct",
+                "printedName": "correct",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.QuizResult.Type) -> PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuizResult",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "QuizResult",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO7correctyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10QuizResultO7correctyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "incorrect",
+                "printedName": "incorrect",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.QuizResult.Type) -> PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuizResult",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "QuizResult",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO9incorrectyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10QuizResultO9incorrectyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "noGuess",
+                "printedName": "noGuess",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.QuizResult.Type) -> PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuizResult",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "QuizResult",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO7noGuessyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10QuizResultO7noGuessyA2EmF",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "RawDocComment"
+                ]
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init(rawValue:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuizResult",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO8rawValueAESgSS_tcfc",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10QuizResultO8rawValueAESgSS_tcfc",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "init_kind": "Designated"
+              },
+              {
+                "kind": "Var",
+                "name": "rawValue",
+                "printedName": "rawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO8rawValueSSvp",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10QuizResultO8rawValueSSvp",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO8rawValueSSvg",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10QuizResultO8rawValueSSvg",
+                    "moduleName": "PlaybackKit",
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "allCases",
+                "printedName": "allCases",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.QuizResult]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "QuizResult",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO8allCasesSayAEGvpZ",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10QuizResultO8allCasesSayAEGvpZ",
+                "moduleName": "PlaybackKit",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Nonisolated"
+                ],
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.QuizResult]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "QuizResult",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO8allCasesSayAEGvgZ",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10QuizResultO8allCasesSayAEGvgZ",
+                    "moduleName": "PlaybackKit",
+                    "static": true,
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10QuizResultO",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "enumRawTypeName": "String",
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Hashable",
+                "printedName": "Hashable",
+                "usr": "s:SH",
+                "mangledName": "$sSH"
+              },
+              {
+                "kind": "Conformance",
+                "name": "RawRepresentable",
+                "printedName": "RawRepresentable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "RawValue",
+                    "printedName": "RawValue",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:SY",
+                "mangledName": "$sSY"
+              },
+              {
+                "kind": "Conformance",
+                "name": "CaseIterable",
+                "printedName": "CaseIterable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "AllCases",
+                    "printedName": "AllCases",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.QuizResult]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "QuizResult",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.QuizResult",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO10QuizResultO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:s12CaseIterableP",
+                "mangledName": "$ss12CaseIterableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              }
+            ]
+          },
+          {
+            "kind": "TypeDecl",
+            "name": "RevealReason",
+            "printedName": "RevealReason",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "confirmed",
+                "printedName": "confirmed",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.RevealReason.Type) -> PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "RevealReason",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "RevealReason",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO9confirmedyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12RevealReasonO9confirmedyA2EmF",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "RawDocComment"
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "timeout",
+                "printedName": "timeout",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.RevealReason.Type) -> PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "RevealReason",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "RevealReason",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO7timeoutyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12RevealReasonO7timeoutyA2EmF",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "RawDocComment"
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "unknown",
+                "printedName": "unknown",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.RevealReason.Type) -> PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "RevealReason",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "RevealReason",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO7unknownyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12RevealReasonO7unknownyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init(rawValue:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "RevealReason",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO8rawValueAESgSS_tcfc",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12RevealReasonO8rawValueAESgSS_tcfc",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "init_kind": "Designated"
+              },
+              {
+                "kind": "Var",
+                "name": "rawValue",
+                "printedName": "rawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO8rawValueSSvp",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12RevealReasonO8rawValueSSvp",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO8rawValueSSvg",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12RevealReasonO8rawValueSSvg",
+                    "moduleName": "PlaybackKit",
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "allCases",
+                "printedName": "allCases",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.RevealReason]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "RevealReason",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO8allCasesSayAEGvpZ",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12RevealReasonO8allCasesSayAEGvpZ",
+                "moduleName": "PlaybackKit",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Nonisolated"
+                ],
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.RevealReason]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "RevealReason",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO8allCasesSayAEGvgZ",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12RevealReasonO8allCasesSayAEGvgZ",
+                    "moduleName": "PlaybackKit",
+                    "static": true,
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO12RevealReasonO",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "enumRawTypeName": "String",
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Hashable",
+                "printedName": "Hashable",
+                "usr": "s:SH",
+                "mangledName": "$sSH"
+              },
+              {
+                "kind": "Conformance",
+                "name": "RawRepresentable",
+                "printedName": "RawRepresentable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "RawValue",
+                    "printedName": "RawValue",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:SY",
+                "mangledName": "$sSY"
+              },
+              {
+                "kind": "Conformance",
+                "name": "CaseIterable",
+                "printedName": "CaseIterable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "AllCases",
+                    "printedName": "AllCases",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.RevealReason]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "RevealReason",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.RevealReason",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO12RevealReasonO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:s12CaseIterableP",
+                "mangledName": "$ss12CaseIterableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              }
+            ]
+          },
+          {
+            "kind": "TypeDecl",
+            "name": "SummaryVariant",
+            "printedName": "SummaryVariant",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "grid",
+                "printedName": "grid",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant.Type) -> PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SummaryVariant",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "SummaryVariant",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO4gridyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO4gridyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "stack",
+                "printedName": "stack",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant.Type) -> PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SummaryVariant",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "SummaryVariant",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO5stackyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO5stackyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "bubbles",
+                "printedName": "bubbles",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant.Type) -> PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SummaryVariant",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "SummaryVariant",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO7bubblesyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO7bubblesyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Var",
+                "name": "unknown",
+                "printedName": "unknown",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant.Type) -> PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SummaryVariant",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "SummaryVariant",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO7unknownyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO7unknownyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init(rawValue:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SummaryVariant",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8rawValueAESgSS_tcfc",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8rawValueAESgSS_tcfc",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "init_kind": "Designated"
+              },
+              {
+                "kind": "Var",
+                "name": "rawValue",
+                "printedName": "rawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8rawValueSSvp",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8rawValueSSvp",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8rawValueSSvg",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8rawValueSSvg",
+                    "moduleName": "PlaybackKit",
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "allCases",
+                "printedName": "allCases",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "SummaryVariant",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8allCasesSayAEGvpZ",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8allCasesSayAEGvpZ",
+                "moduleName": "PlaybackKit",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Nonisolated"
+                ],
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "SummaryVariant",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8allCasesSayAEGvgZ",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO8allCasesSayAEGvgZ",
+                    "moduleName": "PlaybackKit",
+                    "static": true,
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO14SummaryVariantO",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "enumRawTypeName": "String",
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Hashable",
+                "printedName": "Hashable",
+                "usr": "s:SH",
+                "mangledName": "$sSH"
+              },
+              {
+                "kind": "Conformance",
+                "name": "RawRepresentable",
+                "printedName": "RawRepresentable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "RawValue",
+                    "printedName": "RawValue",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:SY",
+                "mangledName": "$sSY"
+              },
+              {
+                "kind": "Conformance",
+                "name": "CaseIterable",
+                "printedName": "CaseIterable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "AllCases",
+                    "printedName": "AllCases",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "SummaryVariant",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.SummaryVariant",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO14SummaryVariantO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:s12CaseIterableP",
+                "mangledName": "$ss12CaseIterableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              }
+            ]
+          },
+          {
+            "kind": "TypeDecl",
+            "name": "ShareSource",
+            "printedName": "ShareSource",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "button",
+                "printedName": "button",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.ShareSource.Type) -> PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ShareSource",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ShareSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO6buttonyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO11ShareSourceO6buttonyA2EmF",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "RawDocComment"
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "screenshot",
+                "printedName": "screenshot",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.ShareSource.Type) -> PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ShareSource",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ShareSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO10screenshotyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO11ShareSourceO10screenshotyA2EmF",
+                "moduleName": "PlaybackKit"
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init(rawValue:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ShareSource",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO8rawValueAESgSS_tcfc",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO11ShareSourceO8rawValueAESgSS_tcfc",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "init_kind": "Designated"
+              },
+              {
+                "kind": "Var",
+                "name": "rawValue",
+                "printedName": "rawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO8rawValueSSvp",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO11ShareSourceO8rawValueSSvp",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO8rawValueSSvg",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO11ShareSourceO8rawValueSSvg",
+                    "moduleName": "PlaybackKit",
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "allCases",
+                "printedName": "allCases",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.ShareSource]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "ShareSource",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO8allCasesSayAEGvpZ",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO11ShareSourceO8allCasesSayAEGvpZ",
+                "moduleName": "PlaybackKit",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Nonisolated"
+                ],
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.ShareSource]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ShareSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO8allCasesSayAEGvgZ",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO11ShareSourceO8allCasesSayAEGvgZ",
+                    "moduleName": "PlaybackKit",
+                    "static": true,
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO11ShareSourceO",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "enumRawTypeName": "String",
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Hashable",
+                "printedName": "Hashable",
+                "usr": "s:SH",
+                "mangledName": "$sSH"
+              },
+              {
+                "kind": "Conformance",
+                "name": "RawRepresentable",
+                "printedName": "RawRepresentable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "RawValue",
+                    "printedName": "RawValue",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:SY",
+                "mangledName": "$sSY"
+              },
+              {
+                "kind": "Conformance",
+                "name": "CaseIterable",
+                "printedName": "CaseIterable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "AllCases",
+                    "printedName": "AllCases",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.ShareSource]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "ShareSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.ShareSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO11ShareSourceO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:s12CaseIterableP",
+                "mangledName": "$ss12CaseIterableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              }
+            ]
+          },
+          {
+            "kind": "TypeDecl",
+            "name": "DismissSource",
+            "printedName": "DismissSource",
+            "children": [
+              {
+                "kind": "Var",
+                "name": "closeButton",
+                "printedName": "closeButton",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.DismissSource.Type) -> PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "DismissSource",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DismissSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO11closeButtonyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO13DismissSourceO11closeButtonyA2EmF",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "RawDocComment"
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "backButton",
+                "printedName": "backButton",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.DismissSource.Type) -> PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "DismissSource",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DismissSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO10backButtonyA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO13DismissSourceO10backButtonyA2EmF",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "RawDocComment"
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "error",
+                "printedName": "error",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent.DismissSource.Type) -> PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "DismissSource",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Metatype",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource.Type",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DismissSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "declKind": "EnumElement",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO5erroryA2EmF",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO13DismissSourceO5erroryA2EmF",
+                "moduleName": "PlaybackKit",
+                "declAttributes": [
+                  "RawDocComment"
+                ]
+              },
+              {
+                "kind": "Constructor",
+                "name": "init",
+                "printedName": "init(rawValue:)",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource?",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "DismissSource",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Constructor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO8rawValueAESgSS_tcfc",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO13DismissSourceO8rawValueAESgSS_tcfc",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "init_kind": "Designated"
+              },
+              {
+                "kind": "Var",
+                "name": "rawValue",
+                "printedName": "rawValue",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO8rawValueSSvp",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO13DismissSourceO8rawValueSSvp",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO8rawValueSSvg",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO13DismissSourceO8rawValueSSvg",
+                    "moduleName": "PlaybackKit",
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              },
+              {
+                "kind": "Var",
+                "name": "allCases",
+                "printedName": "allCases",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Array",
+                    "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.DismissSource]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "DismissSource",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                      }
+                    ],
+                    "usr": "s:Sa"
+                  }
+                ],
+                "declKind": "Var",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO8allCasesSayAEGvpZ",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO13DismissSourceO8allCasesSayAEGvpZ",
+                "moduleName": "PlaybackKit",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Nonisolated"
+                ],
+                "accessors": [
+                  {
+                    "kind": "Accessor",
+                    "name": "Get",
+                    "printedName": "Get()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.DismissSource]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DismissSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ],
+                    "declKind": "Accessor",
+                    "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO8allCasesSayAEGvgZ",
+                    "mangledName": "$s11PlaybackKit0A14AnalyticsEventO13DismissSourceO8allCasesSayAEGvgZ",
+                    "moduleName": "PlaybackKit",
+                    "static": true,
+                    "implicit": true,
+                    "accessorKind": "get"
+                  }
+                ]
+              }
+            ],
+            "declKind": "Enum",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO13DismissSourceO",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "enumRawTypeName": "String",
+            "conformances": [
+              {
+                "kind": "Conformance",
+                "name": "Copyable",
+                "printedName": "Copyable",
+                "usr": "s:s8CopyableP",
+                "mangledName": "$ss8CopyableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Escapable",
+                "printedName": "Escapable",
+                "usr": "s:s9EscapableP",
+                "mangledName": "$ss9EscapableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Hashable",
+                "printedName": "Hashable",
+                "usr": "s:SH",
+                "mangledName": "$sSH"
+              },
+              {
+                "kind": "Conformance",
+                "name": "RawRepresentable",
+                "printedName": "RawRepresentable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "RawValue",
+                    "printedName": "RawValue",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:SY",
+                "mangledName": "$sSY"
+              },
+              {
+                "kind": "Conformance",
+                "name": "CaseIterable",
+                "printedName": "CaseIterable",
+                "children": [
+                  {
+                    "kind": "TypeWitness",
+                    "name": "AllCases",
+                    "printedName": "AllCases",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Array",
+                        "printedName": "[PlaybackKit.PlaybackAnalyticsEvent.DismissSource]",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "DismissSource",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent.DismissSource",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO13DismissSourceO"
+                          }
+                        ],
+                        "usr": "s:Sa"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:s12CaseIterableP",
+                "mangledName": "$ss12CaseIterableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Sendable",
+                "printedName": "Sendable",
+                "usr": "s:s8SendableP",
+                "mangledName": "$ss8SendableP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "SendableMetatype",
+                "printedName": "SendableMetatype",
+                "usr": "s:s16SendableMetatypeP",
+                "mangledName": "$ss16SendableMetatypeP"
+              },
+              {
+                "kind": "Conformance",
+                "name": "Equatable",
+                "printedName": "Equatable",
+                "usr": "s:SQ",
+                "mangledName": "$sSQ"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "==",
+            "printedName": "==(_:_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "PlaybackAnalyticsEvent",
+                "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "PlaybackAnalyticsEvent",
+                "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO2eeoiySbAC_ACtFZ",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO2eeoiySbAC_ACtFZ",
+            "moduleName": "PlaybackKit",
+            "static": true,
+            "implicit": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Var",
+            "name": "name",
+            "printedName": "name",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO4nameSSvp",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO4nameSSvp",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO4nameSSvg",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO4nameSSvg",
+                "moduleName": "PlaybackKit",
+                "isFromExtension": true,
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "properties",
+            "printedName": "properties",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Dictionary",
+                "printedName": "[Swift.String : Swift.String]",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:SD"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:11PlaybackKit0A14AnalyticsEventO10propertiesSDyS2SGvp",
+            "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10propertiesSDyS2SGvp",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "isFromExtension": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Dictionary",
+                    "printedName": "[Swift.String : Swift.String]",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "String",
+                        "printedName": "Swift.String",
+                        "usr": "s:SS"
+                      }
+                    ],
+                    "usr": "s:SD"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:11PlaybackKit0A14AnalyticsEventO10propertiesSDyS2SGvg",
+                "mangledName": "$s11PlaybackKit0A14AnalyticsEventO10propertiesSDyS2SGvg",
+                "moduleName": "PlaybackKit",
+                "isFromExtension": true,
+                "accessorKind": "get"
+              }
+            ]
+          }
+        ],
+        "declKind": "Enum",
+        "usr": "s:11PlaybackKit0A14AnalyticsEventO",
+        "mangledName": "$s11PlaybackKit0A14AnalyticsEventO",
+        "moduleName": "PlaybackKit",
+        "declAttributes": [
+          "AccessControl",
+          "RawDocComment"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "Copyable",
+            "printedName": "Copyable",
+            "usr": "s:s8CopyableP",
+            "mangledName": "$ss8CopyableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Escapable",
+            "printedName": "Escapable",
+            "usr": "s:s9EscapableP",
+            "mangledName": "$ss9EscapableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Sendable",
+            "printedName": "Sendable",
+            "usr": "s:s8SendableP",
+            "mangledName": "$ss8SendableP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "SendableMetatype",
+            "printedName": "SendableMetatype",
+            "usr": "s:s16SendableMetatypeP",
+            "mangledName": "$ss16SendableMetatypeP"
+          }
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "PlaybackKit"
+      },
+      {
+        "kind": "TypeDecl",
         "name": "PlaybackConfiguration",
         "printedName": "PlaybackConfiguration",
         "children": [
@@ -1590,6 +5419,164 @@
           },
           {
             "kind": "Var",
+            "name": "onAnalyticsEvent",
+            "printedName": "onAnalyticsEvent",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "((PlaybackKit.PlaybackAnalyticsEvent) -> ())?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "(PlaybackKit.PlaybackAnalyticsEvent) -> ()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackAnalyticsEvent",
+                        "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                        "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                      }
+                    ]
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "s:11PlaybackKit0A10ControllerC16onAnalyticsEventyAA0aeF0OcSgvp",
+            "mangledName": "$s11PlaybackKit0A10ControllerC16onAnalyticsEventyAA0aeF0OcSgvp",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "Custom",
+              "HasStorage",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((PlaybackKit.PlaybackAnalyticsEvent) -> ())?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(PlaybackKit.PlaybackAnalyticsEvent) -> ()",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "PlaybackAnalyticsEvent",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:11PlaybackKit0A10ControllerC16onAnalyticsEventyAA0aeF0OcSgvg",
+                "mangledName": "$s11PlaybackKit0A10ControllerC16onAnalyticsEventyAA0aeF0OcSgvg",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "get"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Set",
+                "printedName": "Set()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Optional",
+                    "printedName": "((PlaybackKit.PlaybackAnalyticsEvent) -> ())?",
+                    "children": [
+                      {
+                        "kind": "TypeFunc",
+                        "name": "Function",
+                        "printedName": "(PlaybackKit.PlaybackAnalyticsEvent) -> ()",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Void",
+                            "printedName": "()"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "PlaybackAnalyticsEvent",
+                            "printedName": "PlaybackKit.PlaybackAnalyticsEvent",
+                            "usr": "s:11PlaybackKit0A14AnalyticsEventO"
+                          }
+                        ]
+                      }
+                    ],
+                    "usr": "s:Sq"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:11PlaybackKit0A10ControllerC16onAnalyticsEventyAA0aeF0OcSgvs",
+                "mangledName": "$s11PlaybackKit0A10ControllerC16onAnalyticsEventyAA0aeF0OcSgvs",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "set"
+              },
+              {
+                "kind": "Accessor",
+                "name": "Modify",
+                "printedName": "Modify()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Void",
+                    "printedName": "()"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "s:11PlaybackKit0A10ControllerC16onAnalyticsEventyAA0aeF0OcSgvM",
+                "mangledName": "$s11PlaybackKit0A10ControllerC16onAnalyticsEventyAA0aeF0OcSgvM",
+                "moduleName": "PlaybackKit",
+                "implicit": true,
+                "declAttributes": [
+                  "Final"
+                ],
+                "accessorKind": "_modify"
+              }
+            ]
+          },
+          {
+            "kind": "Var",
             "name": "webView",
             "printedName": "webView",
             "children": [
@@ -1667,6 +5654,37 @@
             "moduleName": "PlaybackKit",
             "declAttributes": [
               "Custom",
+              "Convenience",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "init_kind": "Convenience"
+          },
+          {
+            "kind": "Constructor",
+            "name": "init",
+            "printedName": "init(configuration:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "PlaybackController",
+                "printedName": "PlaybackKit.PlaybackController",
+                "usr": "c:@M@PlaybackKit@objc(cs)PlaybackController"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "PlaybackConfiguration",
+                "printedName": "PlaybackKit.PlaybackConfiguration",
+                "hasDefaultArg": true,
+                "usr": "s:11PlaybackKit0A13ConfigurationV"
+              }
+            ],
+            "declKind": "Constructor",
+            "usr": "s:11PlaybackKit0A10ControllerC13configurationAcA0A13ConfigurationV_tcfc",
+            "mangledName": "$s11PlaybackKit0A10ControllerC13configurationAcA0A13ConfigurationV_tcfc",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "Custom",
               "AccessControl",
               "RawDocComment"
             ],
@@ -1708,6 +5726,65 @@
             ],
             "throwing": true,
             "init_kind": "Convenience"
+          },
+          {
+            "kind": "Function",
+            "name": "setPayload",
+            "printedName": "setPayload(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "PlaybackPayload",
+                "printedName": "PlaybackKit.PlaybackPayload",
+                "usr": "s:11PlaybackKit0A7PayloadV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:11PlaybackKit0A10ControllerC10setPayloadyyAA0aE0VKF",
+            "mangledName": "$s11PlaybackKit0A10ControllerC10setPayloadyyAA0aE0VKF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "Custom",
+              "Final",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "throwing": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "setPayload",
+            "printedName": "setPayload(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Data",
+                "printedName": "Foundation.Data",
+                "usr": "s:10Foundation4DataV"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:11PlaybackKit0A10ControllerC10setPayloadyy10Foundation4DataVF",
+            "mangledName": "$s11PlaybackKit0A10ControllerC10setPayloadyy10Foundation4DataVF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "Custom",
+              "Final",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
           },
           {
             "kind": "Function",
@@ -1776,6 +5853,66 @@
             "declKind": "Func",
             "usr": "s:11PlaybackKit0A10ControllerC10handleBackSbyYaF",
             "mangledName": "$s11PlaybackKit0A10ControllerC10handleBackSbyYaF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "Custom",
+              "Final",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "didShare",
+            "printedName": "didShare(activity:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "Swift.String?",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "String",
+                    "printedName": "Swift.String",
+                    "usr": "s:SS"
+                  }
+                ],
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:11PlaybackKit0A10ControllerC8didShare8activityySSSg_tF",
+            "mangledName": "$s11PlaybackKit0A10ControllerC8didShare8activityySSSg_tF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "Custom",
+              "Final",
+              "AccessControl",
+              "RawDocComment"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "didTakeScreenshot",
+            "printedName": "didTakeScreenshot()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:11PlaybackKit0A10ControllerC17didTakeScreenshotyyF",
+            "mangledName": "$s11PlaybackKit0A10ControllerC17didTakeScreenshotyyF",
             "moduleName": "PlaybackKit",
             "declAttributes": [
               "Custom",
@@ -2178,6 +6315,80 @@
             "declKind": "EnumElement",
             "usr": "s:11PlaybackKit0A5EventO5readyyACSaySSG_SStcACmF",
             "mangledName": "$s11PlaybackKit0A5EventO5readyyACSaySSG_SStcACmF",
+            "moduleName": "PlaybackKit",
+            "declAttributes": [
+              "RawDocComment"
+            ]
+          },
+          {
+            "kind": "Var",
+            "name": "loaded",
+            "printedName": "loaded",
+            "children": [
+              {
+                "kind": "TypeFunc",
+                "name": "Function",
+                "printedName": "(PlaybackKit.PlaybackEvent.Type) -> ([Swift.String], Swift.String) -> PlaybackKit.PlaybackEvent",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "([Swift.String], Swift.String) -> PlaybackKit.PlaybackEvent",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackEvent",
+                        "printedName": "PlaybackKit.PlaybackEvent",
+                        "usr": "s:11PlaybackKit0A5EventO"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "(pages: [Swift.String], archetype: Swift.String)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Array",
+                            "printedName": "[Swift.String]",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "String",
+                                "printedName": "Swift.String",
+                                "usr": "s:SS"
+                              }
+                            ],
+                            "usr": "s:Sa"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "String",
+                            "printedName": "Swift.String",
+                            "usr": "s:SS"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "TypeNominal",
+                    "name": "Metatype",
+                    "printedName": "PlaybackKit.PlaybackEvent.Type",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "PlaybackEvent",
+                        "printedName": "PlaybackKit.PlaybackEvent",
+                        "usr": "s:11PlaybackKit0A5EventO"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "declKind": "EnumElement",
+            "usr": "s:11PlaybackKit0A5EventO6loadedyACSaySSG_SStcACmF",
+            "mangledName": "$s11PlaybackKit0A5EventO6loadedyACSaySSG_SStcACmF",
             "moduleName": "PlaybackKit",
             "declAttributes": [
               "RawDocComment"
@@ -6089,6 +10300,139 @@
       "value": "\"pc-playback:\/\/app\/index.html\""
     },
     {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 2822,
+      "length": 17,
+      "value": "\"not_enough_data\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 2888,
+      "length": 17,
+      "value": "\"number_of_shows\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 2930,
+      "length": 12,
+      "value": "\"top_1_show\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 2968,
+      "length": 13,
+      "value": "\"top_5_shows\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 3007,
+      "length": 12,
+      "value": "\"best_month\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 3045,
+      "length": 12,
+      "value": "\"total_time\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 3084,
+      "length": 14,
+      "value": "\"year_vs_year\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 3129,
+      "length": 17,
+      "value": "\"completion_rate\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 3173,
+      "length": 13,
+      "value": "\"roles_intro\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 4320,
+      "length": 15,
+      "value": "\"avant_gardist\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 5083,
+      "length": 6,
+      "value": "\"true\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 5115,
+      "length": 7,
+      "value": "\"false\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 5205,
+      "length": 6,
+      "value": "\"none\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 5748,
+      "length": 3,
+      "value": "\"a\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 5773,
+      "length": 3,
+      "value": "\"b\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 5800,
+      "length": 3,
+      "value": "\"c\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 6253,
+      "length": 14,
+      "value": "\"close_button\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "StringLiteral",
+      "offset": 6399,
+      "length": 13,
+      "value": "\"back_button\""
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "kind": "BooleanLiteral",
+      "offset": 8854,
+      "length": 5,
+      "value": "false"
+    },
+    {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackConfiguration.swift",
       "kind": "Dictionary",
       "offset": 422,
@@ -6119,30 +10463,65 @@
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "BooleanLiteral",
-      "offset": 867,
+      "offset": 1712,
+      "length": 5,
+      "value": "false"
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "kind": "BooleanLiteral",
+      "offset": 1848,
       "length": 5,
       "value": "false"
     },
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "Array",
-      "offset": 954,
+      "offset": 1935,
       "length": 2,
       "value": "[]"
     },
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "IntegerLiteral",
-      "offset": 4337,
+      "offset": 2032,
+      "length": 1,
+      "value": "0"
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "kind": "IntegerLiteral",
+      "offset": 2302,
+      "length": 1,
+      "value": "0"
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "kind": "IntegerLiteral",
+      "offset": 8731,
       "length": 4,
       "value": "1080"
     },
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "IntegerLiteral",
-      "offset": 4351,
+      "offset": 8745,
       "length": 4,
       "value": "1920"
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "kind": "IntegerLiteral",
+      "offset": 12384,
+      "length": 11,
+      "value": "300000000"
+    },
+    {
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "kind": "FloatLiteral",
+      "offset": 12453,
+      "length": 3,
+      "value": "0.2"
     },
     {
       "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",

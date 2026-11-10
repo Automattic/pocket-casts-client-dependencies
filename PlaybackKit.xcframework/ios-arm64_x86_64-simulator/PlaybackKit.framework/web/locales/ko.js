@@ -20,6 +20,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': '팟캐스트로 돌아보는 올해. 함께 살펴볼까요?',
+  'intro.loading': '나만의 경험을 불러오는 중입니다…',
   'intro.body': '어떤 에피소드를 들었는지, 어떤 팟캐스트를 사랑했는지, 그리고 어떤 청취자인지까지.',
 
   'count.shows': { other: '팟캐스트 {count}개' },
@@ -80,6 +81,7 @@ export default {
   'archetype.flaneur.body': '왕성한 청취자. 수천 개의 팟캐스트를 두루 누비며 다음 최애를 찾아 나섭니다.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': '나의 Playback {year}',
   'summary.cards': '나의 Playback 카드',
   'summary.card': '카드 {count}장 중 {index}번째',
   'summary.topShows': 'TOP 팟캐스트',

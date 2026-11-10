@@ -20,6 +20,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'Este es tu año en pódcast. ¿Empezamos?',
+  'intro.loading': 'Cargando tu experiencia…',
   'intro.body': 'Lo que has escuchado. Los pódcast que te han encantado. Lo que te distingue como oyente.',
 
   'count.shows': { one: '{count} pódcast', other: '{count} pódcast' },
@@ -80,6 +81,7 @@ export default {
   'archetype.flaneur.body': 'Escuchas con un apetito voraz y exploras sin rumbo fijo para dar con tu próximo favorito entre miles.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'Mi Playback {year}',
   'summary.cards': 'Tus tarjetas de Playback',
   'summary.card': 'Tarjeta {index} de {count}',
   'summary.topShows': 'Top pódcast',

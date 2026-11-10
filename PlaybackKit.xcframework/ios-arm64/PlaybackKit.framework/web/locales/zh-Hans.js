@@ -18,6 +18,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': '这是您的年度播客回顾。准备好一探究竟了吗？',
+  'intro.loading': '正在加载您的专属体验…',
   'intro.body': '您听了什么，爱上了哪些播客，又是什么让您成为与众不同的听众。',
 
   'count.shows': { other: '{count} 个播客' },
@@ -78,6 +79,7 @@ export default {
   'archetype.flaneur.body': '您是如饥似渴的听众，四处漫游，在成千上万的播客中寻找下一个心头好。',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': '我的 Playback {year}',
   'summary.cards': '您的 Playback 卡片',
   'summary.card': '第 {index} 张卡片，共 {count} 张',
   'summary.topShows': '热门播客',

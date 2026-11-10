@@ -322,9 +322,11 @@ export function startPerf(controller, { dwellMs = 15000, loops = 1, only = null,
     for (let guard = 0; guard < 60 && !stopped; guard++) {
       const page = flow.getPage();
       const id = page.id;
-      // The intro's timed steps are watched to their last step, then a moment longer.
+      // The intro's timed steps are watched to its title, then a moment longer.
       await watch(id, n);
       if (!flow.stepsDone()) await until(() => flow.stepsDone());
+      // Watched longer than it lasts, the intro has moved on by itself.
+      if (flow.getPage().id !== id) continue;
       if (page.quiz && !flow.answers()[id]?.revealed) {
         const options = page.quiz.options;
         dispatch({ type: 'select', optionId: (options.find((o) => o.id !== page.quiz.answerId) ?? options[0]).id });

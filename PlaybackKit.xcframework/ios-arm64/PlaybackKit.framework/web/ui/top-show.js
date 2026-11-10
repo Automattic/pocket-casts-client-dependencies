@@ -115,7 +115,7 @@ export function topShowView(ctx) {
   function setVerdict() {
     const a = ctx.answer;
     const head = !quiz ? t('topPodcast.direct') : a.correct == null ? t('topPodcast.timeout') : a.correct ? t('topPodcast.correct') : t('topPodcast.wrong');
-    verdict.replaceChildren(h('span', null, head), h('br'), h('span', null, t('topPodcast.episodes', { episodes: t('count.episodes', { count: top.episodesPlayed }) })));
+    verdict.replaceChildren(h('span', null, head), h('span', null, t('topPodcast.episodes', { episodes: t('count.episodes', { count: top.episodesPlayed }) })));
   }
 
   /** Off the guess, onto the reveal: the page's CSS plays the rest from now. */

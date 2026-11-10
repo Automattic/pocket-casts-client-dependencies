@@ -21,6 +21,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'Ecco il tuo anno in podcast. Iniziamo?',
+  'intro.loading': 'Caricamento della tua esperienza…',
   'intro.body': 'Cosa hai ascoltato. I podcast che hai amato. Cosa ti distingue da tutti gli altri.',
 
   'count.shows': { one: '{count} podcast', other: '{count} podcast' },
@@ -87,6 +88,7 @@ export default {
   'archetype.flaneur.body': 'Hai una fame insaziabile di ascolti: vaghi in lungo e in largo per trovare il tuo prossimo podcast del cuore tra migliaia.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'Il mio Playback {year}',
   'summary.cards': 'Le tue schede Playback',
   'summary.card': 'Scheda {index} di {count}',
   'summary.topShows': 'Top podcast',

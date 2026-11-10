@@ -19,6 +19,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'Her er podcaståret ditt. Klar til å dykke inn?',
+  'intro.loading': 'Laster inn opplevelsen din…',
   'intro.body': 'Det du lyttet til. Podcastene du elsket. Det som gjør deg unik som lytter.',
 
   'count.shows': { one: '{count} podcast', other: '{count} podcaster' },
@@ -79,6 +80,7 @@ export default {
   'archetype.flaneur.body': 'Du lytter umettelig og streifer vidt og bredt for å finne din neste favoritt blant tusenvis.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'Min Playback {year}',
   'summary.cards': 'Playback-kortene dine',
   'summary.card': 'Kort {index} av {count}',
   'summary.topShows': 'Favorittpodcaster',

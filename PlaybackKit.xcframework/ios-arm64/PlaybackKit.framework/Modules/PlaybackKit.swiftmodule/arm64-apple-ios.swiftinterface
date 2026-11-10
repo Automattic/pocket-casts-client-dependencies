@@ -11,6 +11,139 @@ import _Concurrency
 import _StringProcessing
 import _SwiftConcurrencyShims
 import _WebKit_SwiftUI
+public enum PlaybackAnalyticsEvent : Swift::Equatable, Swift::Sendable {
+  case archetypeAssigned(archetype: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Archetype)
+  case storyShown(story: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story, index: Swift::Int, count: Swift::Int, revisit: Swift::Bool)
+  case quizRevealed(story: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story, correct: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::QuizResult, reason: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::RevealReason)
+  case storyShare(story: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story, variant: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::SummaryVariant?)
+  case storyShared(story: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story, from: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::ShareSource, activity: Swift::String?, variant: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::SummaryVariant?)
+  case replayButtonTapped
+  case storiesDismissed(source: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::DismissSource, story: PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story?, finished: Swift::Bool)
+  case storiesFailedToLoad
+  public enum Story : Swift::String, Swift::CaseIterable, Swift::Sendable {
+    case notEnoughData
+    case cover
+    case numberOfShows
+    case top1Show
+    case top5Shows
+    case bestMonth
+    case totalTime
+    case yearVsYear
+    case completionRate
+    case rolesIntro
+    case archetype
+    case summary
+    case ending
+    case unknown
+    public init(pageID: Swift::String)
+    public init?(rawValue: Swift::String)
+    public typealias AllCases = [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story]
+    public typealias RawValue = Swift::String
+    nonisolated public static var allCases: [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story] {
+      get
+    }
+    public var rawValue: Swift::String {
+      get
+    }
+  }
+  public enum Archetype : Swift::String, Swift::CaseIterable, Swift::Sendable {
+    case collector
+    case avantGardist
+    case aficionado
+    case anthologist
+    case flaneur
+    case unknown
+    public init(id: Swift::String)
+    public init?(rawValue: Swift::String)
+    public typealias AllCases = [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Archetype]
+    public typealias RawValue = Swift::String
+    nonisolated public static var allCases: [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Archetype] {
+      get
+    }
+    public var rawValue: Swift::String {
+      get
+    }
+  }
+  public enum QuizResult : Swift::String, Swift::CaseIterable, Swift::Sendable {
+    case correct
+    case incorrect
+    case noGuess
+    public init?(rawValue: Swift::String)
+    public typealias AllCases = [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::QuizResult]
+    public typealias RawValue = Swift::String
+    nonisolated public static var allCases: [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::QuizResult] {
+      get
+    }
+    public var rawValue: Swift::String {
+      get
+    }
+  }
+  public enum RevealReason : Swift::String, Swift::CaseIterable, Swift::Sendable {
+    case confirmed
+    case timeout
+    case unknown
+    public init?(rawValue: Swift::String)
+    public typealias AllCases = [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::RevealReason]
+    public typealias RawValue = Swift::String
+    nonisolated public static var allCases: [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::RevealReason] {
+      get
+    }
+    public var rawValue: Swift::String {
+      get
+    }
+  }
+  public enum SummaryVariant : Swift::String, Swift::CaseIterable, Swift::Sendable {
+    case grid
+    case stack
+    case bubbles
+    case unknown
+    public init?(rawValue: Swift::String)
+    public typealias AllCases = [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::SummaryVariant]
+    public typealias RawValue = Swift::String
+    nonisolated public static var allCases: [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::SummaryVariant] {
+      get
+    }
+    public var rawValue: Swift::String {
+      get
+    }
+  }
+  public enum ShareSource : Swift::String, Swift::CaseIterable, Swift::Sendable {
+    case button
+    case screenshot
+    public init?(rawValue: Swift::String)
+    public typealias AllCases = [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::ShareSource]
+    public typealias RawValue = Swift::String
+    nonisolated public static var allCases: [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::ShareSource] {
+      get
+    }
+    public var rawValue: Swift::String {
+      get
+    }
+  }
+  public enum DismissSource : Swift::String, Swift::CaseIterable, Swift::Sendable {
+    case closeButton
+    case backButton
+    case error
+    public init?(rawValue: Swift::String)
+    public typealias AllCases = [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::DismissSource]
+    public typealias RawValue = Swift::String
+    nonisolated public static var allCases: [PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::DismissSource] {
+      get
+    }
+    public var rawValue: Swift::String {
+      get
+    }
+  }
+  public static func == (a: PlaybackKit::PlaybackAnalyticsEvent, b: PlaybackKit::PlaybackAnalyticsEvent) -> Swift::Bool
+}
+extension PlaybackKit::PlaybackAnalyticsEvent {
+  public var name: Swift::String {
+    get
+  }
+  public var properties: [Swift::String : Swift::String] {
+    get
+  }
+}
 public struct PlaybackConfiguration : Swift::Sendable {
   public var startAt: Swift::String?
   public var restoredAnswers: [Swift::String : PlaybackKit::PlaybackAnswer]
@@ -30,15 +163,21 @@ public struct PlaybackAnswer : Swift::Equatable, Swift::Sendable {
 }
 @objc @_Concurrency::MainActor final public class PlaybackController : ObjectiveC::NSObject {
   @_Concurrency::MainActor final public var onEvent: ((PlaybackKit::PlaybackEvent) -> Swift::Void)?
+  @_Concurrency::MainActor final public var onAnalyticsEvent: ((PlaybackKit::PlaybackAnalyticsEvent) -> Swift::Void)?
   @_Concurrency::MainActor final public var webView: WebKit::WKWebView {
     get
   }
-  @_Concurrency::MainActor public init(payload: Foundation::Data, configuration: PlaybackKit::PlaybackConfiguration = .init())
+  @_Concurrency::MainActor convenience public init(payload: Foundation::Data, configuration: PlaybackKit::PlaybackConfiguration = .init())
+  @_Concurrency::MainActor public init(configuration: PlaybackKit::PlaybackConfiguration = .init())
   @objc deinit
   @_Concurrency::MainActor convenience public init(payload: PlaybackKit::PlaybackPayload, configuration: PlaybackKit::PlaybackConfiguration = .init()) throws
+  @_Concurrency::MainActor final public func setPayload(_ payload: PlaybackKit::PlaybackPayload) throws
+  @_Concurrency::MainActor final public func setPayload(_ payload: Foundation::Data)
   @_Concurrency::MainActor final public func load()
   @_Concurrency::MainActor final public func goTo(pageID: Swift::String)
   @_Concurrency::MainActor final public func handleBack() async -> Swift::Bool
+  @_Concurrency::MainActor final public func didShare(activity: Swift::String?)
+  @_Concurrency::MainActor final public func didTakeScreenshot()
   @discardableResult
   @_Concurrency::MainActor final public func setCaptureMode(_ on: Swift::Bool) async -> CoreFoundation::CGRect?
   @_Concurrency::MainActor public static let shareImageSize: CoreFoundation::CGSize
@@ -50,6 +189,7 @@ extension PlaybackKit::PlaybackController : WebKit::WKNavigationDelegate {
 }
 public enum PlaybackEvent : Swift::Equatable, Swift::Sendable {
   case ready(pages: [Swift::String], archetype: Swift::String)
+  case loaded(pages: [Swift::String], archetype: Swift::String)
   case page(pageID: Swift::String, index: Swift::Int, count: Swift::Int, revisit: Swift::Bool)
   case select(pageID: Swift::String, optionID: Swift::String)
   case reveal(pageID: Swift::String, selectedID: Swift::String?, answerID: Swift::String, correct: Swift::Bool?, reason: Swift::String)
@@ -119,5 +259,26 @@ public struct PlaybackPayload : Swift::Codable, Swift::Equatable, Swift::Sendabl
   public typealias Coordinator = Swift::Void
   public typealias UIViewType = WebKit::WKWebView
 }
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story : Swift::Equatable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story : Swift::Hashable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Story : Swift::RawRepresentable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Archetype : Swift::Equatable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Archetype : Swift::Hashable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::Archetype : Swift::RawRepresentable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::QuizResult : Swift::Equatable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::QuizResult : Swift::Hashable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::QuizResult : Swift::RawRepresentable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::RevealReason : Swift::Equatable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::RevealReason : Swift::Hashable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::RevealReason : Swift::RawRepresentable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::SummaryVariant : Swift::Equatable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::SummaryVariant : Swift::Hashable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::SummaryVariant : Swift::RawRepresentable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::ShareSource : Swift::Equatable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::ShareSource : Swift::Hashable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::ShareSource : Swift::RawRepresentable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::DismissSource : Swift::Equatable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::DismissSource : Swift::Hashable {}
+extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::DismissSource : Swift::RawRepresentable {}
 extension PlaybackKit::PlaybackController : Swift::Sendable {}
 extension PlaybackKit::PlaybackView : Swift::Sendable {}

@@ -94,6 +94,6 @@ For the writing team, design and the reviewers; none is a translation's to settl
 | `completion.*` | "You got all the way to the end of 62% of your podcasts" (podcasts = episodes here), then "From the 310 episodes you started, you completed 192 of them." |
 | `rolesIntro.*` | before the personality: "Those are your numbers. But what’s your podcast personality?" / "Let’s take a look" |
 | `archetype.*` | "Your personality is..", then one of five names (big, gradient) and its sentence |
-| `summary.*` | three swipeable cards: the title, card labels, the top shows as "1.Title", the role, the footer `Playback’26`, Share and Skip |
+| `summary.*` | three swipeable cards: the title, card labels, the top shows as "1.Title", the role, the footer `Playback’26`, Share and Skip; `summary.shareTitle` titles the card when it is shared, as a story of its own ("My Playback 2026", 24 pt, centred, one line where it can) |
 | `outro.*` | the last screen: thanks, a nudge to share, Play again |
 | `empty.*`, `error.*` | when there is not enough listening, or the data could not be read |

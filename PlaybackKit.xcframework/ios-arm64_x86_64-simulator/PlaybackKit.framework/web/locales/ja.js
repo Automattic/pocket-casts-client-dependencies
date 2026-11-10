@@ -19,6 +19,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'ポッドキャストと過ごした、あなたの1年。さっそく振り返ってみませんか？',
+  'intro.loading': 'あなただけの体験を読み込んでいます…',
   'intro.body': '聴いたもの。好きになったポッドキャスト。そして、リスナーとしてのあなたらしさ。',
 
   'count.shows': { other: '{count}番組' },
@@ -79,6 +80,7 @@ export default {
   'archetype.flaneur.body': '好奇心旺盛なリスナー。何千もの番組をあちこち巡りながら、次のお気に入りを探し続けています。',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': '私のPlayback {year}',
   'summary.cards': 'あなたのPlaybackカード',
   'summary.card': '{count}枚中{index}枚目のカード',
   'summary.topShows': 'トップ番組',

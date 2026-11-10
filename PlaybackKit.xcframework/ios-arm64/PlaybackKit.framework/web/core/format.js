@@ -7,10 +7,18 @@ const formatters = new Map();
 function formatter(kind, locale, options) {
   const key = `${kind}|${locale}`;
   let f = formatters.get(key);
-  if (!f) formatters.set(key, (f = kind === 'number' ? new Intl.NumberFormat(locale) : new Intl.DateTimeFormat(locale, options)));
+  if (!f) formatters.set(key, (f = kind === 'number' ? new Intl.NumberFormat(locale, NUMBER) : new Intl.DateTimeFormat(locale, options)));
   return f;
 }
 
+// Every number from 1,000 up gets its thousands separator, the locale's own. Without
+// 'always', languages whose rules only group from five digits (Spanish, Italian, Polish,
+// European Portuguese) print "4926" but "49.260"; the design wants every figure grouped.
+// An engine before Intl.NumberFormat v3 (iOS 15.4, Chrome 106) reads 'always' as true:
+// the locale's own grouping, as before.
+const NUMBER = { useGrouping: 'always' };
+
+/** A number in the locale's digits and separators, grouped from 1,000 ("4.926" in Spanish). */
 export function formatNumber(n, locale = 'en') {
   return formatter('number', locale).format(n);
 }

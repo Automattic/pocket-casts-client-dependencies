@@ -51,3 +51,6 @@ export function resolveRules(overrides = {}) {
 }
 
 export const SUMMARY_VARIANTS = Object.freeze(['a', 'b', 'c']);
+
+/** The year the intro's title names while the host's data, which says it, is still to come. */
+export const PLAYBACK_YEAR = 2026;

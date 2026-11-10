@@ -20,6 +20,14 @@ export function installApi(controller, env = {}, backdrop = null) {
       return true;
     },
     restart: () => controller.dispatch({ type: 'restart' }),
+    /**
+     * The payload, when the host opened the story before it had it (`PLAYBACK_ENV.pending`):
+     * the rest of the story comes in, and if moving on was waiting for it (the intro's title,
+     * as Intro 5), the story moves on. A payload the page cannot read shows its error state.
+     * Returns true when the story took it; false when it was rejected, or the story already
+     * has its data (only the first call counts).
+     */
+    setData: (payload) => controller.load(payload).ok,
     /** Safe-area insets in CSS px. Android WebViews report env(safe-area-inset-*) as 0. */
     setInsets({ top = 0, right = 0, bottom = 0, left = 0 } = {}) {
       const s = document.documentElement.style;
@@ -50,7 +58,8 @@ export function installApi(controller, env = {}, backdrop = null) {
     state() {
       const s = controller.flow.getState();
       const page = controller.flow.getPage();
-      return { pageId: page.id, index: s.index, count: controller.flow.pages.length, step: controller.flow.step()?.id ?? null, stepsDone: controller.flow.stepsDone(), answers: controller.flow.answers(), finished: s.finished, summaryVariant: s.summaryVariant };
+      const { flow } = controller;
+      return { pageId: page.id, index: s.index, count: flow.count(), step: flow.step()?.id ?? null, stepsDone: flow.stepsDone(), canGoNext: flow.canGoNext(), answers: flow.answers(), finished: s.finished, summaryVariant: s.summaryVariant, pending: flow.isPending(), waiting: flow.isWaiting() };
     },
     /** Rig only. Tells the host (`autoplayDone`, a dev-only message) when the walkthrough ends. */
     autoplay(opts) {

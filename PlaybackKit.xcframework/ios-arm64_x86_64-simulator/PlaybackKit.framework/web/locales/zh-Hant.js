@@ -19,6 +19,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': '這是你的 Podcast 年度回顧。準備好一起來看看了嗎？',
+  'intro.loading': '正在載入你的專屬體驗…',
   'intro.body': '你聽了什麼、愛上了哪些 Podcast，還有你身為聽眾的獨特之處。',
 
   'count.shows': { other: '{count} 個 Podcast' },
@@ -79,6 +80,7 @@ export default {
   'archetype.flaneur.body': '你是如飢似渴的聽眾，四處漫遊，在成千上萬個節目中尋找下一個心頭好。',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': '我的 Playback {year}',
   'summary.cards': '你的 Playback 卡片',
   'summary.card': '第 {index} 張卡片，共 {count} 張',
   'summary.topShows': '最愛 Podcast',

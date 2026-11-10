@@ -19,6 +19,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'Dit was jouw podcastjaar. Klaar om erin te duiken?',
+  'intro.loading': 'Je ervaring wordt geladen…',
   'intro.body': 'Waar je naar luisterde. De podcasts waar je dol op was. Wat jou als luisteraar uniek maakt.',
 
   'count.shows': { one: '{count} podcast', other: '{count} podcasts' },
@@ -79,6 +80,7 @@ export default {
   'archetype.flaneur.body': 'Je krijgt geen genoeg van luisteren en zwerft heinde en ver om tussen duizenden je volgende favoriet te vinden.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'Mijn Playback {year}',
   'summary.cards': 'Je Playback-kaarten',
   'summary.card': 'Kaart {index} van {count}',
   'summary.topShows': 'Toppodcasts',

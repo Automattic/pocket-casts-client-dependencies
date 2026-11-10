@@ -20,6 +20,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'Här är ditt podcastår. Redo att dyka in?',
+  'intro.loading': 'Läser in din upplevelse…',
   'intro.body': 'Det du lyssnade på. De podcasts du älskade. Det som gör dig unik som lyssnare.',
 
   'count.shows': { one: '{count} podcast', other: '{count} podcasts' },
@@ -80,6 +81,7 @@ export default {
   'archetype.flaneur.body': 'Du lyssnar omättligt och strövar vida omkring för att hitta din nästa favorit bland tusentals.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'Min Playback {year}',
   'summary.cards': 'Dina Playback-kort',
   'summary.card': 'Kort {index} av {count}',
   'summary.topShows': 'Favoritpodcasts',

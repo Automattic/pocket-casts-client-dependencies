@@ -21,6 +21,9 @@ export const STRINGS = Object.freeze({
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'Here’s your year in podcasts. Ready to dig in?',
+  // In the tagline's place (Figma "Intro 5"), when moving on from the intro waits for the app
+  // to read the listening history (PCIOS-1324).
+  'intro.loading': 'Loading your experience…',
   'intro.body': 'What you listened to. The podcasts you loved. What sets you apart as a listener.',
 
   'count.shows': { one: '{count} show', other: '{count} shows' },
@@ -91,8 +94,9 @@ export const STRINGS = Object.freeze({
   'archetype.flaneur.body': 'You’re a voracious listener, wandering far and wide to find your next favorite among thousands.',
 
   // Figma's "Summary 1–3" (the P2's video titles it "Playback’26"; its role, "Specialist", is
-  // Figma's sample: each card draws the user's role).
+  // Figma's sample: each card draws the user's role). The share image's title is its share frames'.
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'My Playback {year}',
   'summary.cards': 'Your Playback cards',
   'summary.card': 'Card {index} of {count}',
   'summary.topShows': 'Top shows',

@@ -24,6 +24,7 @@ export default {
   'intro.logo': 'Pocket Casts',
   'intro.title': 'Playback {year}',
   'intro.tagline': 'Ваш год в подкастах. Готовы погрузиться?',
+  'intro.loading': 'Загружаем ваши итоги…',
   'intro.body': 'Что вы слушали. Какие подкасты полюбили. Чем вы выделяетесь среди слушателей.',
 
   'count.shows': { one: '{count} подкаст', few: '{count} подкаста', many: '{count} подкастов' },
@@ -92,6 +93,7 @@ export default {
   'archetype.flaneur.body': 'Вы слушаете запоем и забредаете далеко, чтобы среди тысяч подкастов найти новый любимый.',
 
   'summary.title': 'Playback {year}',
+  'summary.shareTitle': 'Мой Playback {year}',
   'summary.cards': 'Ваши карточки Playback',
   'summary.card': 'Карточка {index} из {count}',
   'summary.topShows': 'Топ подкастов',

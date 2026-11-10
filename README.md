@@ -10,6 +10,7 @@ Binary dependencies for the Pocket Casts clients: prebuilt libraries that iOS (S
 |---|---|
 | `0.1.0` | 0.1.0 |
 | `0.2.0` | 0.2.0 |
+| `0.3.0` | 0.3.0 |
 
 ## iOS (SwiftPM)
 
@@ -17,7 +18,7 @@ In Xcode: **File ▸ Add Package Dependencies…** and enter `https://github.com
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Automattic/pocket-casts-client-dependencies", from: "0.2.0"),
+    .package(url: "https://github.com/Automattic/pocket-casts-client-dependencies", from: "0.3.0"),
 ],
 targets: [
     .target(name: "MyApp", dependencies: [
@@ -49,7 +50,7 @@ and in the module:
 
 ```kotlin
 dependencies {
-    implementation("com.automattic.pocketcasts:playback:0.2.0")
+    implementation("com.automattic.pocketcasts:playback:0.3.0")
 }
 ```
 

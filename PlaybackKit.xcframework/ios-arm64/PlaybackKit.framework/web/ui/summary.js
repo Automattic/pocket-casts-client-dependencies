@@ -12,8 +12,10 @@
 // at `carry` of the finger's speed over its last `window` (fitted on the video's four swipes,
 // within 1.3 pt at every frame once the finger lifts). A tap on a side card, an arrow key or
 // the host's variant moves a card on the video's page move (its four moves as one curve).
-// Every move is a Web Animation of the track, so it runs on the compositor and the rig can
-// seek it; the backdrop reads where the cards are as it draws.
+// Every move is a Web Animation of the track's offset (`--sc-x`), so the rig can seek it. It
+// runs where the backdrop draws, not on the compositor: the backdrop reads where the cards are
+// as it draws their backgrounds, and a track moved on the compositor shows ahead of the canvas
+// by the frames the canvas takes to show, its copy and covers off their cards (POC-1024).
 
 import { h } from './dom.js';
 import { artwork } from './artwork.js';
@@ -114,7 +116,7 @@ export function summaryView(ctx) {
   const arts = [
     () => h('div', { class: 'sc-grid' }, d.grid.map((p, i) => h('div', { class: 'sc-cover', style: `--c: ${i % 3}; --r: ${Math.floor(i / 3)}` }, artwork(p)))),
     () => h('div', { class: 'sc-stack' }, d.stack.map((p, i) => h('div', { class: 'sc-cover', 'data-slot': String(3 - i) }, artwork(p))).reverse()),
-    () => h('div', { class: 'sc-bubbles', 'aria-hidden': 'true' }, SUMMARY_BUBBLES.map((b, i) => h('div', { class: 'sc-bubble', 'data-bubble': String(i), style: `--x: ${b.x}; --y: ${b.y}; --d: ${b.size}` }))),
+    () => h('div', { class: 'sc-bubbles', 'aria-hidden': 'true' }, SUMMARY_BUBBLES.map((b, i) => h('div', { class: 'sc-bubble', 'data-bubble': String(i), style: `--x: ${b.x}; --y: ${b.y}; --d: ${b.size}; --sx: ${b.share.x}; --sy: ${b.share.y}; --sd: ${b.share.size}` }))),
   ];
   const cards = SUMMARY_VARIANTS.map((v, k) => h('section', {
     class: 'sc-card',
@@ -132,6 +134,7 @@ export function summaryView(ctx) {
   const article = h('article', { class: 'page page-summary', 'data-page': page.id },
     h('img', { class: 'sc-logo', src: 'assets/logo.svg', alt: '', width: '31', height: '31' }),
     h('h1', { class: 'story-title sc-title', tabindex: '-1', 'data-testid': 'title' }, t('summary.title', { year: d.year })),
+    h('p', { class: 'sc-share-title' }, t('summary.shareTitle', { year: d.year })),
     deck,
     h('div', { class: 'sc-dots', 'aria-hidden': 'true' }, dots),
     h('button', { type: 'button', class: 'pill sc-share', 'data-testid': 'summary-share', onClick: () => dispatch({ type: 'share' }) }, t('summary.share')),
@@ -145,7 +148,7 @@ export function summaryView(ctx) {
 
   /** CSS pixels from one card to the next, as laid out now (Figma's 273 pt, scaled with the deck). */
   const pitch = () => Math.abs(cards[1].offsetLeft - cards[0].offsetLeft) || PITCH;
-  const transform = (s) => `translateX(${(-dir * s * pitch()).toFixed(3)}px)`;
+  const offset = (s) => `${(-dir * s * pitch()).toFixed(3)}px`;
   /** Where the track is, in cards, animated or not. */
   function position() {
     const m = getComputedStyle(track).transform;
@@ -158,7 +161,7 @@ export function summaryView(ctx) {
   /** Hold the track at `s` cards, still. */
   function hold(s) {
     stop();
-    track.style.transform = transform(s);
+    track.style.setProperty('--sc-x', offset(s));
     light();
   }
 
@@ -204,9 +207,9 @@ export function summaryView(ctx) {
     let animation;
     if (how === 'spring') {
       const course = springCourse(from - k, M.spring.carry * speed, M.spring);
-      animation = track.animate(course.map((u) => ({ transform: transform(k + u) })), { duration: ((course.length - 1) / 60) * 1000, easing: 'linear', fill: 'forwards' });
+      animation = track.animate(course.map((u) => ({ '--sc-x': offset(k + u) })), { duration: ((course.length - 1) / 60) * 1000, easing: 'linear', fill: 'forwards' });
     } else {
-      animation = track.animate([{ transform: transform(from) }, { transform: transform(k) }], { duration: M.page.duration * 1000, easing: css(M.page.ease), fill: 'forwards' });
+      animation = track.animate([{ '--sc-x': offset(from) }, { '--sc-x': offset(k) }], { duration: M.page.duration * 1000, easing: css(M.page.ease), fill: 'forwards' });
     }
     animation.finished.then(() => { if (target === k && !drag) hold(k); }, () => {});
     watch();
@@ -238,7 +241,7 @@ export function summaryView(ctx) {
     let s = drag.s - (dir * (e.clientX - drag.x)) / pitch();
     if (s < 0) s *= M.edge;
     else if (s > count - 1) s = count - 1 + (s - (count - 1)) * M.edge;
-    track.style.transform = transform(s);
+    track.style.setProperty('--sc-x', offset(s));
     light(s);
   });
   const end = (e) => {

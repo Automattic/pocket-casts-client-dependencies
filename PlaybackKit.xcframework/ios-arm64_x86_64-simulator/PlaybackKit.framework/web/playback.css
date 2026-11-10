@@ -109,16 +109,20 @@ body { touch-action: pan-y; }
   display: flex;
   gap: 2px;
 }
-/* The summary and Play again have none (Figma's chrome there is the close alone): it fades out
-   with the role's title on the way into the summary, and comes back with the intro once Play
-   again has gone (pages.js OUTRO_OUT). */
+/* The summary and Play again have none (Figma's chrome there is the close alone), nor the empty
+   page, drawn as Play again is: it fades out with the role's title on the way into the summary,
+   and comes back with the intro once Play again has gone (pages.js OUTRO_OUT). */
 .progress { transition: opacity 0.32s linear; }
-.pb-root:is([data-page='summary'], [data-page='outro']) .progress { opacity: 0; }
-.pb-root[data-page='summary'] .progress { transition-delay: 0.867s; }
+.pb-root:is([data-page='summary'], [data-page='outro'], [data-page='empty']) .progress { opacity: 0; }
+.pb-root[data-page='summary'] .progress { transition-delay: 0.5s; }
 .pb-root[data-page='summary'][data-reduce-motion] .progress { transition: opacity 0.25s linear; }
 .pb-root[data-page='intro'] .progress { transition-delay: 0.32s; }
-.seg { flex: 1; height: 2px; border-radius: 800px; background: var(--pb-track); }
-.seg.done { background: var(--pb-text); }
+/* Each segment fills from its leading edge as its page comes in (ui/app.js animates it); the
+   pages before are full. Scaled, not sized, so filling it never lays anything out. */
+.seg { flex: 1; height: 2px; border-radius: 800px; background: var(--pb-track); overflow: hidden; }
+.seg-fill { display: block; height: 100%; background: var(--pb-text); transform: scaleX(0); transform-origin: 0 50%; }
+.pb-root[dir='rtl'] .seg-fill { transform-origin: 100% 50%; }
+.seg.done .seg-fill { transform: scaleX(1); }
 
 .close {
   position: absolute;
@@ -166,6 +170,10 @@ body { touch-action: pan-y; }
 .share-bar[hidden] { display: none; }
 /* With a page that fades out as it leaves (app.js), the share button fades with it. */
 .share-bar[data-leaving] { animation: page-leave 0.25s linear forwards; pointer-events: none; }
+/* Handed over between two pages that both share (app.js `data-handover`), it is the same button
+   in the same place: it stays as it is, rather than fade out with the page and come in again
+   with the next (PCIOS-1258). Over each page's own way in for it, below. */
+.pb-root[data-page] .share-bar[data-handover]:not([data-leaving]) { animation: none; }
 
 /* Figma's white pill (the summary's Share, Play again). */
 .pill { width: 109px; height: 46px; padding: 0; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 100px; background: #fff; color: var(--pb-ground); font: 800 calc(14px * var(--text-scale))/normal var(--pb-font); cursor: pointer; }
@@ -224,10 +232,15 @@ body { touch-action: pan-y; }
    with a Latin word (src/locales/README.md). */
 .pb-root :is(h1, h2, p, li, button, .share-bar span) { unicode-bidi: plaintext; }
 
+/* Every page's headline is at most 320 pt wide, centred, its lines balanced (POC-1021): across the
+   screen's width a translation ran nearly edge to edge with its last word alone on the next line.
+   Balanced lines need iOS 17.5 and Chromium 114 (Android's WebView); before them a line breaks as it fills. */
 .story-title {
+  max-width: 320px;
   margin: 0 auto;
   font: 800 calc(20px * var(--text-scale))/1.3 var(--pb-font);
   text-align: center;
+  text-wrap: balance;
   outline: none;
   overflow-wrap: anywhere;
 }
@@ -260,7 +273,7 @@ body { touch-action: pan-y; }
    animates them through the deck, scaled about their top centre), so they move on the
    compositor. The page comes in once the intro's tagline has gone (STACK_MOTION). */
 .page-shows-and-episodes { padding: 31.5px 22px 0; }
-.page-shows-and-episodes .story-title { max-width: 349px; animation: pb-fade-in 0.27s linear 0.56s both; }
+.page-shows-and-episodes .story-title { animation: pb-fade-in 0.27s linear 0.56s both; }
 /* Moving on, it fades out (0.25 s) before the top show comes in over the same wave. */
 .page.page-shows-and-episodes[data-leaving] {
   inset: calc(var(--chrome-top) + var(--chrome-height)) var(--safe-right) calc(var(--share-bottom) + var(--share-height) + 16px) var(--safe-left);
@@ -319,9 +332,11 @@ body { touch-action: pan-y; }
 }
 .pb-root[data-page='top-podcast'] .stage { overflow: visible; }
 .page-top-podcast > * { position: absolute; margin: 0; }
-.tp-ask, .tp-verdict { top: calc(var(--chrome-top) + 60px); left: 18px; right: 18px; max-width: 357px; margin-inline: auto; }
-/* Figma's place for the hint is under two lines of title; a longer translation moves it down
-   (--title-extra, ui/dom.js). */
+.tp-ask, .tp-verdict { top: calc(var(--chrome-top) + 60px); left: 18px; right: 18px; margin-inline: auto; }
+/* The verdict's two lines are blocks, as the top month's are: Chromium does not balance lines across a forced break. */
+.tp-verdict > span { display: block; }
+/* Figma's place for the hint is under two lines of title; a longer one (the English too, in 320 pt)
+   moves it down (--title-extra, ui/dom.js). */
 .tp-hint { top: calc(var(--chrome-top) + 124px + var(--title-extra, 0px)); left: 0; right: 0; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
 .tp-slot, .tp-cover { left: calc(50% + 0.5px - var(--size) / 2); top: calc(var(--cy) - var(--size) / 2); width: var(--size); height: var(--size); }
 .tp-slot { visibility: hidden; pointer-events: none; }
@@ -428,7 +443,7 @@ body { touch-action: pan-y; }
    card as one (its cover, its panel and its text), the share button last. Times are
    from the page's start, when the wave starts to fade in and the top show to fade out. */
 .page-top-shows { padding-top: 23.5px; }
-.page-top-shows .story-title { max-width: 261px; --rise: 16.79px; animation: pb-fade-in 0.214s linear 0.2s both, tp-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) 0.2s both; }
+.page-top-shows .story-title { --rise: 16.79px; animation: pb-fade-in 0.214s linear 0.2s both, tp-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) 0.2s both; }
 .top-list {
   list-style: none;
   margin: 32.5px 0 0;
@@ -472,14 +487,11 @@ body { touch-action: pan-y; }
 .pb-root[dir='rtl'] :is(.top-author, .top-title) { text-align: right; }
 .top-author { font: 600 calc(14px * var(--text-scale))/normal var(--pb-font); }
 .top-title { font: 800 calc(16px * var(--text-scale))/1.2 var(--pb-font); }
-/* The share button comes in last (0.866 s). Handed over from the top show, it first
-   fades out with it, where it is. Its own names, so it comes in again rather than carry
-   on from the top show's. */
+/* The share button comes in last (0.866 s), unless it is handed over (above). Its own names,
+   so it comes in again rather than carry on from another page's. */
 @keyframes tf-share-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes tf-share-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
-@keyframes tf-share-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 0; } }
 .pb-root[data-page='top-shows'] .share-bar:not([data-leaving]) { --rise: 7.48px; animation: tf-share-in 0.272s linear 0.866s both, tf-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) 0.931s both; }
-.pb-root[data-page='top-shows'] .share-bar[data-handover]:not([data-leaving]) { animation: tf-share-in 0.272s linear 0.866s both, tf-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) 0.931s both, tf-share-out 0.25s linear; }
 [data-reduce-motion] .page-top-shows *, [data-reduce-motion][data-page='top-shows'] .share-bar { animation: none !important; }
 
 /* Moving on to the top month, the top 5 falls away as its video's does (measured from its
@@ -512,8 +524,7 @@ body { touch-action: pan-y; }
 .page-best-month { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --tm-in: 0.7s; }
 .pb-root[data-page='best-month'] .stage { overflow: visible; }
 .page-best-month > * { position: absolute; margin: 0; }
-.tm-ask, .tm-verdict { top: calc(var(--chrome-top) + 60px); left: 0; right: 0; max-width: 361px; margin-inline: auto; }
-.tm-verdict { max-width: 357px; }
+.tm-ask, .tm-verdict { top: calc(var(--chrome-top) + 60px); left: 0; right: 0; margin-inline: auto; }
 .tm-verdict > span { display: block; }
 .tm-hint { top: calc(var(--chrome-top) + 124px + var(--title-extra, 0px)); left: 0; right: 0; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
 .tm-grid { top: calc(var(--chrome-top) + 144px + var(--title-extra, 0px)); bottom: calc(var(--share-bottom) + 42px); left: 0; right: 0; container-type: size; --u: 1px; }
@@ -604,30 +615,28 @@ body { touch-action: pan-y; }
    (`.mn-number`, its whole width: 53 pt below the copy, 76 pt above the share button),
    where the backdrop draws Creative Lab's 06 with the user's minutes (ui/backdrop.js
    anchors it there, pages.js minutesBackdrop). The page comes in as the top 5 does, from
-   `--in-at` (0.32 s after the tap, once the top month has gone; 0.7 s after the top 5,
+   `--in-at` (0.1 s after the tap, as the top month fades out; 0.7 s after the top 5,
    `data-after`, pages.js MINUTES_IN and TOP_MONTH_IN):
    the number fading in from the ground (the backdrop's), the copy, the share button last. */
 .page-total-minutes { padding: 24px 22px 0; }
-.page-total-minutes .story-title { max-width: 349px; --rise: 16.79px; animation: pb-fade-in 0.214s linear calc(var(--in-at) + 0.2s) both, tp-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.2s) both; }
+.page-total-minutes .story-title { --rise: 16.79px; animation: pb-fade-in 0.214s linear calc(var(--in-at) + 0.2s) both, tp-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.2s) both; }
 .mn-number { flex: 1; min-height: 0; margin: 53px -22px 60px; }
-.pb-root[data-page='total-minutes'] { --in-at: 0.32s; }
+.pb-root[data-page='total-minutes'] { --in-at: 0.1s; }
 .pb-root[data-page='total-minutes']:has(.page-total-minutes[data-after='top-shows']) { --in-at: 0.7s; }
 /* Keyframes of its own: under the top month's names (the top 5's) it would carry on from
    there, finished, rather than come in again. */
 @keyframes mn-share-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes mn-share-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
-@keyframes mn-share-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 0; } }
 .pb-root[data-page='total-minutes'] .share-bar:not([data-leaving]) { --rise: 7.48px; animation: mn-share-in 0.272s linear calc(var(--in-at) + 0.866s) both, mn-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both; }
-/* Handed over from the top month, it first fades out with it, where it is, held there over
-   the rise's start (from the top 5, as the top 5's falls, fading out from 0.45 s). */
-.pb-root[data-page='total-minutes'] .share-bar[data-handover]:not([data-leaving]) { animation: mn-share-in 0.272s linear calc(var(--in-at) + 0.866s) both, mn-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both, mn-share-out 0.32s linear backwards; }
-.pb-root[data-page='total-minutes']:has(.page-total-minutes[data-after='top-shows']) .share-bar[data-handover]:not([data-leaving]) { animation: mn-share-in 0.272s linear calc(var(--in-at) + 0.866s) both, mn-share-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both, mn-share-out 0.2308s linear 0.4503s backwards; }
 [data-reduce-motion] .page-total-minutes *, [data-reduce-motion][data-page='total-minutes'] .share-bar:not([data-leaving]) { animation: none !important; }
 
 /* Moving on to the year comparison, total minutes fades out, everything together, linearly
    over 0.32 s, as the comparing video's own way out does (its number under it: pages.js
    comparisonBackdrop), and its share button with it, handed over. */
 .pb-root[data-page='year-comparison'] .page.page-total-minutes[data-leaving] { animation: page-leave 0.32s linear forwards; }
+/* Taken off the stage's flow as it leaves, it keeps the stage's padding, as the top 5 does:
+   without it, its copy jumps up under the progress bar as it fades. */
+.page.page-total-minutes[data-leaving] { inset: calc(var(--chrome-top) + var(--chrome-height)) var(--safe-right) calc(var(--share-bottom) + var(--share-height) + 16px) var(--safe-left); }
 
 /* Year comparison (Figma "Year comparison", moving as the P2's comparing video does,
    measured from it frame by frame; pages.js COMPARISON_MOTION). Figma's copy below the
@@ -636,15 +645,15 @@ body { touch-action: pan-y; }
    circle a year, sized by its listening and placed by pages.js comparisonLayout: a box the
    backdrop draws 07 in (`.yc-slot`, ui/backdrop.js anchors it), with the year and its
    listening on it, and Figma's two shades at the screen's edges, darkening the circles where
-   they leave it. The page comes in from `--in-at` (0.32 s after the tap, once total minutes
-   has gone: pages.js COMPARISON_IN): each label with its circle, fading in as it scales up
+   they leave it. The page comes in from `--in-at` (0.2 s into the video at the tap, as total
+   minutes fades out: pages.js COMPARISON_IN): each label with its circle, fading in as it scales up
    about its centre (each shade with the circle it darkens), then the copy rising in, the share button
    last. */
 .page-year-comparison { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; }
-.pb-root[data-page='year-comparison'] { --in-at: 0.32s; }
+.pb-root[data-page='year-comparison'] { --in-at: -0.2s; }
 .pb-root[data-page='year-comparison'] .stage { overflow: visible; }
 .page-year-comparison > * { position: absolute; margin: 0; }
-.page-year-comparison .story-title { z-index: 1; top: calc(var(--chrome-top) + 60px); left: 0; right: 0; max-width: 349px; margin-inline: auto; --rise: 7.676px; animation: yc-in 0.8913s cubic-bezier(0.567, 1.117, 0.105, 0.954) calc(var(--in-at) + 0.6187s) both, yc-rise 0.9199s cubic-bezier(0.236, -0.444, 0.088, 1.004) calc(var(--in-at) + 0.5372s) both; }
+.page-year-comparison .story-title { z-index: 1; top: calc(var(--chrome-top) + 60px); left: 0; right: 0; margin-inline: auto; --rise: 7.676px; animation: yc-in 0.8913s cubic-bezier(0.567, 1.117, 0.105, 0.954) calc(var(--in-at) + 0.6187s) both, yc-rise 0.9199s cubic-bezier(0.236, -0.444, 0.088, 1.004) calc(var(--in-at) + 0.5372s) both; }
 .yc-pair { top: calc(var(--chrome-top) + 112px); bottom: calc(var(--share-bottom) + 34px); left: 0; right: 0; container-type: size; --u: 1px; }
 @supports (width: 1cqh) { .yc-pair { --u: min(1px, calc(100cqw / 393), calc(100cqh / 606)); } }
 .yc-circle { position: absolute; left: calc(50% + (var(--x) - var(--r)) * var(--u)); top: calc(50% + (var(--y) - var(--r)) * var(--u)); width: calc(2 * var(--r) * var(--u)); height: calc(2 * var(--r) * var(--u)); }
@@ -661,10 +670,7 @@ body { touch-action: pan-y; }
 @keyframes yc-grow { from { scale: 0.9334; } to { scale: 1; } }
 @keyframes yc-share-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes yc-share-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
-@keyframes yc-share-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 0; } }
 .pb-root[data-page='year-comparison'] .share-bar:not([data-leaving]) { --rise: 8.19px; animation: yc-share-in 0.3429s linear calc(var(--in-at) + 0.6851s) both, yc-share-rise 0.7952s cubic-bezier(0.075, 0.364, 0.183, 1.019) calc(var(--in-at) + 0.7325s) both; }
-/* Handed over from total minutes, it first fades out with it, where it is. */
-.pb-root[data-page='year-comparison'] .share-bar[data-handover]:not([data-leaving]) { animation: yc-share-in 0.3429s linear calc(var(--in-at) + 0.6851s) both, yc-share-rise 0.7952s cubic-bezier(0.075, 0.364, 0.183, 1.019) calc(var(--in-at) + 0.7325s) both, yc-share-out 0.32s linear backwards; }
 [data-reduce-motion] .page-year-comparison *, [data-reduce-motion][data-page='year-comparison'] .share-bar:not([data-leaving]) { animation: none !important; }
 
 /* Moving on to the completion rate, the year comparison (or total minutes, without one) fades
@@ -679,15 +685,15 @@ body { touch-action: pan-y; }
    215–769 pt; on a smaller screen it scales down whole, in --u, as the comparison's does),
    Figma's box for the shape (`.cr-slot`, 361 × 362 pt, 39 pt above the middle of that space),
    where the backdrop draws 08 lit to the rate (ui/backdrop.js anchors it there, pages.js
-   completionBackdrop). The page comes in from `--in-at` (0.32 s after the tap, once the page
-   before has gone: pages.js COMPLETION_IN), as the video does: the shape whole fading in (the
+   completionBackdrop). The page comes in from `--in-at` (0.15 s into the video at the tap, as
+   the page before fades out: pages.js COMPLETION_IN), as the video does: the shape whole fading in (the
    backdrop's), the title, the share button and the line under the title fading in, the copy
    rising a little; then the shape is lit (the backdrop's). */
 .page-completion-rate { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; }
-.pb-root[data-page='completion-rate'] { --in-at: 0.32s; }
+.pb-root[data-page='completion-rate'] { --in-at: -0.15s; }
 .page-completion-rate > * { position: absolute; margin: 0; }
 .cr-copy { z-index: 1; top: calc(var(--chrome-top) + 60px); left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 22px; text-align: center; }
-.page-completion-rate .story-title { max-width: 349px; --rise: 4.68px; animation: cr-in 0.4781s cubic-bezier(0.325, 0.243, 0.78, 1) calc(var(--in-at) + 0.4155s) both, cr-rise 0.7261s cubic-bezier(0.161, 0.5, 0.334, 0.909) calc(var(--in-at) + 0.5012s) both; }
+.page-completion-rate .story-title { --rise: 4.68px; animation: cr-in 0.4781s cubic-bezier(0.325, 0.243, 0.78, 1) calc(var(--in-at) + 0.4155s) both, cr-rise 0.7261s cubic-bezier(0.161, 0.5, 0.334, 0.909) calc(var(--in-at) + 0.5012s) both; }
 .cr-detail { max-width: 349px; margin: 0; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); overflow-wrap: anywhere; --rise: 4.79px; animation: cr-in 0.4283s cubic-bezier(0.336, 0.267, 0, -0.042) calc(var(--in-at) + 0.563s) both, cr-rise 1.0712s cubic-bezier(0.21, 1.201, 0.756, 0.968) calc(var(--in-at) + 0.6395s) both; }
 .cr-area { top: calc(var(--chrome-top) + 164px); bottom: calc(var(--share-bottom) + var(--share-height)); left: 0; right: 0; container-type: size; --u: 1px; pointer-events: none; }
 @supports (width: 1cqh) { .cr-area { --u: min(1px, calc(100cqw / 393), calc(100cqh / 554)); } }
@@ -696,10 +702,7 @@ body { touch-action: pan-y; }
 @keyframes cr-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cr-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
 @keyframes cr-share-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes cr-share-out { from { opacity: 1; } to { opacity: 0; } }
 .pb-root[data-page='completion-rate'] .share-bar:not([data-leaving]) { animation: cr-share-in 0.368s cubic-bezier(0.559, 0.472, 0.723, 0.739) calc(var(--in-at) + 0.4577s) both; }
-/* Handed over from the page before, it first fades out with it, where it is. */
-.pb-root[data-page='completion-rate'] .share-bar[data-handover]:not([data-leaving]) { animation: cr-share-in 0.368s cubic-bezier(0.559, 0.472, 0.723, 0.739) calc(var(--in-at) + 0.4577s) both, cr-share-out 0.32s linear backwards; }
 [data-reduce-motion] .page-completion-rate *, [data-reduce-motion][data-page='completion-rate'] .share-bar:not([data-leaving]) { animation: none !important; }
 
 /* Moving on to roles intro, the page before (the completion rate, or the year comparison or
@@ -720,8 +723,8 @@ body { touch-action: pan-y; }
 .rl-glow-b { left: calc(100% - 616.006px); top: calc(50% - 488.568px); width: 714.372px; height: 712.977px; }
 
 /* Roles intro: centred on the screen, not between the chrome and the share button. It comes in
-   once the page before has gone (0.32 s, pages.js ROLES_IN), the logos growing in as the role
-   video's do, then the title and the line under it as that video's title comes in, the line
+   as the page before fades out (0.1 s after the tap, pages.js ROLES_IN), the logos growing in as
+   the role video's do, then the title and the line under it as that video's title comes in, the line
    0.116 s after it, as the video's share button follows its title (designed: no video has this
    page). */
 .page-roles-intro {
@@ -733,8 +736,8 @@ body { touch-action: pan-y; }
   padding: 0 calc(var(--safe-right) + 18px) 0 calc(var(--safe-left) + 18px);
   text-align: center;
 }
-.page-roles-intro .story-title { max-width: 357px; --rise: 3.968px; animation: ri-in 0.3548s linear 0.7558s both, ri-rise 0.8775s cubic-bezier(0.0814, 0.4313, 0.2156, 1.0558) 0.82s both; }
-.roles-body { margin: 0; max-width: 357px; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); --rise: 3.968px; animation: ri-in 0.3548s linear 0.8718s both, ri-rise 0.8775s cubic-bezier(0.0814, 0.4313, 0.2156, 1.0558) 0.936s both; }
+.page-roles-intro .story-title { --rise: 3.968px; animation: ri-in 0.3548s linear 0.5358s both, ri-rise 0.8775s cubic-bezier(0.0814, 0.4313, 0.2156, 1.0558) 0.6s both; }
+.roles-body { margin: 0; max-width: 357px; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); --rise: 3.968px; animation: ri-in 0.3548s linear 0.6518s both, ri-rise 0.8775s cubic-bezier(0.0814, 0.4313, 0.2156, 1.0558) 0.716s both; }
 @keyframes ri-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ri-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
 [data-reduce-motion] .page-roles-intro * { animation: none !important; }
@@ -759,7 +762,7 @@ body { touch-action: pan-y; }
 @property --ar-shine { syntax: '<length>'; inherits: false; initial-value: -200px; }
 .page-archetype { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; }
 .page-archetype > :not(.rl-glows) { position: absolute; margin: 0; }
-.page-archetype .story-title { z-index: 1; top: calc(var(--chrome-top) + 60px); left: 0; right: 0; max-width: 269px; margin-inline: auto; --rise: 3.968px; animation: ar-fade-in 0.3548s linear 0.4358s both, ar-rise 0.8775s cubic-bezier(0.0814, 0.4313, 0.2156, 1.0558) 0.5s both; }
+.page-archetype .story-title { z-index: 1; top: calc(var(--chrome-top) + 60px); left: 0; right: 0; margin-inline: auto; --rise: 3.968px; animation: ar-fade-in 0.3548s linear 0.4358s both, ar-rise 0.8775s cubic-bezier(0.0814, 0.4313, 0.2156, 1.0558) 0.5s both; }
 .ar-role { z-index: 1; left: 50%; top: calc(50% - 0.5px); width: min(var(--w, 323px), calc(100% - 36px)); translate: -50% -50%; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .ar-role[data-role='avantGardist'] { --w: 343px; }
 .ar-role:is([data-role='aficionado'], [data-role='flaneur']) { --w: 317px; }
@@ -814,14 +817,13 @@ body { touch-action: pan-y; }
 /* The way out (on to the summary), the video's, from the tap: the name sweeps out from the left
    (each column over 0.44 s, 719 pt a second across), the line 0.21 s after it; the logos shrink
    back under the summary's cards (pages.js SUMMARY_BACKDROP); the title and the share button fade out
-   linearly over 0.32 s from 0.867 s. The summary shows once it has gone. */
+   linearly over 0.32 s from 0.5 s, and the summary comes in from 0.8 s as the logos shrink back. */
 .page.page-archetype[data-leaving] { animation: page-leave 0.01s linear 1.18s forwards; }
 .page-archetype[data-leaving] .ar-name { --sweep: 319.6px; -webkit-mask-image: linear-gradient(90deg, transparent calc(var(--ar-out) - var(--sweep)), #000 var(--ar-out)); mask-image: linear-gradient(90deg, transparent calc(var(--ar-out) - var(--sweep)), #000 var(--ar-out)); animation: ar-out 4.173s linear both, ar-shine 2.8s linear 1.8818s infinite; }
 .page-archetype[data-leaving] .ar-body { --sweep: 295.2px; -webkit-mask-image: linear-gradient(90deg, transparent calc(var(--ar-out) - var(--sweep)), #000 var(--ar-out)); mask-image: linear-gradient(90deg, transparent calc(var(--ar-out) - var(--sweep)), #000 var(--ar-out)); animation: ar-out 4.303s linear 0.2098s both, ar-shine 2.8s linear 1.7825s infinite; }
-.page-archetype[data-leaving] .story-title { animation: ar-fade-out 0.32s linear 0.867s both; }
+.page-archetype[data-leaving] .story-title { animation: ar-fade-out 0.32s linear 0.5s both; }
 /* The summary has a share button of its own: the story's fades out with the role, and stays out. */
-.pb-root[data-page='summary'] .share-bar[data-leaving] { animation: page-leave 0.32s linear 0.867s forwards; }
-.pb-root[data-page='summary']:has(.page-archetype[data-leaving]) .page-summary:not([data-leaving]) { visibility: hidden; }
+.pb-root[data-page='summary'] .share-bar[data-leaving] { animation: page-leave 0.32s linear 0.5s forwards; }
 [data-reduce-motion] .page.page-archetype[data-leaving], [data-reduce-motion] .page-archetype[data-leaving] * { animation: page-leave 0.25s linear forwards !important; }
 
 /* The summary (Figma "Summary 1–3", nodes 1002-9410, 9673, 9766; ui/summary.js). The logo and
@@ -830,10 +832,10 @@ body { touch-action: pan-y; }
    down whole, in --u); Share and Skip at the bottom. Each card is see-through: its background
    is the backdrop's, drawn in its box and following it (pages.js SUMMARY_BACKDROP), with a
    picture of it standing in when there is no WebGL. Positions in a card are Figma's, in pt from
-   its top left. The way in is designed (the video opens on the page settled): once the role has
-   gone (`--in-at`, pages.js SUMMARY_IN) it comes in as the top 5 does, the title, then the cards
-   as one, their backgrounds fading in with them, then the dots, Share and Skip. */
-.page-summary { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --in-at: 1.18s; }
+   its top left. The way in is designed (the video opens on the page settled): as the role's
+   logos shrink back (`--in-at`, pages.js SUMMARY_IN) it comes in as the top 5 does, the title,
+   then the cards as one, their backgrounds fading in with them, then the dots, Share and Skip. */
+.page-summary { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --in-at: 0.8s; }
 .pb-root[data-page='summary'] .stage { overflow: visible; }
 .page-summary > * { position: absolute; margin: 0; }
 .sc-logo { top: calc(var(--chrome-top) + 12px); left: calc(50% - 15.5px); width: 31px; height: 31px; }
@@ -855,7 +857,10 @@ body { touch-action: pan-y; }
 .sc-deck { top: calc(var(--chrome-top) + 119px); bottom: calc(var(--share-bottom) + 165px); left: 0; right: 0; container-type: size; outline: none; pointer-events: none; --u: 1px; }
 @supports (width: 1cqh) { .sc-deck { --u: min(1px, calc(100cqh / 469)); } }
 .sc-deck:focus-visible .sc-card[data-current] { outline: 2px solid #fff; outline-offset: 3px; }
-.sc-track { position: absolute; top: calc(50% - 234.5 * var(--u)); inset-inline-start: 50%; width: 0; height: calc(469 * var(--u)); }
+/* The carousel moves the track by its offset (ui/summary.js), animated where the backdrop draws the
+   cards' backgrounds, so they move as one: a transform animated on the compositor runs ahead. */
+@property --sc-x { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.sc-track { position: absolute; top: calc(50% - 234.5 * var(--u)); inset-inline-start: 50%; width: 0; height: calc(469 * var(--u)); transform: translateX(var(--sc-x)); }
 .sc-card {
   position: absolute;
   top: 0;
@@ -917,9 +922,8 @@ body { touch-action: pan-y; }
 [data-reduce-motion] .page-summary * { animation: none !important; }
 /* The way out, on to Play again: everything fades out linearly over 0.32 s (pages.js
    SUMMARY_OUT), the cards' backgrounds under Play again's wave (OUTRO_BACKDROP); Play again
-   comes in once the summary has gone. */
+   comes in as it does (pages.js OUTRO_IN). */
 .pb-root[data-page='outro'] .page.page-summary[data-leaving] { animation: page-leave 0.32s linear forwards; }
-.pb-root[data-page='outro']:has(.page-summary[data-leaving]) .page-outro:not([data-leaving]) { visibility: hidden; }
 
 /* Play again (Figma "Repeate or close", node 1002-9098, moving as the P2's outro video does;
    pages.js OUTRO_BACKDROP). The copy in the middle of the screen, Figma's 291 pt block (its
@@ -927,12 +931,15 @@ body { touch-action: pan-y; }
    draws it: the ground, feathered into the wave on a Gaussian edge (σ 27 pt, half way at
    Figma's radius; to 1.6 pt and 0.016 of the wave's contrast on the video's). Play again where
    Figma has it, 3 pt below the share line. The close is the story's; no progress (above).
-   The way in is designed (the video opens on the page settled): once the summary has gone
-   (`--in-at`, pages.js OUTRO_IN), the title comes in as total minutes' does, the line 0.116 s
-   after it (as roles intro's), Play again as the share button does. */
-.page-outro { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --in-at: 0.32s; }
-.pb-root[data-page='outro'] .stage { overflow: visible; }
-.page-outro > * { position: absolute; margin: 0; }
+   The way in is designed (the video opens on the page settled): as the summary fades out
+   (`--in-at`, pages.js OUTRO_IN), the disc fades in over its cards, the title comes in as total
+   minutes' does, the line 0.116 s after it (as roles intro's), Play again as the share button does.
+   Not enough listening (POC-1016) is this screen with its own copy and Close for Play again,
+   coming in the same way as it opens (pages.js EMPTY_BACKDROP). */
+:is(.page-outro, .page-empty) { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --in-at: 0.1s; }
+.page-empty { --in-at: 0s; }
+.pb-root:is([data-page='outro'], [data-page='empty']) .stage { overflow: visible; }
+:is(.page-outro, .page-empty) > * { position: absolute; margin: 0; }
 .ou-disc {
   left: calc(50% - 0.5px - 260px);
   top: calc(50% - 0.5px - 260px);
@@ -955,7 +962,8 @@ body { touch-action: pan-y; }
 }
 .ou-copy .story-title { width: 100%; }
 .ou-body { margin: 0; max-width: 279px; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
-.ou-again { bottom: calc(var(--share-bottom) - 3.08px); left: calc(50% - 54.5px); }
+.ou-pill { bottom: calc(var(--share-bottom) - 3.08px); left: calc(50% - 54.5px); }
+.page-outro .ou-disc { animation: ou-in 0.45s linear var(--in-at) both; }
 
 /* Figma sizes the buttons to its English labels. A longer label (a translation) widens its
    button rather than wrapping, centred where Figma centres it; the English is unchanged. */
@@ -964,10 +972,10 @@ body { touch-action: pan-y; }
 :is(.pill, .tp-confirm, .tm-confirm, .sc-skip) { width: max-content; padding-inline: 16px; white-space: nowrap; left: 0; right: 0; margin-inline: auto; }
 @keyframes ou-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ou-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
-.page-outro .story-title { --rise: 16.79px; animation: ou-in 0.214s linear calc(var(--in-at) + 0.2s) both, ou-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.2s) both; }
-.page-outro .ou-body { --rise: 16.79px; animation: ou-in 0.214s linear calc(var(--in-at) + 0.316s) both, ou-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.316s) both; }
-.page-outro .ou-again { --rise: 7.48px; animation: ou-in 0.272s linear calc(var(--in-at) + 0.866s) both, ou-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both; }
-[data-reduce-motion] .page-outro * { animation: none !important; }
+:is(.page-outro, .page-empty) .story-title { --rise: 16.79px; animation: ou-in 0.214s linear calc(var(--in-at) + 0.2s) both, ou-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.2s) both; }
+:is(.page-outro, .page-empty) .ou-body { --rise: 16.79px; animation: ou-in 0.214s linear calc(var(--in-at) + 0.316s) both, ou-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.316s) both; }
+:is(.page-outro, .page-empty) .ou-pill { --rise: 7.48px; animation: ou-in 0.272s linear calc(var(--in-at) + 0.866s) both, ou-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both; }
+[data-reduce-motion] :is(.page-outro, .page-empty) * { animation: none !important; }
 /* Play again's way out (pages.js OUTRO_OUT): everything fades out linearly over 0.32 s, the wave
    under the intro's bare ground; the intro starts once it has gone (its clock starts then, so
    its animations wait for it: `--step-t`). */
@@ -1057,21 +1065,26 @@ body { touch-action: pan-y; }
   animation: intro-logo-light 4.75s var(--step-t) both;
 }
 /* 3 · the title and the line at the bottom arrive as the rings finish opening (0.4 s),
-   the tagline 1.5 s later (0.3 s). The title and the line leave with the blob, which
-   fades as it breaks up (6.87–7.47 s); the tagline stays for the wave. */
+   the tagline 1.5 s later (0.3 s), and stay until the intro moves on. */
 .page-intro[data-step='title'] .intro-tagline { animation: intro-in 0.3s linear calc(1.5s + var(--step-t)) both; }
-.page-intro[data-step='title'] :is(.intro-title, .intro-body) {
-  animation: intro-in 0.4s linear var(--step-t) both, intro-out 0.6s cubic-bezier(0.33, 0, 0.67, 1) calc(6.87s + var(--step-t)) forwards;
-}
+.page-intro[data-step='title'] :is(.intro-title, .intro-body) { animation: intro-in 0.4s linear var(--step-t) both; }
 /* The intro's clock starts with the first frames on screen, not at mount (ui/app.js),
    and stops while the app is in the background: its animations wait for it, and so do
    the other pages' (the cover stack, the share button coming in). */
 [data-paused] :is(.page, .share-bar), [data-paused] .page * { animation-play-state: paused !important; }
-/* 4 · the wave washes in under the tagline. Arriving here early fades what was showing. */
-.page-intro[data-step='wave'] > * { transition: opacity 0.5s; }
+/* 4 · moving on (a tap, or by itself): the title and the line leave with the blob, as the
+   video's do, and the wave washes in under the tagline. ui/app.js fades them there (0.6 s:
+   pages.js INTRO_BLOB_OUT) from wherever the title had them. */
 .page-intro[data-step='wave'] .intro-tagline { opacity: 1; }
 /* Reduced Motion: one still composition. */
 .page-intro[data-step='still'] :is(.intro-title, .intro-tagline, .intro-body) { opacity: 1; }
+/* 5 · moving on before the app has read the listening history (Figma "Intro 5", node
+   1484-6750, PCIOS-1324): the title holds, the blob carrying on under it, and the tagline
+   gives way to what it waits for, one line in the tagline's type, on the middle of the blob.
+   Once the data is there the wave plays; the tagline does not come back (`data-waited`). */
+.intro-loading { top: 50%; width: min(339px, calc(100% - 36px)); transform: translate(-50%, -50%); font: 800 calc(20px * var(--text-scale))/1.3 var(--pb-font); transition: opacity 0.3s linear; }
+.pb-root[data-waiting] .page-intro .intro-loading { opacity: 1; }
+.page-intro[data-waited] .intro-tagline { color: transparent; transition: color 0.3s linear; }
 /* Moving on: what is showing fades as the first stat comes in over the same wave. */
 @keyframes page-leave { to { opacity: 0; } }
 .page-intro[data-leaving] { animation: page-leave 0.25s linear forwards; }
@@ -1160,8 +1173,8 @@ body { touch-action: pan-y; }
   color: #000;
 }
 
-/* The quiz questions keep the design's size: they are the longest titles (the best month's is two full
-   lines at 393 px) and "Pick one" sits at a fixed distance under them, so one more line over it. */
+/* The quiz questions keep the design's size: they are the longest titles (the best month's takes three
+   lines in its 320 pt) and "Pick one" sits at a fixed distance under them, so one more line over it. */
 .tp-ask, .tm-ask { --text-scale: 1; }
 /* The summary's cards are one composition, as the share image is: their type stays at the design's size (it is
    sized with the card, and the cards' columns hold what Figma drew). */
@@ -1184,15 +1197,28 @@ body { touch-action: pan-y; }
 /* While the host takes a share image (setCaptureMode), the story is laid out as the image: a 9:16
    box as wide as the screen allows, centred, on no insets, its chrome and share button gone and
    Figma's Pocket Casts badge where the button was (Role 7, node 1003:18010). The host crops
-   that box and scales it to 1080 × 1920. */
+   that box and scales it to 1080 × 1920.
+   The image is posted as a story, and Instagram's editor draws over it: its top bar to 10%
+   of the height, its tools down the right 14% of the width to 35% down, its caption field
+   over the bottom 8%. Its safe area is Figma's share frames (393 × 853, Sections 5 and 6 of
+   the QA page) fitted by their height, which the 9:16 image is wider than: titles 14% down
+   (120 px), the badge 12% up (Figma's 100 px under it), Figma's 68 px between the artwork
+   and what is above and below it, and titles 14% in from the sides, clear of the tools. The
+   pages are laid out between them, as they are between the chrome and the share button. */
 :root.capture {
   --share-box: min(100vw, calc(100vh * 9 / 16));
   --share-box-h: calc(var(--share-box) * 16 / 9);
+  --share-safe-top: calc(var(--share-box-h) * 0.14);
+  --share-safe-bottom: calc(var(--share-box-h) * 0.12);
+  --share-safe-x: calc(var(--share-box) * 0.14);
+  --share-gap: calc(var(--share-box-h) * 0.08);
   --safe-top: 0px;
   --safe-right: 0px;
   --safe-bottom: 0px;
   --safe-left: 0px;
-  --chrome-top: 51px;
+  /* Titles are 60 px under the chrome's top, and the badge 3 px over the share button's line. */
+  --chrome-top: calc(var(--share-safe-top) - 60px);
+  --share-bottom: calc(var(--share-safe-bottom) - 3px);
 }
 .capture { --text-scale: 1 !important; } /* the image is the same whatever the user's text size */
 .capture #backdrop {
@@ -1216,11 +1242,74 @@ body { touch-action: pan-y; }
    card's box, so they go with it). They keep their place in the layout (the carousel measures its pitch from
    them) and lose their size, which is what the backdrop looks for. */
 .capture .page-summary .sc-card:not([data-current]) { width: 0; height: 0; overflow: hidden; visibility: hidden; }
+/* The summary's image is the card being shared as a story of its own (POC-1023: Figma's share
+   frames, nodes 1002-9036 and 1002-9063, and the QA page's 1439-20238): the card fills the
+   image, its background with it, under "My Playback 2026" in place of the logo and "Playback
+   2026"; its artwork enlarged, its copy at the frames' sizes, no footer. Positions are the frames' pt (--u: the frame fitted to the image by its
+   height, as above) from its top, and from the left of its 393 pt column, centred (--x0); the
+   bubbles spread across the image as they do across the frame, so the ones at its edges still
+   bleed off them. The track holds still under its card, and the card reaches past the image by
+   the corner the backdrop rounds its background to (in a border: what is in it fills the image). */
+.capture .page-summary :is(.sc-logo, .sc-title, .sc-mark, .sc-footer) { visibility: hidden; }
+.capture .page-summary, .capture .page-summary .sc-deck { --u: calc(var(--share-box-h) / 853); }
+.capture .page-summary :is(.sc-deck, .sc-track) { inset: 0; width: auto; height: auto; }
+.capture .page-summary .sc-track { transform: none !important; }
+.capture .page-summary .sc-card[data-current] { inset: -4px; width: auto; height: auto; border: 4px solid transparent; }
+.capture .page-summary .sc-card { --x0: calc(50% - 196.5 * var(--u)); border-radius: 0; }
+.sc-share-title { display: none; }
+.capture .sc-share-title {
+  display: block;
+  top: calc(120 * var(--u));
+  left: 0;
+  right: 0;
+  width: max-content;
+  max-width: calc(var(--share-box) - 2 * var(--share-safe-x));
+  margin-inline: auto;
+  color: #fff;
+  font: 600 calc(24 * var(--u))/calc(35.318 * var(--u)) var(--pb-font);
+  text-align: center;
+  text-wrap: balance;
+}
+.capture .sc-grid .sc-cover { left: calc(var(--x0) + (39.85 + var(--c) * 108.04) * var(--u)); top: calc((200 + var(--r) * 107.194) * var(--u)); width: calc(99.277 * var(--u)); height: calc(99.277 * var(--u)); }
+.capture .sc-stack .sc-cover { left: calc(var(--x0) + (195.8 - var(--d) / 2) * var(--u)); }
+.capture .sc-stack [data-slot='0'] { --d: 88.667; --y: 199; }
+.capture .sc-stack [data-slot='1'] { --d: 113.555; --y: 239.444; }
+.capture .sc-stack [data-slot='2'] { --d: 147.778; --y: 279.111; }
+.capture .sc-stack [data-slot='3'] { --d: 182; --y: 332; }
+.capture .sc-bubble { left: calc((var(--sx) + var(--sd) / 2) / 393 * 100% - var(--sd) / 2 * var(--u)); top: calc(var(--sy) * var(--u)); width: calc(var(--sd) * var(--u)); height: calc(var(--sd) * var(--u)); }
+.capture .sc-card .sc-label { font-size: calc(11.867 * var(--u)); }
+.capture .sc-card .sc-top { inset-inline-start: calc(var(--x0) + 39.39 * var(--u)); top: calc(540.5 * var(--u)); width: calc(143.59 * var(--u)); gap: calc(6.61 * var(--u)); }
+.capture .sc-card .sc-shows { gap: calc(3.56 * var(--u)); font-size: calc(11.867 * var(--u)); }
+.capture .sc-card :is(.sc-minutes, .sc-role) { inset-inline-start: calc(var(--x0) + 237.74 * var(--u)); width: calc(115.87 * var(--u)); gap: calc(6.83 * var(--u)); }
+.capture .sc-card .sc-minutes { top: calc(540.5 * var(--u)); }
+.capture .sc-card .sc-role { top: calc(608.82 * var(--u)); }
+.capture .sc-card .sc-number { font-size: calc(32.945 * var(--u) * var(--fit, 1)); }
+.capture .sc-card .sc-role-name { font-size: calc(20.937 * var(--u) * var(--fit, 1)); }
+/* Shows and episodes: the title clear of the tools, the stack Figma's gap from it and from
+   the badge (the stage stops 11 px over the badge), shrinking to fit between. */
+.capture .page-shows-and-episodes .story-title { max-width: calc(var(--share-box) - 2 * var(--share-safe-x)); }
+.capture .stack-wrap { margin: var(--share-gap) 0 calc(var(--share-gap) - 11px); }
+/* The top show's answer: the verdict, the cover and the details one under the other, Figma's
+   gap above the badge, so a verdict on more lines moves the cover down rather than under it.
+   The cover is as big as its row lets the shape around it be (it reaches up to a fifth of the
+   cover past it, above and below), up to Figma's 222 px; the backdrop draws the shape on the
+   slot, so it goes with it. */
+.capture .page-top-podcast:not([data-phase='guess']) {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  row-gap: 16px;
+  padding: calc(var(--chrome-top) + 60px) 0 calc(var(--share-safe-bottom) + 36px + var(--share-gap));
+}
+.capture .page-top-podcast:not([data-phase='guess']) :is(.tp-verdict, .tp-slot-reveal, .tp-cover, .tp-details) { position: relative; inset: auto; }
+.capture .page-top-podcast:not([data-phase='guess']) .tp-verdict { grid-row: 1; max-width: calc(var(--share-box) - 2 * var(--share-safe-x)); }
+.capture .page-top-podcast:not([data-phase='guess']) :is(.tp-slot-reveal, .tp-cover) { grid-row: 2; grid-column: 1; align-self: center; width: auto; height: min(222px, 100% / 1.4); aspect-ratio: 1; }
+.capture .page-top-podcast:not([data-phase='guess']) .tp-details { grid-row: 3; }
 .share-badge { display: none; }
 .capture .share-badge {
   position: absolute;
   z-index: 5;
-  bottom: calc(var(--share-bottom) + 3px);
+  bottom: var(--share-safe-bottom);
   left: 50%;
   translate: -50% 0;
   display: flex;

@@ -1,7 +1,7 @@
 // Walkthrough driver for the rig: plays the whole flow unattended so a platform can be
 // screenshotted or filmed with nobody tapping. It goes through the public flow actions
 // only, exactly what a person's taps would do. A timed sequence (the intro) is watched
-// to its last step, as a person would, before moving on.
+// to the step it rests on (its title), as a person would, before moving on.
 //
 // `guess` controls the quiz screens: 'correct', 'wrong', or 'alternate' (wrong first,
 // correct second, so one run shows both outcomes).

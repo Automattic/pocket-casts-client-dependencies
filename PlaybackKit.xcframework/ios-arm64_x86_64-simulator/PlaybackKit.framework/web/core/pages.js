@@ -3,13 +3,18 @@
 // A page is a plain description: `kind` picks the view, `data` carries facts (never
 // copy), `quiz` marks an interactive page, `motion` names the Creative Lab asset that
 // becomes its WebGL background, `steps` (the intro only, so far) is a timed sequence
-// inside the page, each step with the motion document it draws, `backdrop` is the
-// document a page without steps draws, `pickBackdrop` the one a quiz page draws once
+// inside the page, each step with the motion document it draws (the step it rests on, with
+// `ms`, moves the page on by itself once it has run; a last step that is the `transition`
+// into the next page runs then, taking no taps, and the page moves on as it ends), `backdrop` is the document a page
+// without steps draws, `pickBackdrop` the one a quiz page draws once
 // something is picked (or, with `options`, the one for whatever is picked), and
 // `revealBackdrop` the one it draws once its answer shows (or straight away when it has
 // no quiz). `ownShare` marks a page that draws its own share button (the summary's, Figma's
 // pill), so the story's is hidden there. `leaves` is how long a page takes to leave when
 // Play again restarts the story from it (seconds): the intro's clock starts once it has gone.
+// `shows` is how long after entering a page (or, on a step, after it begins) its backdrop
+// is still bringing in what the page shows, when that outlasts the page's own CSS
+// animations (seconds): its progress segment fills until then (ui/app.js).
 
 import { seededShuffle } from './random.js';
 
@@ -30,31 +35,46 @@ const MOTION = {
   archetype: { effect: 'pattern-refraction', asset: '09 - your role - visual B (Figma\'s two logos, as the P2\'s role video draws them: composed)' },
   summary: { effect: 'wave, pattern-refraction', asset: '10, 11 - summary card backgrounds, 07 - summary card with dots (Figma\'s five bubbles, as the P2\'s cards video draws them: composed)' },
   outro: { effect: 'wave', asset: '12 - play again (its canvas covering the screen, as the P2\'s outro video draws it)' },
-  empty: null,
+  // No design of its own (POC-1016): drawn as Play again is, with its own copy.
+  empty: { effect: 'wave', asset: '12 - play again (as Play again draws it)' },
 };
 
 /**
  * The intro (Figma "Intro 1–4", moving as the P2's intro video does, timed from it
  * frame by frame): the logo on the dark ground; rings coming out from under it and
  * opening onto the sphere; the title as the sphere turns into the blob; then the wave
- * washing in under the tagline. Each step lasts `ms` and the last holds until the user
- * moves on; moving on earlier skips to the last step first (core/flow.js).
+ * washing in under the tagline. The logo and the rings play through (`locked`: a tap does
+ * nothing on them, PCIOS-1324). The title (Intro 3, "Ready to dig in?") is the screen the
+ * intro rests on: a tap moves on from it, or it moves on by itself 6.85 s in, when the
+ * P2's video starts to fade the blob (POC-1020: nobody should have to tap). Intro 4 is no
+ * screen but the way from there into the first stat (`transition`, core/flow.js): the
+ * blob fades out with the title and the line at the bottom as the video's does (0.6 s:
+ * the wave's `replaces`), the wave washes in under the tagline from the bare ground after
+ * it, and the first stat comes in over the wave once it has (2.6 s); a tap does nothing on
+ * it. Coming back to the intro shows the title as it is once everything on it has come in
+ * (`settled`).
  *
  * The rings and the sphere are one stack on one clock (the sphere is underneath when
  * the rings open), and it plays on from the ring step into the title step (`from`: how
  * far into the stack a step starts). The rings are composed from 01
  * (web/scripts/import-motion.mjs). The sphere is 02 as delivered, started 2.4 s in so
  * it has grown by the time they open, and drawn at the video's size: 0.77 of its
- * authored canvas fitted to the screen, 238 px wide on its 375 px phone. The video fades it out with the text as it breaks
- * up (`fade`, in 02's seconds), so the wave washes in from the bare ground: no
- * transition between effects is needed (PCIOS-1258). `hold` keeps the wave moving,
- * after its entrance, on the stretch before the document moves on to the next page's
- * pose (6 s).
+ * authored canvas fitted to the screen, 238 px wide on its 375 px phone. The blob holds
+ * whole for as long as the title shows (`hold`, just before 02 breaks it up, BLOB_HOLD), its
+ * relief sliding on as 02 slides it (`drift`): the title can wait for a tap, or, as Intro 5,
+ * for the data (PCIOS-1324). Moving on fades it out (the wave's `replaces`, over the 0.6 s the
+ * video's fade takes, 6.85 s into the title when nobody taps), so the wave washes in from the
+ * bare ground. `hold` on the wave would keep it moving, after its entrance, on the stretch
+ * before the document moves on to the next page's pose (6 s): the first stat comes in as it
+ * reaches it, and carries it on from there.
  */
+export const BLOB_HOLD = 8.6;
+/** 02's relief slide (cx 50.25 → 80 over 1.5–10.95 s, linearly), in cx a second. */
+export const BLOB_SLIDE = 29.75 / 9.45;
 const INTRO_STACK = {
   name: 'intro',
   layers: [
-    { document: 'intro-loading', delay: 2.4, loop: false, fit: 'canvas', scale: 0.77, fade: [9.2, 9.8] },
+    { document: 'intro-loading', delay: 2.4, loop: false, fit: 'canvas', scale: 0.77, hold: [BLOB_HOLD, BLOB_HOLD + 0.01], drift: { rate: [BLOB_SLIDE, 0], since: BLOB_HOLD + 0.01 } },
     { document: 'intro-rings', loop: false },
   ],
 };
@@ -68,15 +88,21 @@ const INTRO_STACK = {
 export const OUTRO_OUT = 0.32;
 const INTRO_GROUND = { stack: { name: 'intro-ground', layers: [] }, replaces: [0, OUTRO_OUT] };
 
+/** Intro 4, the way from the title into the first stat: the blob fades out, then the wave washes in (its entrance, 1.9 s). */
+export const INTRO_BLOB_OUT = 0.6;
+export const INTRO_WAVE_IN = 0.68;
+export const INTRO_OUT_MS = 2600;
+
 export const INTRO_STEPS = [
-  { id: 'logo', ms: 1800, backdrop: INTRO_GROUND },
-  { id: 'ring', ms: 4750, backdrop: { stack: INTRO_STACK, from: 0 } },
-  { id: 'title', ms: 7550, backdrop: { stack: INTRO_STACK, from: 4.75 } },
-  { id: 'wave', ms: null, backdrop: { document: 'wave-transition', hold: [2, 5.8] } },
+  { id: 'logo', ms: 1800, locked: true, backdrop: INTRO_GROUND },
+  { id: 'ring', ms: 4750, locked: true, backdrop: { stack: INTRO_STACK, from: 0 } },
+  // Everything on it is in 2.2 s in: the tagline (1.8 s) and the blob (02's 4.53 s).
+  { id: 'title', ms: 6850, settled: 2200, backdrop: { stack: INTRO_STACK, from: 4.75 } },
+  { id: 'wave', ms: INTRO_OUT_MS, transition: true, shows: INTRO_OUT_MS / 1000, backdrop: { document: 'wave-transition', delay: INTRO_WAVE_IN, hold: [2, 5.8], replaces: [0, INTRO_BLOB_OUT] } },
 ];
 
-/** Reduced Motion: one still composition, the title over the blob. */
-export const INTRO_STILL = [{ id: 'still', ms: null, backdrop: { document: 'intro-loading', fit: 'canvas', scale: 0.77 } }];
+/** Reduced Motion: one still composition, the title over the blob, moving on 4 s in. */
+export const INTRO_STILL = [{ id: 'still', ms: 4000, backdrop: { document: 'intro-loading', fit: 'canvas', scale: 0.77 } }];
 
 /**
  * Shows and episodes (Figma "Total listened", moving as the P2's "centered covers"
@@ -226,6 +252,24 @@ export function topMonthReveal(sizes) {
 }
 
 /**
+ * Where a page fades out as it leaves (the top month on to Play again), it fades out over
+ * PAGE_OUT (everything together, linearly, as the P2's videos' ways out do) and the next starts
+ * coming in OVERLAP_IN after the tap, a third of the way into that fade rather than once it has
+ * gone, so the screen is never the bare ground in between (PCIOS-1258). A page whose video
+ * opens on the bare ground starts that much earlier (COMPARISON_IN, COMPLETION_IN).
+ */
+export const PAGE_OUT = 0.32;
+export const OVERLAP_IN = 0.1;
+/**
+ * Going back, the page comes back as it was left, its way in done: as it is BACK_SETTLED s
+ * into its visit (every page's way in is done by then: the longest, the completion rate's
+ * sweep, by COMPLETION_SHOWN), what holds or loops carrying on from there. It crossfades in
+ * over BACK_FADE as the page left fades out, what each draws with it (ui/app.js, ui/backdrop.js).
+ */
+export const BACK_FADE = 0.22;
+export const BACK_SETTLED = 4;
+
+/**
  * Total minutes (Figma "Total minutes listened", moving as the P2's minutes video does,
  * measured from it frame by frame; see docs/effects.md).
  *
@@ -240,14 +284,14 @@ export function topMonthReveal(sizes) {
  *
  * The video has no way in (it opens on the page settled), so the way in is designed: the
  * top month fades out, everything together, linearly over 0.32 s, as its own video's way
- * out does (its bubbles under it: `replaces`), then the page comes in on the bare ground as
+ * out does (its bubbles under it: `replaces`), and the page comes in over it (MINUTES_IN) as
  * the top 5 does, the number fading in from the ground on the curve the top 5's wave does
  * (`fade`), the copy and the share button after it (playback.css, from MINUTES_IN). Without
  * a month to guess, the page follows the top 5, which falls away as it does into the top
  * month, its wave dimming to the ground, and the page comes in 0.7 s after the tap.
  * Reduced Motion: a still (the engine's, of the page as it settles).
  */
-export const MINUTES_IN = 0.32;
+export const MINUTES_IN = OVERLAP_IN;
 export const MINUTES_MOTION = { drift: 0.3394, textX: 50, span: 831.3, spanY: 902 };
 export function minutesBackdrop(minutes, { afterTopShows = false } = {}) {
   return {
@@ -257,7 +301,7 @@ export function minutesBackdrop(minutes, { afterTopShows = false } = {}) {
     anchor: { selector: '.mn-number', span: MINUTES_MOTION.span, spanY: MINUTES_MOTION.spanY },
     delay: afterTopShows ? TOP_MONTH_IN : MINUTES_IN,
     fade: [0, TOP_SHOWS_FADE_IN.duration, 1, 0, TOP_SHOWS_FADE_IN.ease],
-    replaces: afterTopShows ? TOP_MONTH_GUESS_BACKDROP.replaces : [0, MINUTES_IN],
+    replaces: afterTopShows ? TOP_MONTH_GUESS_BACKDROP.replaces : [0, PAGE_OUT],
     sharp: true,
   };
 }
@@ -275,13 +319,14 @@ export function minutesBackdrop(minutes, { afterTopShows = false } = {}) {
  *
  * The way in is designed (the total minutes video has no way out): total minutes fades out,
  * everything together, linearly over 0.32 s, as this video's own way out and the best-months
- * video's do (its number under it: `replaces`); then the page comes in on the bare ground as
- * the video does, from its first frame (COMPARISON_IN): each circle fades in (`fade`) as it
- * grows on 07's entrance at the video's pace (its own start, `grow`), its label fading in as it
- * scales up about its centre; the copy, then the share button (playback.css). Reduced Motion:
- * a still.
+ * video's do (its number under it: `replaces`), and the page comes in over it as the video
+ * does: each circle fades in (`fade`) as it grows on 07's entrance at the video's pace (its own
+ * start, `grow`), its label fading in as it scales up about its centre; the copy, then the share
+ * button (playback.css). The video opens on the bare ground, its circles fading in from 0.25 s,
+ * so the page starts 0.2 s into it at the tap (COMPARISON_IN): the circles are there as total
+ * minutes goes. Reduced Motion: a still.
  */
-export const COMPARISON_IN = 0.32;
+export const COMPARISON_IN = -0.2;
 export const COMPARISON_MOTION = {
   // Each circle fades in from `at` over `fade` on `ease`, so it brightens as the video's does
   // (07's flat start is brighter than its settled metal, up to twice, each circle's shade its
@@ -367,7 +412,7 @@ export function comparisonBackdrop(circles) {
         };
       }),
     },
-    replaces: [0, COMPARISON_IN],
+    replaces: [0, PAGE_OUT],
     sharp: true,
   };
 }
@@ -386,12 +431,13 @@ export function comparisonBackdrop(circles) {
  *
  * The way in is designed, as the year comparison's was: the page before (the year comparison,
  * or total minutes without one) fades out, everything together, linearly over 0.32 s, as the
- * comparing video's way out does, what it drew fading out underneath (`replaces`); then the
- * page comes in on the bare ground as the video does, from its first frame (COMPLETION_IN): the
- * shape whole fading in (`fade`), then lit from the left (`sweep`), the copy and the share
- * button meanwhile (playback.css). Reduced Motion: a still, lit to the rate.
+ * comparing video's way out does, what it drew fading out underneath (`replaces`), and the
+ * page comes in over it as the video does: the shape whole fading in (`fade`), then lit from the
+ * left (`sweep`), the copy and the share button meanwhile (playback.css). As the year
+ * comparison's, the video opens on the bare ground, its shape fading in from 0.22 s, so the page
+ * starts 0.15 s into it at the tap (COMPLETION_IN). Reduced Motion: a still, lit to the rate.
  */
-export const COMPLETION_IN = 0.32;
+export const COMPLETION_IN = -0.15;
 export const COMPLETION_MOTION = {
   // The shape whole fades in from `at` over `fade` on `ease` (the video's, to 0.015).
   whole: { at: 0.2206, fade: 0.6717, ease: [0.508, 0.114, 0.171, 0.933] },
@@ -402,18 +448,22 @@ export const COMPLETION_MOTION = {
 };
 /** Figma's picture box (361 pt across), in 08's authored pixels, and where 08's frame centre sits from its centre. */
 export const COMPLETION_SHAPE = { span: 503.9, offset: [7.28, 21.72] };
+/** When the shape is lit to the rate, after entering the page (its `shows`): later than the copy settles. */
+export const COMPLETION_SHOWN = COMPLETION_IN + COMPLETION_MOTION.sweep.at + COMPLETION_MOTION.sweep.duration;
 
 export function completionBackdrop(percent) {
   const { whole, sweep } = COMPLETION_MOTION;
   return {
     document: 'completion-reveal',
     loop: false,
-    delay: COMPLETION_IN,
+    // Started before the page (COMPLETION_IN < 0), that far into its document.
+    delay: Math.max(0, COMPLETION_IN),
+    from: Math.max(0, -COMPLETION_IN),
     fade: [whole.at, whole.at + whole.fade, 1, 0, whole.ease],
     scrub: [sweep.at, sweep.at + sweep.duration, 0, Math.max(0, Math.min(1, percent / 100)), sweep.ease],
     anchor: { selector: '.cr-slot', ...COMPLETION_SHAPE },
     stillAt: sweep.at + sweep.duration,
-    replaces: [0, COMPLETION_IN],
+    replaces: [0, PAGE_OUT],
     sharp: true,
   };
 }
@@ -432,13 +482,13 @@ export function completionBackdrop(percent) {
  * its ridges a period every 4.02 s (09 B's pace, the video's: `drift`), and they shrink back on
  * the way out (their documents' `exit`). Hard-edged, so drawn at the screen's density (`sharp`).
  *
- * Roles intro comes in once the page before it has faded out (ROLES_IN, the completion rate's
+ * Roles intro comes in (ROLES_IN) as the page before it fades out (the completion rate's
  * video's way out: `replaces`); the role's backdrop is the same logos, carried on with their clock
  * (`carries`), so only the copy changes; opened on the role, they grow in as the video's. The
  * summary after it replaces them, so they shrink back under its cards (SUMMARY_BACKDROP).
  * Reduced Motion: stills.
  */
-export const ROLES_IN = 0.32;
+export const ROLES_IN = OVERLAP_IN;
 /** Each logo's box (Figma's, pt), how it is turned, and its relief's slide (% of the box a second). */
 export const ROLE_LOGO = {
   a: { span: 243, rotate: 0, drift: [5.0004, 3.1066] },
@@ -454,7 +504,7 @@ const roleLogo = (k, delay) => ({
   drift: { rate: ROLE_LOGO[k].drift, since: 0 },
 });
 const roleLogos = (delay) => ['b', 'a'].map((k) => roleLogo(k, delay));
-export const ROLES_INTRO_BACKDROP = { stack: { name: 'roles-intro', layers: roleLogos(ROLES_IN) }, replaces: [0, ROLES_IN], carries: true, sharp: true };
+export const ROLES_INTRO_BACKDROP = { stack: { name: 'roles-intro', layers: roleLogos(ROLES_IN) }, replaces: [0, PAGE_OUT], carries: true, sharp: true };
 export const ARCHETYPE_BACKDROP = { stack: { name: 'archetype', layers: roleLogos(0) }, carries: true, sharp: true };
 /** The role's way out, from the tap (playback.css): its logos shrink back by then. */
 export const ARCHETYPE_OUT = 1.41;
@@ -474,12 +524,12 @@ export const ARCHETYPE_OUT = 1.41;
  *
  * The way in is designed (the video opens on the page settled): the role goes as its video's
  * way out does, its logos shrinking back under the summary (`replaces`), and the summary comes in
- * once it has gone (SUMMARY_IN): the cards fade in, their backgrounds with them (`fade`, on the
+ * as they shrink back (SUMMARY_IN), the role's name still sweeping out: the cards fade in, their backgrounds with them (`fade`, on the
  * DOM's curve, playback.css), as they rise. The way out (on to Play again) fades everything out
  * linearly over SUMMARY_OUT, the cards' backgrounds under Play again's wave (OUTRO_BACKDROP).
  * Reduced Motion: stills.
  */
-export const SUMMARY_IN = 1.18;
+export const SUMMARY_IN = 0.8;
 export const SUMMARY_OUT = 0.32;
 /** The cards' entrance (playback.css `.sc-card`), from SUMMARY_IN: their backgrounds fade in with them. */
 export const SUMMARY_CARD_IN = { at: 0.205, fade: 0.234 };
@@ -488,14 +538,15 @@ export const SUMMARY_CARD = { width: 265, height: 469, radius: 4 };
 /**
  * Figma's bubbles on the third card (its PC_Logo layers, a disc each): box left, top and width
  * in pt from the card's top left, and the part of 07's field each shows (Phase, Evolution), as
- * Figma's are each shaded their own way.
+ * Figma's are each shaded their own way. `share`: the same bubble's box on the card's share
+ * frame (393 × 853 pt, the QA page's node 1439-20238), enlarged, bleeding off its edges.
  */
 export const SUMMARY_BUBBLES = [
-  { x: -18, y: -9, size: 86.066, shade: [-12, -50] },
-  { x: 237, y: 188, size: 86.066, shade: [24, -14] },
-  { x: 117, y: 415, size: 92.078, shade: [-40, 20] },
-  { x: 111, y: 7, size: 131.823, shade: [-12, -50] },
-  { x: 18, y: 165, size: 86.452, shade: [40, -30] },
+  { x: -18, y: -9, size: 86.066, shade: [-12, -50], share: { x: -28, y: 25, size: 106 } },
+  { x: 237, y: 188, size: 86.066, shade: [24, -14], share: { x: 329, y: 407, size: 106 } },
+  { x: 117, y: 415, size: 92.078, shade: [-40, 20], share: { x: -20, y: 796, size: 95.186 } },
+  { x: 111, y: 7, size: 131.823, shade: [-12, -50], share: { x: 138, y: 185, size: 162 } },
+  { x: 18, y: 165, size: 86.452, shade: [40, -30], share: { x: 22, y: 374, size: 106 } },
 ];
 /** 07's disc across its slot, in its authored pixels: its silhouette, 0.87 of its 96% of 432 (as the year comparison's circle). */
 const DOT_SPAN = (0.96 * 432 * (1 + 0.74)) / 2;
@@ -543,14 +594,14 @@ export const SUMMARY_BACKDROP = summaryBackdrop();
  *
  * The video has no way in (it opens on the page settled), so the way in is designed, as total
  * minutes' is: the summary fades out (SUMMARY_OUT), its cards' backgrounds under the wave
- * (`replaces`), and once it has gone (OUTRO_IN) the wave fades in from the ground on the curve
+ * (`replaces`), and as it does (OUTRO_IN) the wave fades in from the ground on the curve
  * the top 5's wave does, the copy, then Play again, coming in as total minutes' do (playback.css);
  * 12 reaches its own start, the video's first frame, as the page has come in (OUTRO_SETTLED). The
  * way out is Play again's (OUTRO_OUT, above); closing is the host's. Reduced Motion: a still, the
  * video's first frame.
  */
-export const OUTRO_IN = SUMMARY_OUT;
-/** The page has come in, from OUTRO_IN: Play again's rise ends (playback.css `.ou-again`). */
+export const OUTRO_IN = OVERLAP_IN;
+/** The page has come in, from OUTRO_IN: Play again's rise ends (playback.css `.ou-pill`). */
 export const OUTRO_SETTLED = 1.643;
 /** 12's loop (s): it starts this far before its end, so it is at its own start once the page has come in. */
 const PLAY_AGAIN_LOOP = 10;
@@ -565,6 +616,13 @@ export const OUTRO_BACKDROP = {
   replaces: [0, SUMMARY_OUT],
 };
 
+/**
+ * Not enough listening (POC-1016): the story's last screen, Play again, with its own copy and
+ * Close where Play again is. It is the first and only page, so it comes in as Play again does
+ * once the summary has gone, from the moment it opens: no wait, nothing to replace.
+ */
+export const EMPTY_BACKDROP = { document: 'play-again', fit: 'cover', from: OUTRO_FROM, fade: OUTRO_BACKDROP.fade, stillAt: PLAY_AGAIN_LOOP };
+
 /** Covers on the first card's grid (Figma's 3 × 3), and on the second card's stack (Figma's 4). */
 export const SUMMARY_GRID = 9;
 export const SUMMARY_STACK = 4;
@@ -574,7 +632,7 @@ export function summaryCovers(ranking, n = SUMMARY_GRID) {
 }
 
 function page(id, extra = {}) {
-  return { id, kind: id, shareable: false, ownShare: false, quiz: null, steps: null, backdrop: null, pickBackdrop: null, revealBackdrop: null, leaves: 0, motion: MOTION[id] ?? null, data: {}, ...extra };
+  return { id, kind: id, shareable: false, ownShare: false, quiz: null, steps: null, backdrop: null, pickBackdrop: null, revealBackdrop: null, leaves: 0, shows: 0, motion: MOTION[id] ?? null, data: {}, ...extra };
 }
 
 function topPodcastPage(stats) {
@@ -616,17 +674,32 @@ function bestMonthPage(stats) {
 }
 
 /**
+ * The intro: the one page that needs no data, so the story can open on it while the host
+ * reads the user's listening history (PCIOS-1324, core/session.js).
+ * @param {{reduceMotion?: boolean}} [options]
+ */
+export function introPage(options = {}) {
+  return page('intro', { steps: options.reduceMotion ? INTRO_STILL : INTRO_STEPS });
+}
+
+/**
+ * The story's length with every page in it (each optional page earned), which the progress
+ * bar shows while the host's data is still to come: most stories are this long or one short.
+ */
+export const STORY_LENGTH = 12;
+
+/**
  * @param {ReturnType<import('./stats.js').deriveStats>} stats
  * @param {{id: string, evidence: object}} archetype
  * @param {{reduceMotion?: boolean}} [options]
  */
 export function buildPages(stats, archetype, options = {}) {
   if (!stats.eligible) {
-    return [page('empty')];
+    return [page('empty', { backdrop: EMPTY_BACKDROP })];
   }
 
   const pages = [];
-  pages.push(page('intro', { steps: options.reduceMotion ? INTRO_STILL : INTRO_STEPS }));
+  pages.push(introPage(options));
   pages.push(page('shows-and-episodes', { shareable: true, backdrop: options.reduceMotion ? SHOWS_STILL : SHOWS_BACKDROP, data: { shows: stats.showsCount, episodes: stats.episodesCount, podcasts: stats.ranking } }));
   pages.push(topPodcastPage(stats));
   pages.push(page('top-shows', { shareable: true, backdrop: options.reduceMotion ? TOP_SHOWS_STILL : TOP_SHOWS_BACKDROP, data: { podcasts: stats.top } }));
@@ -641,7 +714,7 @@ export function buildPages(stats, archetype, options = {}) {
     const circles = comparisonLayout(stats.comparison, stats.year);
     pages.push(page('year-comparison', { shareable: true, backdrop: comparisonBackdrop(circles), data: { ...stats.comparison, year: stats.year, circles } }));
   }
-  if (stats.completion) pages.push(page('completion-rate', { shareable: true, backdrop: completionBackdrop(stats.completion.percent), data: stats.completion }));
+  if (stats.completion) pages.push(page('completion-rate', { shareable: true, backdrop: completionBackdrop(stats.completion.percent), shows: options.reduceMotion ? 0 : COMPLETION_SHOWN, data: stats.completion }));
   pages.push(page('roles-intro', { backdrop: ROLES_INTRO_BACKDROP }));
   pages.push(page('archetype', { shareable: true, backdrop: ARCHETYPE_BACKDROP, data: archetype }));
   pages.push(page('summary', {

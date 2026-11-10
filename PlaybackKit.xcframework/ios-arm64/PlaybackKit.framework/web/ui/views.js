@@ -15,7 +15,7 @@ import { summaryView } from './summary.js';
 import { durationParts } from '../core/format.js';
 
 /** Page kinds drawn to the final design. Everything else renders as a wireframe. */
-const FINAL = new Set(['intro', 'shows-and-episodes', 'top-podcast', 'top-shows', 'best-month', 'total-minutes', 'year-comparison', 'completion-rate', 'roles-intro', 'archetype', 'summary', 'outro']);
+const FINAL = new Set(['intro', 'shows-and-episodes', 'top-podcast', 'top-shows', 'best-month', 'total-minutes', 'year-comparison', 'completion-rate', 'roles-intro', 'archetype', 'summary', 'outro', 'empty']);
 
 // ── helpers ────────────────────────────────────────────────────────────────────────
 
@@ -39,10 +39,6 @@ function storyTitle(text) {
   return h('h1', { class: 'story-title', tabindex: '-1', 'data-testid': 'title' }, text);
 }
 
-function button(label, onClick, { primary, ...attrs } = {}) {
-  return h('button', { type: 'button', class: primary ? 'btn primary' : 'btn', onClick, ...attrs }, label);
-}
-
 // ── pages ──────────────────────────────────────────────────────────────────────────
 
 const views = {
@@ -57,6 +53,9 @@ const views = {
         h('img', { class: 'logo-light', src: 'assets/logo-light.svg', alt: '', width: '80', height: '80' })),
       h('h1', { class: 'intro-title', tabindex: '-1', 'data-testid': 'title' }, t('intro.title', { year: payload.year })),
       h('p', { class: 'intro-tagline', 'data-testid': 'tagline' }, t('intro.tagline')),
+      // Intro 5: what moving on waits for, in the tagline's place (ui/app.js setLoading). A live
+      // region, so a screen reader says it once it shows.
+      h('p', { class: 'intro-loading', role: 'status', 'aria-live': 'polite', 'data-testid': 'loading' }),
       h('p', { class: 'intro-body' }, t('intro.body')),
     ];
   },
@@ -187,22 +186,27 @@ const views = {
   // restarts the story, the story's close ends it.
   outro(ctx) {
     const { t } = ctx;
-    return [
-      h('div', { class: 'ou-disc', 'aria-hidden': 'true' }),
-      h('div', { class: 'ou-copy' }, storyTitle(t('outro.title')), h('p', { class: 'ou-body' }, t('outro.body'))),
-      h('button', { type: 'button', class: 'pill ou-again', 'data-testid': 'again', onClick: () => ctx.dispatch({ type: 'restart' }) }, t('outro.again')),
-    ];
+    return lastScreen(t('outro.title'), t('outro.body'),
+      h('button', { type: 'button', class: 'pill ou-pill', 'data-testid': 'again', onClick: () => ctx.dispatch({ type: 'restart' }) }, t('outro.again')));
   },
 
+  // Not enough listening: Play again's screen with its own copy (POC-1016), Close where Play
+  // again is. There is no story to play again.
   empty(ctx) {
     const { t } = ctx;
-    return [
-      heading(t('empty.title')),
-      h('p', { class: 'body' }, t('empty.body')),
-      button(t('empty.close'), () => ctx.dispatch({ type: 'close', reason: 'closed' }), { primary: true, 'data-testid': 'close-cta' }),
-    ];
+    return lastScreen(t('empty.title'), t('empty.body'),
+      h('button', { type: 'button', class: 'pill ou-pill', 'data-testid': 'close-cta', onClick: () => ctx.dispatch({ type: 'close', reason: 'closed' }) }, t('empty.close')));
   },
 };
+
+/** Play again's layout (Figma "Repeate or close"): the disc, the copy on it, a pill under it. */
+function lastScreen(title, body, pill) {
+  return [
+    h('div', { class: 'ou-disc', 'aria-hidden': 'true' }),
+    h('div', { class: 'ou-copy' }, storyTitle(title), h('p', { class: 'ou-body' }, body)),
+    pill,
+  ];
+}
 
 /** Figma's boxes for the two logos on roles intro and the role (the backdrop draws them). */
 function roleGlows() {
