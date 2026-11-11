@@ -176,8 +176,9 @@ export const TOP_SHOWS_STILL = { document: 'wave-transition', stillAt: 3.9 };
  * drawn in the month's own box on the page (`anchor`, `box`), shaded its own way
  * (`values`: MONTH_SHIFT) with a 10 pt bevel at any size (`pixels`); another pick sends
  * it back (`replaces`). The answer turns every month into its bubble, sized by its
- * listening (monthSizes), one after another as the video's do (`delay`), each resizing
- * from the guess's 80 pt with its disc (`size`); the picked one carries on. Hard-edged,
+ * listening (monthSizes), one after another as the video's do (`delay`), each coming in
+ * as a pick's does and resizing from the guess's 80 pt with its disc (`size`, followed at
+ * every display frame); the picked one carries on. Hard-edged,
  * so drawn at the screen's density (`sharp`).
  * Reduced Motion: stills.
  */
@@ -203,14 +204,20 @@ export function monthSizes(seconds) {
  *   pick: from the tap, the bubble's Depth comes up (its document's 0.3 s) as the flat
  *     disc gives way over `flat` from `flatAt` (both fitted to how the video's brightens),
  *     the label turning white over `label` from `labelAt`;
- *   reveal: from "This one!" (as it gives under the finger), each disc resizes over
- *     `duration` on `ease` (fitted to 0.26 pt RMS), its bubble coming in `metal` into its
- *     resize, as the pick's does.
+ *   reveal: from "This one!" (as it gives under the finger), each month turns to its
+ *     bubble as a pick does (`pick`: the bubble from the start, the flat disc giving way,
+ *     the label turning white) and bounces to its size over `duration` along `ease`:
+ *     rising 15% past it, then settling back, at rest where it starts, turns and ends
+ *     (segments, as the CSS keyframes have them; fx/document.js easeAt), one after another
+ *     in the video's order and stagger. Not the video's motion (measured: 0.861 s on
+ *     [0.839, -0.042, 0.213, 1], still for 0.35 s, then half the way in 0.1 s, its bubble
+ *     coming in 0.333 s in, in the middle of that snap): on the page that read as a lag,
+ *     then a jolt, with the flat disc and the bubble crossfading as they moved fastest.
  */
 export const MONTH_MOTION = {
   in: { first: 0.2429, row: 0.048, column: 0.0163, fade: 0.1932, scale: 0.7609, grow: 0.677, ease: [0.04, 1.122, 0.821, 0.988] },
   pick: { flatAt: 0.067, flat: 0.3, labelAt: 0.05, label: 0.1, out: 0.3 },
-  reveal: { first: 0.042, row: 0.0492, column: 0.0144, duration: 0.8606, ease: [0.839, -0.042, 0.213, 1], metal: 0.333 },
+  reveal: { first: 0.042, row: 0.0492, column: 0.0144, duration: 0.65, ease: [[0.55, 1.15, [0.45, 0, 0.45, 1]], [1, 1, [0.4, 0, 0.6, 1]]] },
 };
 /** When month `m` (0 = January) starts to move in `motion`'s stagger. */
 export const monthAt = (m, { first, row, column }) => first + Math.floor(m / 3) * row + (2 - (m % 3)) * column;
@@ -241,11 +248,11 @@ const bubble = (m, extra = {}) => ({
 });
 export const topMonthPick = (m) => ({ stack: { name: `top-month-pick-${m}`, layers: [bubble(m)] }, replaces: [0, MONTH_MOTION.pick.out], sharp: true });
 export function topMonthReveal(sizes) {
-  const { duration, ease, metal } = MONTH_MOTION.reveal;
+  const { duration, ease } = MONTH_MOTION.reveal;
   return {
     stack: {
       name: 'top-month-reveal',
-      layers: sizes.map((size, m) => bubble(m, { delay: monthAt(m, MONTH_MOTION.reveal) + metal, size: [-metal, duration - metal, MONTH_SIZE.guess / size, ease] })),
+      layers: sizes.map((size, m) => bubble(m, { delay: monthAt(m, MONTH_MOTION.reveal), size: [0, duration, MONTH_SIZE.guess / size, ease] })),
     },
     sharp: true,
   };
@@ -690,7 +697,7 @@ export const STORY_LENGTH = 12;
 
 /**
  * @param {ReturnType<import('./stats.js').deriveStats>} stats
- * @param {{id: string, evidence: object}} archetype
+ * @param {{id: string}} archetype  the backend's (archetypes.js)
  * @param {{reduceMotion?: boolean}} [options]
  */
 export function buildPages(stats, archetype, options = {}) {

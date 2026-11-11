@@ -211,22 +211,36 @@ public struct PlaybackPayload : Swift::Codable, Swift::Equatable, Swift::Sendabl
   public var monthlySeconds: [Swift::Double]
   public var previousYearSeconds: Swift::Double?
   public var completion: PlaybackKit::PlaybackPayload.PlaybackKit::Completion?
+  public var archetype: PlaybackKit::PlaybackPayload.PlaybackKit::Archetype?
   public var strings: [Swift::String : PlaybackKit::PlaybackPayload.PlaybackKit::StringValue]
-  public init(version: Swift::Int = 1, year: Swift::Int, locale: Swift::String? = nil, podcasts: [PlaybackKit::PlaybackPayload.PlaybackKit::Podcast], monthlySeconds: [Swift::Double], previousYearSeconds: Swift::Double? = nil, completion: PlaybackKit::PlaybackPayload.PlaybackKit::Completion? = nil, strings: [Swift::String : PlaybackKit::PlaybackPayload.PlaybackKit::StringValue] = [:])
+  public init(version: Swift::Int = 1, year: Swift::Int, locale: Swift::String? = nil, podcasts: [PlaybackKit::PlaybackPayload.PlaybackKit::Podcast], monthlySeconds: [Swift::Double], previousYearSeconds: Swift::Double? = nil, completion: PlaybackKit::PlaybackPayload.PlaybackKit::Completion? = nil, archetype: PlaybackKit::PlaybackPayload.PlaybackKit::Archetype? = nil, strings: [Swift::String : PlaybackKit::PlaybackPayload.PlaybackKit::StringValue] = [:])
   public struct Podcast : Swift::Codable, Swift::Equatable, Swift::Sendable {
     public var uuid: Swift::String
     public var title: Swift::String
     public var author: Swift::String
-    public var genre: Swift::String
     public var artworkUrl: Swift::String?
     public var playedSeconds: Swift::Double
     public var episodesPlayed: Swift::Int
-    public var listenerCount: Swift::Int?
-    public var earlyFollower: Swift::Bool
-    public init(uuid: Swift::String, title: Swift::String, author: Swift::String = "", genre: Swift::String = "Other", artworkUrl: Swift::String? = nil, playedSeconds: Swift::Double, episodesPlayed: Swift::Int, listenerCount: Swift::Int? = nil, earlyFollower: Swift::Bool = false)
+    public init(uuid: Swift::String, title: Swift::String, author: Swift::String = "", artworkUrl: Swift::String? = nil, playedSeconds: Swift::Double, episodesPlayed: Swift::Int)
     public static func == (a: PlaybackKit::PlaybackPayload.PlaybackKit::Podcast, b: PlaybackKit::PlaybackPayload.PlaybackKit::Podcast) -> Swift::Bool
     public func encode(to encoder: any Swift::Encoder) throws
     public init(from decoder: any Swift::Decoder) throws
+  }
+  public enum Archetype : Swift::String, Swift::Codable, Swift::CaseIterable, Swift::Sendable {
+    case collector
+    case avantGardist
+    case aficionado
+    case anthologist
+    case flaneur
+    public init?(rawValue: Swift::String)
+    public typealias AllCases = [PlaybackKit::PlaybackPayload.PlaybackKit::Archetype]
+    public typealias RawValue = Swift::String
+    nonisolated public static var allCases: [PlaybackKit::PlaybackPayload.PlaybackKit::Archetype] {
+      get
+    }
+    public var rawValue: Swift::String {
+      get
+    }
   }
   public struct Completion : Swift::Codable, Swift::Equatable, Swift::Sendable {
     public var started: Swift::Int
@@ -281,4 +295,7 @@ extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::DismissSource : Swift
 extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::DismissSource : Swift::Hashable {}
 extension PlaybackKit::PlaybackAnalyticsEvent.PlaybackKit::DismissSource : Swift::RawRepresentable {}
 extension PlaybackKit::PlaybackController : Swift::Sendable {}
+extension PlaybackKit::PlaybackPayload.PlaybackKit::Archetype : Swift::Equatable {}
+extension PlaybackKit::PlaybackPayload.PlaybackKit::Archetype : Swift::Hashable {}
+extension PlaybackKit::PlaybackPayload.PlaybackKit::Archetype : Swift::RawRepresentable {}
 extension PlaybackKit::PlaybackView : Swift::Sendable {}

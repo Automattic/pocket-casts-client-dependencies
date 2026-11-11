@@ -519,7 +519,8 @@ body { touch-action: pan-y; }
    scales down whole, in --u), "This one!" above the share line. Every month is a flat disc
    (the DOM's) over a slot where the backdrop draws its bubble (ui/backdrop.js), 80 pt on
    the guess and its listening's size on the answer (core/pages.js monthSizes); a disc
-   gives way to its bubble once picked, or on the answer. Every animation is the video's;
+   gives way to its bubble once picked, or on the answer. Every animation is the video's
+   but the answer's resize, and when its bubbles come in (below);
    the page comes in 0.7 s after it is entered, once the top 5 has fallen away (`--tm-in`, pages.js TOP_MONTH_IN). */
 .page-best-month { position: absolute; inset: 0 var(--safe-right) 0 var(--safe-left); width: auto; --tm-in: 0.7s; }
 .pb-root[data-page='best-month'] .stage { overflow: visible; }
@@ -564,7 +565,8 @@ body { touch-action: pan-y; }
 .page-best-month:not([data-phase='guess']) .tm-label, .tm-month[aria-pressed='true'] .tm-label { color: #fff; }
 
 @keyframes tm-grow { from { scale: 0.7609; } to { scale: 1; } }
-@keyframes tm-resize { from { scale: var(--from); } to { scale: 1; } }
+/* The answer's bounce (MONTH_MOTION.reveal): 15% past its size by 55%, then back, at rest at each end and at the turn. */
+@keyframes tm-resize { from { scale: var(--from); animation-timing-function: cubic-bezier(0.45, 0, 0.45, 1); } 55% { scale: calc(1 + (1 - var(--from)) * 0.15); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); } to { scale: 1; } }
 @keyframes tm-flat-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes tm-flat-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes tm-white { from { color: var(--tm-label); } to { color: #fff; } }
@@ -585,17 +587,18 @@ body { touch-action: pan-y; }
 .page-best-month[data-phase='guess'] .tm-month[data-unpicked] .tm-label { animation: tm-pink 0.1s linear both; }
 .page-best-month[data-phase='guess'] .tm-confirm[data-ready]::before { animation: tm-ready 0.063s linear 0.075s both; }
 /* The answer: "This one!" gives under the finger, and 0.042 s on what asked drifts up and
-   fades (title, "Pick one"), "This one!" fades; every month resizes to its listening one
-   after another (--reveal), its disc giving way to its bubble 0.4 s in; the verdict comes
-   in, the minutes under it, and the share button. */
+   fades (title, "Pick one"), "This one!" fades; every month, one after another
+   (--reveal), turns to its bubble as a pick does (its disc giving way, its label white)
+   and bounces to its listening's size (MONTH_MOTION.reveal: not the video's snap); the verdict
+   comes in, the minutes under it, and the share button. */
 .page-best-month[data-phase='reveal'] .tm-ask { --drift: 11.79px; animation: tp-drift 0.4336s cubic-bezier(0.906, 0, 0.894, 0.761) 0.3424s both, tp-out 0.2478s linear 0.5732s both; }
 .page-best-month[data-phase='reveal'] .tm-hint { --drift: 16.23px; animation: tp-drift 0.473s cubic-bezier(0.837, 0.037, 0.755, 0.609) 0.4239s both, tp-out 0.2628s linear 0.6298s both; }
 .page-best-month[data-phase='reveal'] .tm-confirm { animation: tm-press 0.17s linear both, tp-out 0.1947s linear 0.4934s both; }
 .page-best-month[data-phase='reveal'] .tm-verdict-head { --rise: 13.48px; animation: pb-fade-in 0.3324s linear 0.7752s both, tp-rise 0.8079s cubic-bezier(0.092, 0.457, 0.189, 1) 0.8051s both; }
 .page-best-month[data-phase='reveal'] .tm-verdict-detail { --rise: 6.86px; animation: pb-fade-in 0.3282s linear 0.8615s both, tp-rise 0.7098s cubic-bezier(0.128, 0.685, 0.422, 0.95) 0.9127s both; }
-.page-best-month[data-phase='reveal'] .tm-disc { animation: tm-resize 0.8606s cubic-bezier(0.839, -0.042, 0.213, 1) var(--reveal) both, tm-flat-out 0.3s linear calc(var(--reveal) + 0.4s) both; }
-.page-best-month[data-phase='reveal'] .tm-month[aria-pressed='true'] .tm-disc { animation: tm-resize 0.8606s cubic-bezier(0.839, -0.042, 0.213, 1) var(--reveal) both; }
-.page-best-month[data-phase='reveal'] .tm-label { animation: tm-white 0.1s linear calc(var(--reveal) + 0.45s) both; }
+.page-best-month[data-phase='reveal'] .tm-disc { animation: tm-resize 0.65s var(--reveal) both, tm-flat-out 0.3s linear calc(var(--reveal) + 0.067s) both; }
+.page-best-month[data-phase='reveal'] .tm-month[aria-pressed='true'] .tm-disc { animation: tm-resize 0.65s var(--reveal) both; }
+.page-best-month[data-phase='reveal'] .tm-label { animation: tm-white 0.1s linear calc(var(--reveal) + 0.05s) both; }
 .page-best-month[data-phase='reveal'] .tm-month[aria-pressed='true'] .tm-label { animation: none; }
 .pb-root[data-page='best-month'] .share-bar:not([data-leaving]) { animation: tf-share-in 0.4667s cubic-bezier(0.715, 1.174, 0.218, 0.864) 0.6515s both; }
 /* Opened on the answer: it comes in as the guess does, the bubbles in their places. */

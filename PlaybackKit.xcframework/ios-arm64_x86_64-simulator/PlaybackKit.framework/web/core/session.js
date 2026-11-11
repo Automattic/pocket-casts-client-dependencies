@@ -52,7 +52,7 @@ function build(rawPayload, rules, options) {
   if (!normalized.ok) return { ok: false, errors: normalized.errors };
   const { payload, warnings } = normalized;
   const stats = deriveStats(payload, rules);
-  const archetype = assignArchetype(stats);
+  const archetype = assignArchetype(payload);
   const pages = buildPages(stats, archetype, options);
   return { ok: true, payload, warnings, stats, archetype, pages };
 }

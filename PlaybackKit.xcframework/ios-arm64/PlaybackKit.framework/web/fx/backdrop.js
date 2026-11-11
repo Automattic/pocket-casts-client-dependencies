@@ -18,7 +18,7 @@
 // while what is in it changes at its document's cadence.
 
 import { createGL } from './gl.js';
-import { createPatternEffect } from './pattern.js';
+import { createPatternEffect, MAX_BLUR_LEVEL } from './pattern.js';
 import { createWaveEffect } from './wave.js';
 import { createThermalEffect } from './thermal.js';
 import { loadDocument, documentTime, fadeLevel, holdTime, screenAt, scrubTime, sizeLevel, valuesAt } from './document.js';
@@ -83,6 +83,28 @@ const EDGE_MARGIN = 32;
  * placed on (the top month's bubbles) follows it every display frame.
  */
 const MAX_RESCALE = 0.1;
+
+/**
+ * An unclipped box (the top month's bubbles: past them only their empty margin) or one
+ * that resizes is drawn into a target whose sides are whole multiples of this, its first
+ * pixel where a target of its own size has it. Pattern keys its grain and its ramp's
+ * dissolve on the pixel, and blurs on copies 2^level times smaller, rounded up: on a
+ * side that is not a multiple, those copies' pixels fall elsewhere on the picture, and
+ * through the metal's steep bands the whole bubble shifts. On this grid the picture is the
+ * same however large the target, so a resizing box can keep one (see drawBoxed).
+ */
+const BOX_GRID = 2 ** MAX_BLUR_LEVEL;
+
+/**
+ * The largest an entry's `size` makes it from its own time `at` until it is whole, or
+ * null once it is (or it has none): sampled, so an ease that overshoots counts.
+ */
+function peakSize(size, at) {
+  if (!size || at >= size[1]) return null;
+  let peak = 0;
+  for (let i = 0; i <= 16; i++) peak = Math.max(peak, sizeLevel(size, at + ((size[1] - at) * i) / 16));
+  return peak;
+}
 
 /** Effects this build can draw. Layers naming any other effect are skipped. */
 export const SUPPORTED_EFFECTS = ['pattern-refraction', 'wave', 'thermal'];
@@ -330,6 +352,7 @@ export function createBackdrop(canvas, options = {}) {
       const { at, opacity, k } = m;
       const o = { opacity, phase: e.phase, clock: at + e.phase, ramp: e.ramp ?? ramp, drift: drifted(e, at), values: e.values, rates: e.rates, pixels: e.pixels, px, outline: e.outline, text: e.text };
       e.placedKey = placeKey(e.place);
+      e.drawnK = k;
       // A canvas that covers the screen is drawn whole in a box of its own, as Creative Lab's
       // runtime draws it (Wave's mesh and ripple read across all of it), and cut at the screen.
       if (m.boxed) {
@@ -394,10 +417,10 @@ export function createBackdrop(canvas, options = {}) {
     // (`place.margin` authored px, BOX_MARGIN by default).
     const clip = place.clip !== false;
     const spill = clip ? (Number.isFinite(place.edge) ? place.edge : EDGE_MARGIN) * unit : m;
-    const x0 = Math.max(-spill, Math.floor(Math.min(...corners.map((q) => q[0])) - m));
-    const y0 = Math.max(-spill, Math.floor(Math.min(...corners.map((q) => q[1])) - m));
-    const x1 = Math.min(Math.ceil(Bw + spill), Math.ceil(Math.max(...corners.map((q) => q[0])) + m));
-    const y1 = Math.min(Math.ceil(Bh + spill), Math.ceil(Math.max(...corners.map((q) => q[1])) + m));
+    let x0 = Math.max(-spill, Math.floor(Math.min(...corners.map((q) => q[0])) - m));
+    let y0 = Math.max(-spill, Math.floor(Math.min(...corners.map((q) => q[1])) - m));
+    let x1 = Math.min(Math.ceil(Bw + spill), Math.ceil(Math.max(...corners.map((q) => q[0])) + m));
+    let y1 = Math.min(Math.ceil(Bh + spill), Math.ceil(Math.max(...corners.map((q) => q[1])) + m));
     if (x1 - x0 < 1 || y1 - y0 < 1) return;
     let box = boxes.get(i);
     if (!box) boxes.set(i, (box = { fx: {}, rt: null, drawn: null }));
@@ -408,12 +431,34 @@ export function createBackdrop(canvas, options = {}) {
     const keep = !refresh && was?.entry === e && Math.abs(r - 1) < MAX_RESCALE
       && x0 * r >= was.x0 && y0 * r >= was.y0 && x1 * r <= was.x1 && y1 * r <= was.y1;
     if (!keep) {
-      const bw = x1 - x0, bh = y1 - y0;
+      // A box resizing with what it is placed on (its `size`: the top month's bubbles) keeps
+      // one target while it plays, with room for the largest it gets, until it is whole:
+      // one of its own size at every frame meant a dozen textures a frame for each (its
+      // Pattern instance's too), and dropped frames. On BOX_GRID, it is the same picture as
+      // drawn at its own size, frame by frame and once it settles (it jumped there, drawn
+      // centred in a target of any size).
+      let bw = x1 - x0, bh = y1 - y0;
+      if (!clip || e.size) {
+        const grid = (n) => Math.ceil(n / BOX_GRID) * BOX_GRID;
+        let [tw, th] = [grid(bw), grid(bh)];
+        const peak = playing ? peakSize(e.size, at) : null;
+        if (peak && box.rt && box.rt.w >= tw && box.rt.h >= th && box.rt.w % BOX_GRID === 0 && box.rt.h % BOX_GRID === 0) [tw, th] = [box.rt.w, box.rt.h];
+        else if (peak) {
+          const g = Math.max(1, peak / k) * 1.02;
+          [tw, th] = [grid(bw * g + 2), grid(bh * g + 2)];
+        }
+        // Grown right and up: its first pixel (bottom left) stays where it was.
+        [bw, bh] = [tw, th];
+        [x1, y0] = [x0 + tw, y1 - th];
+      }
+      if (!box.rt || box.rt.w !== bw || box.rt.h !== bh) {
+        box.rt?.dispose();
+        box.rt = kit.target(bw, bh);
+      }
       const { screen, local } = screenAt(e.doc, documentTime(e.doc, timeline(e, at)));
       // An instance of each effect its layers use (Pattern's bubbles, Wave's cards), with
       // targets of the box's size.
       for (const L of screen.layers) if (L.type === 'effect' && !box.fx[L.effect] && effects[L.effect]?.fork) box.fx[L.effect] = effects[L.effect].fork();
-      if (!box.rt || box.rt.w !== bw || box.rt.h !== bh) { box.rt?.dispose(); box.rt = kit.target(bw, bh); }
       for (const fx of Object.values(box.fx)) fx.resize(bw, bh);
       gl.bindFramebuffer(gl.FRAMEBUFFER, box.rt.fbo);
       gl.viewport(0, 0, bw, bh);
@@ -525,15 +570,17 @@ export function createBackdrop(canvas, options = {}) {
     }
     lastTick = now;
     // A frame when what shows has changed, when anything showing is due one at its own
-    // cadence, or when something placed on what moves has moved. Otherwise the last
-    // frame holds (and with nothing showing, nothing is drawn at all).
+    // cadence, when something placed on what moves has moved, or when something is
+    // resizing (its `size`: the top month's bubbles, with their discs, at every display
+    // frame, not at their document's 30). Otherwise the last frame holds (and with nothing
+    // showing, nothing is drawn at all).
     const t = clock();
     const shown = stack.map((e) => moment(e, t));
     const caps = beatsDue(now, shown);
     let wanted = shownKey(shown) !== lastShown;
     for (const [i, e] of stack.entries()) {
       if (wanted) break;
-      if (shown[i]) wanted = due(e, caps) || (Boolean(e.track) && placeKey(e.place) !== e.placedKey);
+      if (shown[i]) wanted = due(e, caps) || (Boolean(e.track) && placeKey(e.place) !== e.placedKey) || shown[i].k !== e.drawnK;
     }
     if (!wanted) return;
     for (const cap of caps) beats.set(cap, now);
@@ -587,7 +634,8 @@ export function createBackdrop(canvas, options = {}) {
      * second of the entry's own time, never wrapped with its document's loop (a colour that
      * drifts for as long as the page shows, with no jump). `size: [a, b, start, ease]` scales a
      * placed entry from `start` at a to whole at b seconds of its own time (along a
-     * cubic-bezier's four numbers, linear without), as what it is placed on resizes.
+     * cubic-bezier's four numbers, or segments `[[x, y, bezier], …]`: past whole and back, a
+     * bounce; linear without), as what it is placed on resizes.
      * `outline: true` keeps a circle's silhouette on its outline whatever its Rounding (in
      * a frame's own space): the edge blur, cut at half, takes about σ²/2r off its radius,
      * which this gives back, frame by frame (a disc as wide as what it stands for).
@@ -622,7 +670,7 @@ export function createBackdrop(canvas, options = {}) {
           values: numbers(e.values),
           rates: numbers(e.rates),
           pixels: numbers(e.pixels),
-          size: Array.isArray(e.size) && e.size[1] > e.size[0] && Number(e.size[2]) >= 0 ? [Number(e.size[0]), Number(e.size[1]), Number(e.size[2]), ...(isEase(e.size[3]) ? [e.size[3].map(Number)] : [])] : null,
+          size: Array.isArray(e.size) && e.size[1] > e.size[0] && Number(e.size[2]) >= 0 ? [Number(e.size[0]), Number(e.size[1]), Number(e.size[2]), ...(isEase(e.size[3]) ? [e.size[3].map(Number)] : isSegments(e.size[3]) ? [e.size[3].map(([x, y, b]) => [Number(x), Number(y), ...(isEase(b) ? [b.map(Number)] : [])])] : [])] : null,
           scrub: Array.isArray(e.scrub) && e.scrub[1] > e.scrub[0] && [e.scrub[2], e.scrub[3]].every((v) => Number.isFinite(Number(v))) ? [...e.scrub.slice(0, 4).map(Number), ...(isEase(e.scrub[4]) ? [e.scrub[4].map(Number)] : [])] : null,
         }));
       } catch (err) {
@@ -806,6 +854,8 @@ function numbers(o) {
 
 /** A cubic-bezier's four numbers. */
 const isEase = (v) => Array.isArray(v) && v.length === 4 && v.every((n) => Number.isFinite(Number(n)));
+/** An ease in segments, `[[x, y, bezier?], …]` (document.js easeAt), x rising to 1. */
+const isSegments = (v) => Array.isArray(v) && v.length > 0 && v.every((s, i) => Array.isArray(s) && Number.isFinite(Number(s[0])) && Number.isFinite(Number(s[1])) && (s[2] == null || isEase(s[2])) && (i === 0 || Number(s[0]) > Number(v[i - 1][0]))) && Number(v[v.length - 1][0]) === 1;
 
 /** A share in 0..1, or `fallback` when it is not a number. */
 function unit(v, fallback) {

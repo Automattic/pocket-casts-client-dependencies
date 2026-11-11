@@ -21,33 +21,12 @@ export const DEFAULT_RULES = Object.freeze({
   completionMinStarted: 5,
   /** Interactive screens reveal their answer on their own after this long without a pick. */
   revealTimeoutMs: 2 * 60 * 1000,
-  /**
-   * Archetype thresholds. SIMPLIFIED: these follow the one-line definitions in the
-   * visual-direction post. PCIOS-1299 replaces them with the rules written in the
-   * Sept 16 P2.
-   */
-  archetypes: Object.freeze({
-    /** The Collector: the most-listened show has fewer listeners than this. */
-    collectorMaxAudience: 1000,
-    /** The Avant-gardist: at least this many shows followed before they got big. */
-    avantGardistMinEarlyShows: 2,
-    /** The Aficionado: at least this share of listening time is in one genre. */
-    aficionadoMinGenreShare: 0.7,
-    /** The Anthologist: at least this many genres... */
-    anthologistMinGenres: 5,
-    /** ...each with at least this share of listening time. */
-    anthologistMinGenreShare: 0.05,
-  }),
 });
 
-/** Merge host overrides over the defaults (one level deep for `archetypes`). */
+/** Merge host overrides over the defaults. */
 export function resolveRules(overrides = {}) {
   const o = overrides && typeof overrides === 'object' ? overrides : {};
-  return {
-    ...DEFAULT_RULES,
-    ...o,
-    archetypes: { ...DEFAULT_RULES.archetypes, ...(o.archetypes || {}) },
-  };
+  return { ...DEFAULT_RULES, ...o };
 }
 
 export const SUMMARY_VARIANTS = Object.freeze(['a', 'b', 'c']);

@@ -1,17 +1,11 @@
-// Listener archetypes. The user sees exactly one. Names and one-line definitions are
-// from the visual-direction post ("The Culturista" concept). These are SIMPLIFIED rules:
-// the written ones in the Sept 16 P2 replace them in PCIOS-1299. Thresholds are in
-// DEFAULT_RULES.archetypes.
+// Listener archetypes. The user sees exactly one, and the backend picks it: the sync API
+// applies the rules written in the Sept 16 P2 to the user's whole year, against figures
+// for every show and every listener (`GET /user/playback-2026/archetype`, and
+// `Playback2026Archetypes` in pocket-casts-sync-api). The host passes it in the payload.
+// Nothing here can apply those rules: they need data the device does not have.
 //
-// Rules are checked in priority order and the first to match wins: that order is the
-// tie-break when a listener fits several. The most specific (rarest) archetypes come
-// first, and The Flâneur is the default that always matches.
-//
-// Sparse data never earns an archetype by accident: a show with no audience figure is
-// not small, and listening with no known genre is not a genre (it still counts towards
-// total listening, so it dilutes the genre shares rather than being ignored).
-
-import { UNKNOWN_GENRE } from './model.js';
+// The backend stores a user's archetype the first time it is asked and never changes it,
+// so the role is the same on every device and every time the story is opened.
 
 export const ARCHETYPE_IDS = Object.freeze([
   'collector',
@@ -21,54 +15,16 @@ export const ARCHETYPE_IDS = Object.freeze([
   'flaneur',
 ]);
 
-const knownGenres = (stats) => stats.genres.filter((g) => g.genre !== UNKNOWN_GENRE);
+/**
+ * The role when the host has none (it could not reach the backend): the backend's own
+ * default, the one it gives a listener without enough plays for any other.
+ */
+export const FALLBACK_ARCHETYPE = 'anthologist';
 
-const RULES = [
-  {
-    id: 'collector',
-    // The favourite show (the ranking's first, so its tie-breaks apply) has few listeners.
-    // A count of 0 is a show the backend has no figure for: someone is listening to it.
-    test(stats, r) {
-      const top = stats.topPodcast;
-      if (!top || !(top.listenerCount > 0) || top.listenerCount >= r.collectorMaxAudience) return null;
-      return { show: top.title, listenerCount: top.listenerCount };
-    },
-  },
-  {
-    id: 'avantGardist',
-    // Followed several shows before they got big.
-    test(stats, r) {
-      const early = stats.ranking.filter((p) => p.earlyFollower);
-      if (early.length < r.avantGardistMinEarlyShows) return null;
-      return { earlyShows: early.length };
-    },
-  },
-  {
-    id: 'aficionado',
-    // One genre takes up most of the listening. Genres are ordered by time, then name.
-    test(stats, r) {
-      const top = knownGenres(stats)[0];
-      if (!top || top.share < r.aficionadoMinGenreShare) return null;
-      return { genre: top.genre, share: top.share };
-    },
-  },
-  {
-    id: 'anthologist',
-    // Many different genres, each a real part of the listening.
-    test(stats, r) {
-      const real = knownGenres(stats).filter((g) => g.share >= r.anthologistMinGenreShare);
-      if (real.length < r.anthologistMinGenres) return null;
-      return { genres: real.length };
-    },
-  },
-  { id: 'flaneur', test: () => ({}) },
-];
-
-/** @returns {{id: string, evidence: object}} */
-export function assignArchetype(stats) {
-  for (const rule of RULES) {
-    const evidence = rule.test(stats, stats.rules.archetypes);
-    if (evidence) return { id: rule.id, evidence };
-  }
-  throw new Error('unreachable: the fallback archetype always matches');
+/**
+ * @param {import('./model.js').Payload} payload
+ * @returns {{id: string}}
+ */
+export function assignArchetype(payload) {
+  return { id: payload.archetype ?? FALLBACK_ARCHETYPE };
 }
