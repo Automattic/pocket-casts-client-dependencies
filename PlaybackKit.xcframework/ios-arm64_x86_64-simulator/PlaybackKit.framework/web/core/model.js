@@ -1,16 +1,15 @@
 // The payload contract: the facts a host hands the page. See docs/payload.md.
 //
 // The host supplies facts only. No colours, no layout, no ranking, no copy: everything
-// derived (top shows, best month, comparison, archetype) is computed here, once, for
-// every platform. `normalizePayload` is the single gate: whatever it returns is safe
-// for the rest of the code to assume.
+// derived (top shows, best month, comparison) is computed here, once, for every platform.
+// The archetype is the one fact the host does not read from the device: the backend
+// works it out (archetypes.js). `normalizePayload` is the single gate: whatever it
+// returns is safe for the rest of the code to assume.
 
 import { displayLocale } from './copy.js';
+import { ARCHETYPE_IDS, FALLBACK_ARCHETYPE } from './archetypes.js';
 
 export const PAYLOAD_VERSION = 1;
-
-/** What a show without a genre is filed under. The archetype rules treat it as unknown. */
-export const UNKNOWN_GENRE = 'Other';
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 const nonNeg = (v) => (isNum(v) && v > 0 ? v : 0);
@@ -20,12 +19,9 @@ const nonNeg = (v) => (isNum(v) && v > 0 ? v : 0);
  * @property {string} uuid
  * @property {string} title
  * @property {string} author
- * @property {string} genre
  * @property {string|null} artworkUrl
  * @property {number} playedSeconds       listening time this year
  * @property {number} episodesPlayed      distinct episodes played this year
- * @property {number|null} listenerCount  audience size, null when unknown
- * @property {boolean} earlyFollower      the user followed it before it broke out
  *
  * @typedef {Object} Payload
  * @property {number} version
@@ -35,6 +31,7 @@ const nonNeg = (v) => (isNum(v) && v > 0 ? v : 0);
  * @property {number[]} monthlySeconds    12 entries, January first
  * @property {number|null} previousYearSeconds
  * @property {{started:number, completed:number}|null} completion
+ * @property {string|null} archetype     the backend's, one of ARCHETYPE_IDS; null when the host has none
  * @property {Object<string,string|Object>} strings   copy overrides
  */
 
@@ -69,12 +66,9 @@ export function normalizePayload(raw) {
       uuid: p.uuid,
       title: p.title,
       author: typeof p.author === 'string' ? p.author : '',
-      genre: typeof p.genre === 'string' && p.genre ? p.genre : UNKNOWN_GENRE,
       artworkUrl: typeof p.artworkUrl === 'string' ? p.artworkUrl : null,
       playedSeconds: nonNeg(p.playedSeconds),
       episodesPlayed: Math.floor(nonNeg(p.episodesPlayed)),
-      listenerCount: isNum(p.listenerCount) && p.listenerCount >= 0 ? p.listenerCount : null,
-      earlyFollower: p.earlyFollower === true,
     });
   });
 
@@ -94,6 +88,9 @@ export function normalizePayload(raw) {
       ? { started: Math.floor(c.started), completed: Math.min(Math.floor(c.completed), Math.floor(c.started)) }
       : null;
 
+  const archetype = ARCHETYPE_IDS.includes(raw.archetype) ? raw.archetype : null;
+  if (raw.archetype != null && !archetype) warnings.push(`archetype "${raw.archetype}" is not one the page knows: it shows ${FALLBACK_ARCHETYPE}`);
+
   return {
     ok: true,
     warnings,
@@ -105,6 +102,7 @@ export function normalizePayload(raw) {
       monthlySeconds: monthly,
       previousYearSeconds: isNum(raw.previousYearSeconds) && raw.previousYearSeconds >= 0 ? raw.previousYearSeconds : null,
       completion,
+      archetype,
       strings: raw.strings && typeof raw.strings === 'object' ? raw.strings : {},
     },
   };

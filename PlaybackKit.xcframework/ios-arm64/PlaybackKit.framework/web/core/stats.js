@@ -26,15 +26,6 @@ export function findBestMonth(monthlySeconds) {
   return best;
 }
 
-export function genreBreakdown(ranking) {
-  const total = sum(ranking.map((p) => p.playedSeconds));
-  const bySeconds = new Map();
-  for (const p of ranking) bySeconds.set(p.genre, (bySeconds.get(p.genre) || 0) + p.playedSeconds);
-  return [...bySeconds.entries()]
-    .map(([genre, seconds]) => ({ genre, seconds, share: total ? seconds / total : 0 }))
-    .sort((a, b) => b.seconds - a.seconds || a.genre.localeCompare(b.genre, 'en'));
-}
-
 export function compareYears(totalSeconds, previousSeconds, rules) {
   if (previousSeconds == null || previousSeconds < rules.comparisonMinPreviousSeconds) return null;
   const rawPercent = ((totalSeconds - previousSeconds) / previousSeconds) * 100;
@@ -80,6 +71,5 @@ export function deriveStats(payload, ruleOverrides) {
     bestMonth: findBestMonth(payload.monthlySeconds),
     comparison: compareYears(totalSeconds, payload.previousYearSeconds, rules),
     completion,
-    genres: genreBreakdown(ranking),
   };
 }

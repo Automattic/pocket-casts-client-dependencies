@@ -104,15 +104,34 @@ export function fadeLevel(fade, t) {
 
 /**
  * A placed entry's scale at its own time `t` from its `size`, `[a, b, start, ease]`:
- * `start` until `a`, whole from `b`, between them along `ease` (linear without it). No
- * size is whole.
+ * `start` until `a`, whole from `b`, between them along `ease` (linear without it; see
+ * `easeAt`: past whole and back, a bounce). No size is whole.
  */
 export function sizeLevel(size, t) {
   if (!size) return 1;
   const [a, b, start = 1, ease] = size;
   const x = Math.max(0, Math.min(1, (t - a) / (b - a)));
-  const k = ease ? cubicBezier(ease[0], ease[1], ease[2], ease[3], x) : x;
-  return start + (1 - start) * k;
+  return start + (1 - start) * easeAt(ease, x);
+}
+
+/**
+ * How far along `ease` is at `x` (0..1): a cubic-bezier's four numbers, or segments
+ * `[[x, y, bezier], …]` on from (0, 0), each along its own cubic-bezier (linear without
+ * one), the last ending at (1, 1): a rise past the end and a settle back, as CSS keyframes
+ * with a timing function each move (the top month's answer). Linear without an ease.
+ */
+export function easeAt(ease, x) {
+  if (!ease) return x;
+  if (!Array.isArray(ease[0])) return cubicBezier(ease[0], ease[1], ease[2], ease[3], x);
+  let x0 = 0, y0 = 0;
+  for (const [x1, y1, b] of ease) {
+    if (x <= x1) {
+      const u = x1 > x0 ? (x - x0) / (x1 - x0) : 1;
+      return y0 + (y1 - y0) * (b ? cubicBezier(b[0], b[1], b[2], b[3], u) : u);
+    }
+    x0 = x1; y0 = y1;
+  }
+  return y0;
 }
 
 /**

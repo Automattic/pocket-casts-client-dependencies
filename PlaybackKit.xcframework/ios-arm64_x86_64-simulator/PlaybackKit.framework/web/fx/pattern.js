@@ -442,7 +442,8 @@ void main() {
   frag = vec4(uMode == 1 ? vec3(t.a) : uMode == 2 ? vec3(t.r) : t.rgb, 1.0);
 }`;
 
-const MAX_BLUR_LEVEL = 4;
+/** Its blurs' coarsest level: their reduced copies are 2^level times smaller (fx/backdrop.js BOX_GRID). */
+export const MAX_BLUR_LEVEL = 4;
 
 /**
  * `shared` is another instance's programs and lattice (from its `fork()`): an
