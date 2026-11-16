@@ -17,7 +17,7 @@
 // texture is stored bottom-up (render targets are, and uploads are flipped to match),
 // so going from a canvas pixel to a texture coordinate always flips v.
 
-import { RAMP_SIZE, bakeRamp, normaliseRamp } from './ramp.js';
+import { RAMP_LEVELS, RAMP_SIZE, bakeRamp, normaliseRamp, rampLevels } from './ramp.js';
 import { LATTICE, LATTICE_COLUMNS, LATTICE_ROWS, LATTICE_ROW0 } from './lattice.js';
 import { drawCustomShape, drawSolidRing, rasterCache } from './outline.js';
 
@@ -442,6 +442,11 @@ void main() {
   frag = vec4(uMode == 1 ? vec3(t.a) : uMode == 2 ? vec3(t.r) : t.rgb, 1.0);
 }`;
 
+// The baked mip chains of the last few ramps, by their stops (shared by every instance):
+// the intro switches between two ramps at every frame, and the month bubbles share theirs.
+const CHAINS = new Map();
+const MAX_CHAINS = 32;
+
 /** Its blurs' coarsest level: their reduced copies are 2^level times smaller (fx/backdrop.js BOX_GRID). */
 export const MAX_BLUR_LEVEL = 4;
 
@@ -458,7 +463,15 @@ export function createPatternEffect(kit, shared = null) {
     colour: kit.program(FS_COLOUR, 'pattern/colour'),
     blit: kit.program(FS_BLIT, 'pattern/blit'),
   };
-  const rampTex = kit.texture();
+  // The ramp with its whole mip chain, allocated once at its full size and filled level by
+  // level from the CPU (setRamp): never redefined, never generateMipmap'd (see rampLevels).
+  const rampTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, rampTex);
+  gl.texStorage2D(gl.TEXTURE_2D, RAMP_LEVELS, gl.RGBA8, RAMP_SIZE, 1);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   const blank = kit.texture();
   // The landscape's random values: read texel by texel, never filtered.
   let latticeTex = shared?.latticeTex;
@@ -557,10 +570,14 @@ export function createPatternEffect(kit, shared = null) {
     const key = JSON.stringify(ramp);
     if (key === rampKey) return;
     rampKey = key;
+    let chain = CHAINS.get(key);
+    if (!chain) {
+      chain = rampLevels(bakeRamp(ramp));
+      CHAINS.set(key, chain);
+      if (CHAINS.size > MAX_CHAINS) CHAINS.delete(CHAINS.keys().next().value);
+    }
     gl.bindTexture(gl.TEXTURE_2D, rampTex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, RAMP_SIZE, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, bakeRamp(ramp));
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    chain.forEach((px, level) => gl.texSubImage2D(gl.TEXTURE_2D, level, 0, 0, RAMP_SIZE >> level, 1, gl.RGBA, gl.UNSIGNED_BYTE, px));
   }
 
   /**

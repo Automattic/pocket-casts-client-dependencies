@@ -10544,259 +10544,259 @@
   },
   "ConstValues": [
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/BundleSchemeHandler.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/BundleSchemeHandler.swift",
       "kind": "StringLiteral",
       "offset": 511,
       "length": 13,
       "value": "\"pc-playback\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/BundleSchemeHandler.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/BundleSchemeHandler.swift",
       "kind": "StringLiteral",
       "offset": 563,
       "length": 30,
       "value": "\"pc-playback:\/\/app\/index.html\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 2822,
       "length": 17,
       "value": "\"not_enough_data\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 2888,
       "length": 17,
       "value": "\"number_of_shows\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 2930,
       "length": 12,
       "value": "\"top_1_show\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 2968,
       "length": 13,
       "value": "\"top_5_shows\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 3007,
       "length": 12,
       "value": "\"best_month\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 3045,
       "length": 12,
       "value": "\"total_time\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 3084,
       "length": 14,
       "value": "\"year_vs_year\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 3129,
       "length": 17,
       "value": "\"completion_rate\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 3173,
       "length": 13,
       "value": "\"roles_intro\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 4320,
       "length": 15,
       "value": "\"avant_gardist\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 5083,
       "length": 6,
       "value": "\"true\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 5115,
       "length": 7,
       "value": "\"false\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 5205,
       "length": 6,
       "value": "\"none\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 5748,
       "length": 3,
       "value": "\"a\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 5773,
       "length": 3,
       "value": "\"b\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 5800,
       "length": 3,
       "value": "\"c\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 6253,
       "length": 14,
       "value": "\"close_button\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "StringLiteral",
       "offset": 6399,
       "length": 13,
       "value": "\"back_button\""
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackAnalyticsEvent.swift",
       "kind": "BooleanLiteral",
       "offset": 8854,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackConfiguration.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackConfiguration.swift",
       "kind": "Dictionary",
       "offset": 422,
       "length": 3,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackConfiguration.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackConfiguration.swift",
       "kind": "BooleanLiteral",
       "offset": 618,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackConfiguration.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackConfiguration.swift",
       "kind": "Dictionary",
       "offset": 1390,
       "length": 3,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackConfiguration.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackConfiguration.swift",
       "kind": "BooleanLiteral",
       "offset": 1461,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "BooleanLiteral",
       "offset": 1712,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "BooleanLiteral",
       "offset": 1848,
       "length": 5,
       "value": "false"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "Array",
       "offset": 1935,
       "length": 2,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "IntegerLiteral",
       "offset": 2032,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "IntegerLiteral",
       "offset": 2302,
       "length": 1,
       "value": "0"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "IntegerLiteral",
       "offset": 8731,
       "length": 4,
       "value": "1080"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "IntegerLiteral",
       "offset": 8745,
       "length": 4,
       "value": "1920"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "IntegerLiteral",
       "offset": 12384,
       "length": 11,
       "value": "300000000"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackController.swift",
       "kind": "FloatLiteral",
       "offset": 12453,
       "length": 3,
       "value": "0.2"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
       "kind": "IntegerLiteral",
       "offset": 1436,
       "length": 1,
       "value": "1"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
       "kind": "Dictionary",
       "offset": 1713,
       "length": 3,
       "value": "[]"
     },
     {
-      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026-archetype\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
+      "filePath": "\/Users\/kean\/Developer\/pocket-casts-playback-2026\/ios\/Sources\/PlaybackKit\/PlaybackPayload.swift",
       "kind": "StringLiteral",
       "offset": 2409,
       "length": 2,

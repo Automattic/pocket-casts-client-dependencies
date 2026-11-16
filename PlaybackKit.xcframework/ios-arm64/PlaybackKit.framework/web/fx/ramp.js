@@ -51,6 +51,34 @@ export function bakeRamp(stops) {
   return px;
 }
 
+/** The levels of a full mip chain of a ramp: RAMP_SIZE texels, then half as many, … down to one. */
+export const RAMP_LEVELS = Math.log2(RAMP_SIZE) + 1;
+
+/**
+ * A baked ramp's mip chain, level 0 (`bakeRamp`'s texels) first: each texel the mean of
+ * the level-0 texels it covers, rounded once (within 2 of Chrome's generateMipmap on a Mac,
+ * which is the GPU's own). Built here, not on the GPU, because on a Pixel 10 (PowerVR) a
+ * ramp's first generateMipmap came out wrong: Pattern read garbage wherever the grain or
+ * the relief spread its read over the ramp, as heavy grain or tight stripes, until the
+ * ramp was uploaded again.
+ */
+export function rampLevels(level0) {
+  const levels = [level0];
+  let src = Float32Array.from(level0);
+  for (let w = RAMP_SIZE >> 1; w >= 1; w >>= 1) {
+    const mean = new Float32Array(w * 4), px = new Uint8Array(w * 4);
+    for (let i = 0; i < mean.length; i++) {
+      const x = i >> 2, c = i & 3;
+      const v = (src[x * 8 + c] + src[x * 8 + 4 + c]) / 2;
+      mean[i] = v;
+      px[i] = (v + 0.5) | 0;
+    }
+    levels.push(px);
+    src = mean;
+  }
+  return levels;
+}
+
 function toRgb(c) {
   if (typeof c === 'string') {
     const m = /^#?([0-9a-f]{6})$/i.exec(c.trim());
