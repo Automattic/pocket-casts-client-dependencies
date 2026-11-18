@@ -29,7 +29,8 @@ export default {
   'shows.artwork': '가장 많이 들은 팟캐스트',
 
   'topPodcast.quizTitle': '그중에서도 유독 빠져든 팟캐스트가 있습니다. 어떤 팟캐스트일까요?',
-  'topPodcast.quizHint': '하나를 선택하세요',
+  'topPodcast.quizHint': '스와이프해서 하나를 선택하세요',
+  'topPodcast.chooseHint': '팟캐스트를 탭해서 선택하세요',
   'topPodcast.confirm': '이거예요!',
   'topPodcast.correct': '정답입니다!',
   'topPodcast.wrong': '아깝네요!',
@@ -40,7 +41,7 @@ export default {
 
   'topShows.title': { other: '나의 TOP {count}' },
   'topShows.rank': '{rank}위',
-  'topShows.listened': '{episodes} 청취',
+  'topShows.listened': { other: '{episodes} 청취' },
 
   'bestMonth.quizTitle': '올해 유난히 많이 들은 달이 있습니다. 몇 월일까요?',
   'bestMonth.quizHint': '하나를 선택하세요',

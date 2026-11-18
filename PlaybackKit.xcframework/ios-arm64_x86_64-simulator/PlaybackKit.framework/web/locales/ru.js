@@ -33,7 +33,8 @@ export default {
   'shows.artwork': 'Ваши главные подкасты',
 
   'topPodcast.quizTitle': 'Но один подкаст занимал вас больше остальных. Угадаете какой?',
-  'topPodcast.quizHint': 'Выберите один',
+  'topPodcast.quizHint': 'Листайте и выберите один',
+  'topPodcast.chooseHint': 'Нажмите на подкаст, чтобы выбрать его',
   'topPodcast.confirm': 'Вот этот!',
   'topPodcast.correct': 'Точно!',
   'topPodcast.wrong': 'Не совсем!',
@@ -44,7 +45,7 @@ export default {
 
   'topShows.title': { one: 'Ваш топ-{count}', few: 'Ваш топ-{count}', many: 'Ваш топ-{count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': 'Прослушано: {episodes}',
+  'topShows.listened': { one: 'Прослушано: {episodes}', few: 'Прослушано: {episodes}', many: 'Прослушано: {episodes}' },
 
   'bestMonth.quizTitle': 'В одном месяце этого года вы слушали больше всего. Угадаете, в каком?',
   'bestMonth.quizHint': 'Выберите один',

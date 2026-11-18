@@ -12,9 +12,16 @@ export function startAutoplay(controller, { intervalMs = 1500, guess = 'alternat
   let variantsShown = 0;
   let sharedSummary = false;
   let stopped = false;
+  // The visit the walkthrough left the story on: a page that moved on by itself since (every
+  // page that holds, POC-1019) is watched a step before it is moved on from.
+  let visit = flow.getState().visit;
 
   const step = () => {
     if (stopped) return;
+    if (flow.getState().visit !== visit) {
+      visit = flow.getState().visit;
+      return;
+    }
     const page = flow.getPage();
     const answer = page.quiz ? flow.answers()[page.id] : null;
 
@@ -43,6 +50,7 @@ export function startAutoplay(controller, { intervalMs = 1500, guess = 'alternat
     } else {
       dispatch({ type: 'next' });
     }
+    visit = flow.getState().visit;
   };
 
   const timer = setInterval(step, intervalMs);

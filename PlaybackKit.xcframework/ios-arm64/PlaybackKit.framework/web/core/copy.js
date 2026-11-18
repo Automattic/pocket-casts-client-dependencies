@@ -32,7 +32,9 @@ export const STRINGS = Object.freeze({
   'shows.artwork': 'Your top shows',
 
   'topPodcast.quizTitle': 'But one show got most of your attention. Can you guess which?',
-  'topPodcast.quizHint': 'Pick one',
+  'topPodcast.quizHint': 'Swipe and select one',
+  // Said in the hint's place when "This one!" is tapped before a show is chosen (PCIOS-1351).
+  'topPodcast.chooseHint': 'Tap a podcast to choose it',
   'topPodcast.confirm': 'This one!',
   // The verdict, then `topPodcast.episodes` on the next line. Figma has the first only;
   // the others follow it until the writing team says otherwise.
@@ -45,7 +47,8 @@ export const STRINGS = Object.freeze({
 
   'topShows.title': { one: 'Here’s your top show', other: 'Here’s your top {count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': 'Listened to {episodes}',
+  // A plural table for the languages whose sentence agrees with the number (es "1 episodio escuchado").
+  'topShows.listened': { one: 'Listened to {episodes}', other: 'Listened to {episodes}' },
 
   'bestMonth.quizTitle': 'Your listening spiked for one month this year. Guess which one?',
   'bestMonth.quizHint': 'Pick one',

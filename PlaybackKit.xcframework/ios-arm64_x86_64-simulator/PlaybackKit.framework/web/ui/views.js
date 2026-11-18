@@ -2,7 +2,10 @@
 // page, its quiz state, a translator, the dispatch function, `reduceMotion` and `rtl`.
 // A view can instead return `{article, update}`: its own page, updated in place for the
 // rest of the visit (the top show's carousel and reveal, the top month's grid, the
-// summary's cards). Pages in FINAL have the Figma design; the rest are still wireframes
+// summary's cards), `loaded`, a function that returns a promise for what it still has
+// to load (the top show's cover, which its answer waits for before it holds: ui/app.js), and
+// `pause(paused)`, told as the app goes into the background and comes back (the top show's
+// nudge waits only while it shows). Pages in FINAL have the Figma design; the rest are still wireframes
 // (labels, boxes and buttons). Share lives in the story container (app.js), not in the
 // views, but for the summary's own Share pill.
 
@@ -13,6 +16,7 @@ import { topShowView } from './top-show.js';
 import { topMonthView } from './top-month.js';
 import { summaryView } from './summary.js';
 import { durationParts } from '../core/format.js';
+import { LOGO, LOGO_LIGHT } from './logos.js';
 
 /** Page kinds drawn to the final design. Everything else renders as a wireframe. */
 const FINAL = new Set(['intro', 'shows-and-episodes', 'top-podcast', 'top-shows', 'best-month', 'total-minutes', 'year-comparison', 'completion-rate', 'roles-intro', 'archetype', 'summary', 'outro', 'empty']);
@@ -49,8 +53,8 @@ const views = {
     const { t, payload } = ctx;
     return [
       h('div', { class: 'intro-logo', role: 'img', 'aria-label': t('intro.logo') },
-        h('img', { class: 'logo-dark', src: 'assets/logo.svg', alt: '', width: '80', height: '80' }),
-        h('img', { class: 'logo-light', src: 'assets/logo-light.svg', alt: '', width: '80', height: '80' })),
+        h('img', { class: 'logo-dark', src: LOGO, alt: '', width: '80', height: '80' }),
+        h('img', { class: 'logo-light', src: LOGO_LIGHT, alt: '', width: '80', height: '80' })),
       h('h1', { class: 'intro-title', tabindex: '-1', 'data-testid': 'title' }, t('intro.title', { year: payload.year })),
       h('p', { class: 'intro-tagline', 'data-testid': 'tagline' }, t('intro.tagline')),
       // Intro 5: what moving on waits for, in the tagline's place (ui/app.js setLoading). A live
@@ -93,7 +97,7 @@ const views = {
               { class: 'top-body' },
               h('div', { class: 'top-meta' },
                 h('span', { class: 'top-rank' }, t('topShows.rank', { rank: i + 1 })),
-                h('span', { class: 'top-count' }, t('topShows.listened', { episodes: episodes(ctx, p.episodesPlayed) }))),
+                h('span', { class: 'top-count' }, t('topShows.listened', { count: p.episodesPlayed, episodes: episodes(ctx, p.episodesPlayed) }))),
               h('div', { class: 'top-names' },
                 // dir=auto: a show's own direction, so a long one is cut at its end on any page.
                 h('span', { class: 'top-author', dir: 'auto' }, p.author),
@@ -217,6 +221,6 @@ export function renderPage(ctx) {
   const { kind } = ctx.page;
   const view = views[kind];
   const content = view ? view(ctx) : [heading(kind)];
-  if (content.article) return Object.assign(content.article, { update: content.update });
+  if (content.article) return Object.assign(content.article, { update: content.update, loaded: content.loaded, pause: content.pause });
   return h('article', { class: `page page-${kind}${FINAL.has(kind) ? '' : ' wireframe'}`, 'data-page': ctx.page.id, 'data-step': ctx.step?.id, 'data-after': ctx.page.data?.after }, content);
 }

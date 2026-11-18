@@ -14,9 +14,23 @@
 // Play again restarts the story from it (seconds): the intro's clock starts once it has gone.
 // `shows` is how long after entering a page (or, on a step, after it begins) its backdrop
 // is still bringing in what the page shows, when that outlasts the page's own CSS
-// animations (seconds): its progress segment fills until then (ui/app.js).
+// animations (seconds): its progress segment fills until then (ui/app.js). `plays` is how
+// long what the page is for takes to play through once, from entering it, where it loops
+// on after (seconds: the shows' covers coming round their deck, PCIOS-1350): the segment
+// fills until then too, and coming back to the page, it plays again from the start.
+// `holds` is how long a page without steps stays once it has shown everything (a quiz,
+// once its answer has: the view says when, its cover loaded and its way in played), before
+// it moves on by itself, as a tap would (seconds; 0, the default: it waits for a tap). Its
+// segment fills until it moves on. Sharing keeps it where it is for the rest of the visit
+// (core/flow.js). It counts from its `shows` and `plays` too, where those end later. Every
+// page that asks nothing of the user holds (PAGE_HOLD, POC-1019; shows and episodes and the
+// top show's answer their own, PCIOS-1350 and PCIOS-1352): not the intro (its steps), the
+// summary or Play again.
+// `covers` are the shows whose covers the page draws: the container fetches and decodes
+// every one the story draws as soon as the story starts (`storyCovers`, POC-1032).
 
 import { seededShuffle } from './random.js';
+import { DECK_MAX, deckRound } from '../ui/stack.js';
 
 /** Creative Lab deliverables in `motion/developments deliverables/`, by page kind. */
 const MOTION = {
@@ -49,9 +63,9 @@ const MOTION = {
  * P2's video starts to fade the blob (POC-1020: nobody should have to tap). Intro 4 is no
  * screen but the way from there into the first stat (`transition`, core/flow.js): the
  * blob fades out with the title and the line at the bottom as the video's does (0.6 s:
- * the wave's `replaces`), the wave washes in under the tagline from the bare ground after
- * it, and the first stat comes in over the wave once it has (2.6 s); a tap does nothing on
- * it. Coming back to the intro shows the title as it is once everything on it has come in
+ * the wave's `replaces`) while the wave washes in under it and the tagline (POC-1030), and
+ * the first stat comes in over the wave once it has (1.67 s); a tap does nothing on it.
+ * Coming back to the intro shows the title as it is once everything on it has come in
  * (`settled`).
  *
  * The rings and the sphere are one stack on one clock (the sphere is underneath when
@@ -63,10 +77,9 @@ const MOTION = {
  * whole for as long as the title shows (`hold`, just before 02 breaks it up, BLOB_HOLD), its
  * relief sliding on as 02 slides it (`drift`): the title can wait for a tap, or, as Intro 5,
  * for the data (PCIOS-1324). Moving on fades it out (the wave's `replaces`, over the 0.6 s the
- * video's fade takes, 6.85 s into the title when nobody taps), so the wave washes in from the
- * bare ground. `hold` on the wave would keep it moving, after its entrance, on the stretch
- * before the document moves on to the next page's pose (6 s): the first stat comes in as it
- * reaches it, and carries it on from there.
+ * video's fade takes, 6.85 s into the title when nobody taps). `hold` on the wave would keep it
+ * moving, after its entrance, on the stretch before the document moves on to the next page's
+ * pose (6 s): the first stat comes in as it reaches it, and carries it on from there.
  */
 export const BLOB_HOLD = 8.6;
 /** 02's relief slide (cx 50.25 → 80 over 1.5–10.95 s, linearly), in cx a second. */
@@ -88,18 +101,39 @@ const INTRO_STACK = {
 export const OUTRO_OUT = 0.32;
 const INTRO_GROUND = { stack: { name: 'intro-ground', layers: [] }, replaces: [0, OUTRO_OUT] };
 
-/** Intro 4, the way from the title into the first stat: the blob fades out, then the wave washes in (its entrance, 1.9 s). */
+/**
+ * Intro 4, the way from the title into the first stat: the blob fades out as the wave washes in
+ * under it (POC-1030). The wave draws opaque edge to edge (Wave's Colorama fills the frame), so
+ * it comes in `under` what it replaces, the blob fading out over it. Its entrance (03's first
+ * 1.92 s) is dark for its first 0.42 s, its source a sliver: it starts INTRO_WAVE_FROM into it,
+ * so its first light comes as the blob is half gone (it used to start 0.68 s after the move on,
+ * after the blob had gone, and showed its first light 1.1 s in: half a second of bare ground).
+ * The first stat comes in as the wave has washed in, the rest of its entrance after the move on.
+ */
 export const INTRO_BLOB_OUT = 0.6;
-export const INTRO_WAVE_IN = 0.68;
-export const INTRO_OUT_MS = 2600;
+export const INTRO_WAVE_FROM = 0.25;
+export const INTRO_OUT_MS = 1670;
 
 export const INTRO_STEPS = [
   { id: 'logo', ms: 1800, locked: true, backdrop: INTRO_GROUND },
   { id: 'ring', ms: 4750, locked: true, backdrop: { stack: INTRO_STACK, from: 0 } },
   // Everything on it is in 2.2 s in: the tagline (1.8 s) and the blob (02's 4.53 s).
   { id: 'title', ms: 6850, settled: 2200, backdrop: { stack: INTRO_STACK, from: 4.75 } },
-  { id: 'wave', ms: INTRO_OUT_MS, transition: true, shows: INTRO_OUT_MS / 1000, backdrop: { document: 'wave-transition', delay: INTRO_WAVE_IN, hold: [2, 5.8], replaces: [0, INTRO_BLOB_OUT] } },
+  { id: 'wave', ms: INTRO_OUT_MS, transition: true, shows: INTRO_OUT_MS / 1000, backdrop: { document: 'wave-transition', from: INTRO_WAVE_FROM, hold: [2, 5.8], replaces: [0, INTRO_BLOB_OUT], under: true } },
 ];
+
+/**
+ * A cold start (POC-1029): what the intro draws can come in seconds after the story opens (the
+ * app busy serving the files the page asks for once it is up; the GPU compiling the effects for
+ * the first time). The intro waits for it rather than playing on without it, which skipped the
+ * logo and the rings' first second: the logo (part of the page, ui/logos.js, so never late)
+ * comes in at once and holds at its beat, INTRO_HOLD_MS into the logo step (before it shrinks
+ * for the rings), until the rings are there; then it plays on. Picked over waiting on the bare
+ * ground and over a breathing logo (the options video on the PR). Never longer than
+ * INTRO_WAIT_CAP_MS: then it plays on as it is.
+ */
+export const INTRO_HOLD_MS = 1250;
+export const INTRO_WAIT_CAP_MS = 5000;
 
 /** Reduced Motion: one still composition, the title over the blob, moving on 4 s in. */
 export const INTRO_STILL = [{ id: 'still', ms: 4000, backdrop: { document: 'intro-loading', fit: 'canvas', scale: 0.77 } }];
@@ -109,8 +143,12 @@ export const INTRO_STILL = [{ id: 'still', ms: 4000, backdrop: { document: 'intr
  * video does): the intro's wave carries on, from where the deliverable moves it on to
  * the first stat (6 s), and sinks to the bottom of the screen while it mutes to 0.71
  * of itself against the ground, as the video's does ("the pattern becomes more muted,
- * letting the podcasts be the protagonists"). Then it moves on the stretch after that
- * (`hold`). Reduced Motion: one still of that pose.
+ * letting the podcasts be the protagonists"). Then it holds the pose it sank to (`hold`:
+ * nothing is keyframed on that stretch), its waves travelling on forward for as long as the
+ * page shows, never turning back (POC-1031). Its progress segment fills until the covers'
+ * deck has come round, every show at the front in turn and the top show back there
+ * (`plays`, `deckRound`, PCIOS-1350): the cycle is what the page is for. Reduced Motion:
+ * one still of that pose, the covers still too.
  */
 export const SHOWS_BACKDROP = { document: 'wave-transition', from: 6, hold: [7.7, 9.9], fade: [6, 6.25, 0.71] };
 export const SHOWS_STILL = { document: 'wave-transition', stillAt: 8.5, fade: [6, 6.25, 0.71] };
@@ -153,7 +191,8 @@ export const TOP_REVEAL_BACKDROP = { document: 'top-shape', loop: false, anchor:
 
 /**
  * The top 5 (Figma "Top 5", moving as the P2's top 5 video does): the wave comes back,
- * on the stretch the intro holds it on, fading in from the ground on the video's curve
+ * on the stretch the intro holds it on (its waves travelling on forward through it),
+ * fading in from the ground on the video's curve
  * (its backdrop brightens that way, 0.13 s before the frame its take starts on) as the
  * top show's answer, and the shape behind its cover, fade out (`replaces`). Its waves
  * carry on from where shows and episodes left them (ui/backdrop.js). The video's
@@ -206,18 +245,20 @@ export function monthSizes(seconds) {
  *     the label turning white over `label` from `labelAt`;
  *   reveal: from "This one!" (as it gives under the finger), each month turns to its
  *     bubble as a pick does (`pick`: the bubble from the start, the flat disc giving way,
- *     the label turning white) and bounces to its size over `duration` along `ease`:
- *     rising 15% past it, then settling back, at rest where it starts, turns and ends
- *     (segments, as the CSS keyframes have them; fx/document.js easeAt), one after another
- *     in the video's order and stagger. Not the video's motion (measured: 0.861 s on
- *     [0.839, -0.042, 0.213, 1], still for 0.35 s, then half the way in 0.1 s, its bubble
- *     coming in 0.333 s in, in the middle of that snap): on the page that read as a lag,
- *     then a jolt, with the flat disc and the bubble crossfading as they moved fastest.
+ *     the label turning white) and bounces softly to its size over `duration` along `ease`:
+ *     rising 6% past it by 60% of the way, then settling back, at rest where it starts,
+ *     turns and ends (segments, as the CSS keyframes have them; fx/document.js easeAt), one
+ *     after another in the video's order, at 1.5 times its stagger (all twelve under way in
+ *     0.27 s). Not the video's motion (measured: 0.861 s on [0.839, -0.042, 0.213, 1], still
+ *     for 0.35 s, then half the way in 0.1 s, its bubble coming in 0.333 s in, in the middle
+ *     of that snap): on the page that read as a lag, then a jolt, with the flat disc and the
+ *     bubble crossfading as they moved fastest. Nor the 0.65 s bounce, 15% past, that
+ *     replaced it, reported as too fast (POC-1035: this was picked from three).
  */
 export const MONTH_MOTION = {
   in: { first: 0.2429, row: 0.048, column: 0.0163, fade: 0.1932, scale: 0.7609, grow: 0.677, ease: [0.04, 1.122, 0.821, 0.988] },
   pick: { flatAt: 0.067, flat: 0.3, labelAt: 0.05, label: 0.1, out: 0.3 },
-  reveal: { first: 0.042, row: 0.0492, column: 0.0144, duration: 0.65, ease: [[0.55, 1.15, [0.45, 0, 0.45, 1]], [1, 1, [0.4, 0, 0.6, 1]]] },
+  reveal: { first: 0.042, row: 0.0738, column: 0.0216, duration: 1, ease: [[0.6, 1.06, [0.4, 0, 0.3, 1]], [1, 1, [0.45, 0, 0.55, 1]]] },
 };
 /** When month `m` (0 = January) starts to move in `motion`'s stagger. */
 export const monthAt = (m, { first, row, column }) => first + Math.floor(m / 3) * row + (2 - (m % 3)) * column;
@@ -255,6 +296,10 @@ export function topMonthReveal(sizes) {
       layers: sizes.map((size, m) => bubble(m, { delay: monthAt(m, MONTH_MOTION.reveal), size: [0, duration, MONTH_SIZE.guess / size, ease] })),
     },
     sharp: true,
+    // Its twelve bubbles made ready on the guess, once it has come in (TOP_MONTH_IN and the
+    // last disc's way in), and a frame held up waits rather than skips their resize (POC-1035).
+    prepares: { after: 2 },
+    waits: true,
   };
 }
 
@@ -546,12 +591,14 @@ export const SUMMARY_CARD = { width: 265, height: 469, radius: 4 };
  * Figma's bubbles on the third card (its PC_Logo layers, a disc each): box left, top and width
  * in pt from the card's top left, and the part of 07's field each shows (Phase, Evolution), as
  * Figma's are each shaded their own way. `share`: the same bubble's box on the card's share
- * frame (393 × 853 pt, the QA page's node 1439-20238), enlarged, bleeding off its edges.
+ * frame (393 × 853 pt, the QA page's node 1439-20238), enlarged, bleeding off its edges; its
+ * `edge`, the two that bleed off the frame's top and bottom corners, which the share image,
+ * shorter than the frame, keeps at its own (playback.css).
  */
 export const SUMMARY_BUBBLES = [
-  { x: -18, y: -9, size: 86.066, shade: [-12, -50], share: { x: -28, y: 25, size: 106 } },
+  { x: -18, y: -9, size: 86.066, shade: [-12, -50], share: { x: -28, y: 25, size: 106, edge: 'top' } },
   { x: 237, y: 188, size: 86.066, shade: [24, -14], share: { x: 329, y: 407, size: 106 } },
-  { x: 117, y: 415, size: 92.078, shade: [-40, 20], share: { x: -20, y: 796, size: 95.186 } },
+  { x: 117, y: 415, size: 92.078, shade: [-40, 20], share: { x: -20, y: 796, size: 95.186, edge: 'bottom' } },
   { x: 111, y: 7, size: 131.823, shade: [-12, -50], share: { x: 138, y: 185, size: 162 } },
   { x: 18, y: 165, size: 86.452, shade: [40, -30], share: { x: 22, y: 374, size: 106 } },
 ];
@@ -559,6 +606,15 @@ export const SUMMARY_BUBBLES = [
 const DOT_SPAN = (0.96 * 432 * (1 + 0.74)) / 2;
 /** The bubbles' colour drift, on 07's Offset (a second): 07's own pace (38 to 2 over its 7 s). */
 const DOT_DRIFT = -36 / 7;
+/**
+ * 10's colour (Colorama's Phase) goes once round its wheel over its 10 s loop, linearly, from
+ * its first key at 0.05 s (−30 to 70 at 10 s): looping, it held still for those 0.05 s every
+ * 10 s, a hitch on the card (POC-1031). Run at that pace on the card's own clock instead
+ * (`rates`, from where the keys put it), it goes round for as long as the page shows, the
+ * document's colour at every moment of its first loop.
+ */
+const CARD_1_PACE = (70 - -30) / (10 - 0.05);
+export const SUMMARY_CARD_1_COLOUR = { values: { colorPhase: -30 - 0.05 * CARD_1_PACE }, rates: { colorPhase: CARD_1_PACE } };
 export const SUMMARY_VARIANT_CARDS = { a: 'summary-card-1', b: 'summary-card-2', c: 'summary-ground' };
 
 function summaryBackdrop() {
@@ -570,7 +626,7 @@ function summaryBackdrop() {
       name: 'summary',
       layers: [
         // 10 and 11 are Wave, 9:16 frames: fitted across the card (a pt taller than it, cut).
-        { document: 'summary-card-1', ...inAt, anchor: { ...card('a'), span: 576, edge: 0 } },
+        { document: 'summary-card-1', ...inAt, ...SUMMARY_CARD_1_COLOUR, anchor: { ...card('a'), span: 576, edge: 0 } },
         { document: 'summary-card-2', ...inAt, anchor: { ...card('b'), span: 576, edge: 0 } },
         { document: 'summary-ground', ...inAt, anchor: { ...card('c'), span: SUMMARY_CARD.width, edge: 0 } },
         ...SUMMARY_BUBBLES.map((b, i) => ({
@@ -639,8 +695,45 @@ export function summaryCovers(ranking, n = SUMMARY_GRID) {
 }
 
 function page(id, extra = {}) {
-  return { id, kind: id, shareable: false, ownShare: false, quiz: null, steps: null, backdrop: null, pickBackdrop: null, revealBackdrop: null, leaves: 0, shows: 0, motion: MOTION[id] ?? null, data: {}, ...extra };
+  return { id, kind: id, shareable: false, ownShare: false, quiz: null, steps: null, backdrop: null, pickBackdrop: null, revealBackdrop: null, leaves: 0, shows: 0, plays: 0, holds: 0, covers: [], motion: MOTION[id] ?? null, data: {}, ...extra };
 }
+
+/**
+ * The covers the story draws, as their artwork URLs, once each, in the order its pages first
+ * draw them (shows without artwork draw their tile, so are not in it).
+ */
+export const storyCovers = (pages) => [...new Set(pages.flatMap((p) => p.covers).map((p) => p.artworkUrl).filter(Boolean))];
+
+/**
+ * How long a page stays once it has played its own animation in full and shown everything,
+ * then moves on by itself (POC-1019, design: "All screens auto-advance, except the ones where
+ * the user needs to select or interact with something", holding "5 seconds once the animation
+ * has finished"; a quiz once its answer has). Every page but the intro, shows and episodes and
+ * the top show's answer (their own, from design's later word: SHOWS_HOLD, TOP_PODCAST_HOLD),
+ * the summary (its cards to swipe, share or skip) and Play again (the last).
+ */
+export const PAGE_HOLD = 5;
+
+/**
+ * How long the top show's answer stays once it has all come in, then moves on by itself
+ * (PCIOS-1352, design QA): long enough to read the verdict, the cover and the show's details.
+ */
+export const TOP_PODCAST_HOLD = 6;
+
+/**
+ * How long shows and episodes stays once its covers' deck has come round, then moves on by
+ * itself (PCIOS-1350, design QA: "a short hold so the final state is readable before
+ * advancing", about 1 s).
+ */
+export const SHOWS_HOLD = 1;
+
+/**
+ * Shows and episodes' `holds` for a deck that comes round `plays` seconds in: SHOWS_HOLD, or
+ * longer for a short deck, so the page stays at least TOP_PODCAST_HOLD in all, as long as the
+ * top show's answer does, to read its count. A deck that does not cycle (one show, Reduced
+ * Motion's still) stays that long once the page has come in.
+ */
+export const showsHold = (plays) => Math.max(SHOWS_HOLD, TOP_PODCAST_HOLD - plays);
 
 function topPodcastPage(stats) {
   const top = stats.topPodcast;
@@ -651,6 +744,9 @@ function topPodcastPage(stats) {
     backdrop: TOP_GUESS_BACKDROP,
     pickBackdrop: TOP_PICK_BACKDROP,
     revealBackdrop: TOP_REVEAL_BACKDROP,
+    holds: TOP_PODCAST_HOLD,
+    // The carousel's options, then the answer's cover (an option too, when there is a quiz).
+    covers: hasQuiz ? [...options, top] : [top],
     data: { podcast: top },
     quiz: hasQuiz
       ? {
@@ -670,6 +766,7 @@ function bestMonthPage(stats) {
   const sizes = monthSizes(stats.months.map((m) => m.seconds));
   return page('best-month', {
     shareable: true,
+    holds: PAGE_HOLD,
     backdrop: TOP_MONTH_GUESS_BACKDROP,
     pickBackdrop: { options: Object.fromEntries(stats.months.map((m) => [String(m.month), topMonthPick(m.month)])) },
     revealBackdrop: topMonthReveal(sizes),
@@ -707,33 +804,45 @@ export function buildPages(stats, archetype, options = {}) {
 
   const pages = [];
   pages.push(introPage(options));
-  pages.push(page('shows-and-episodes', { shareable: true, backdrop: options.reduceMotion ? SHOWS_STILL : SHOWS_BACKDROP, data: { shows: stats.showsCount, episodes: stats.episodesCount, podcasts: stats.ranking } }));
+  const plays = options.reduceMotion ? 0 : deckRound(stats.ranking.length);
+  pages.push(page('shows-and-episodes', {
+    shareable: true,
+    backdrop: options.reduceMotion ? SHOWS_STILL : SHOWS_BACKDROP,
+    plays,
+    holds: showsHold(plays),
+    // The stack deals out the top shows, no more than its deck holds.
+    covers: stats.ranking.slice(0, DECK_MAX),
+    data: { shows: stats.showsCount, episodes: stats.episodesCount, podcasts: stats.ranking },
+  }));
   pages.push(topPodcastPage(stats));
-  pages.push(page('top-shows', { shareable: true, backdrop: options.reduceMotion ? TOP_SHOWS_STILL : TOP_SHOWS_BACKDROP, data: { podcasts: stats.top } }));
+  pages.push(page('top-shows', { shareable: true, holds: PAGE_HOLD, backdrop: options.reduceMotion ? TOP_SHOWS_STILL : TOP_SHOWS_BACKDROP, covers: stats.top, data: { podcasts: stats.top } }));
   if (stats.bestMonth) pages.push(bestMonthPage(stats));
   const afterTopShows = !stats.bestMonth;
   pages.push(page('total-minutes', {
     shareable: true,
+    holds: PAGE_HOLD,
     backdrop: minutesBackdrop(stats.totalMinutes, { afterTopShows }),
     data: { totalSeconds: stats.totalSeconds, minutes: stats.totalMinutes, after: afterTopShows ? 'top-shows' : 'best-month' },
   }));
   if (stats.comparison) {
     const circles = comparisonLayout(stats.comparison, stats.year);
-    pages.push(page('year-comparison', { shareable: true, backdrop: comparisonBackdrop(circles), data: { ...stats.comparison, year: stats.year, circles } }));
+    pages.push(page('year-comparison', { shareable: true, holds: PAGE_HOLD, backdrop: comparisonBackdrop(circles), data: { ...stats.comparison, year: stats.year, circles } }));
   }
-  if (stats.completion) pages.push(page('completion-rate', { shareable: true, backdrop: completionBackdrop(stats.completion.percent), shows: options.reduceMotion ? 0 : COMPLETION_SHOWN, data: stats.completion }));
-  pages.push(page('roles-intro', { backdrop: ROLES_INTRO_BACKDROP }));
-  pages.push(page('archetype', { shareable: true, backdrop: ARCHETYPE_BACKDROP, data: archetype }));
+  if (stats.completion) pages.push(page('completion-rate', { shareable: true, holds: PAGE_HOLD, backdrop: completionBackdrop(stats.completion.percent), shows: options.reduceMotion ? 0 : COMPLETION_SHOWN, data: stats.completion }));
+  pages.push(page('roles-intro', { holds: PAGE_HOLD, backdrop: ROLES_INTRO_BACKDROP }));
+  pages.push(page('archetype', { shareable: true, holds: PAGE_HOLD, backdrop: ARCHETYPE_BACKDROP, data: archetype }));
+  const grid = summaryCovers(stats.ranking, SUMMARY_GRID), stack = stats.ranking.slice(0, SUMMARY_STACK);
   pages.push(page('summary', {
     shareable: true,
     ownShare: true,
     backdrop: SUMMARY_BACKDROP,
+    covers: [...grid, ...stack],
     data: {
       year: stats.year,
       minutes: stats.totalMinutes,
       top: stats.top,
-      grid: summaryCovers(stats.ranking, SUMMARY_GRID),
-      stack: stats.ranking.slice(0, SUMMARY_STACK),
+      grid,
+      stack,
       archetype,
     },
   }));

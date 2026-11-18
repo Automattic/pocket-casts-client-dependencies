@@ -28,7 +28,8 @@ export default {
   'shows.artwork': 'よく聴いた番組',
 
   'topPodcast.quizTitle': 'なかでも、いちばん夢中になった番組があります。どれだかわかりますか？',
-  'topPodcast.quizHint': '1つ選んでください',
+  'topPodcast.quizHint': 'スワイプして1つ選んでください',
+  'topPodcast.chooseHint': 'ポッドキャストをタップして選んでください',
   'topPodcast.confirm': 'これ！',
   'topPodcast.correct': '大正解！',
   'topPodcast.wrong': '惜しい！',
@@ -39,7 +40,7 @@ export default {
 
   'topShows.title': { other: 'よく聴いた番組トップ{count}' },
   'topShows.rank': '{rank}位',
-  'topShows.listened': '{episodes}を聴きました',
+  'topShows.listened': { other: '{episodes}を聴きました' },
 
   'bestMonth.quizTitle': '今年、とくにたくさん聴いた月がありました。何月だと思いますか？',
   'bestMonth.quizHint': '1つ選んでください',

@@ -27,7 +27,8 @@ export default {
   'shows.artwork': '您最常听的播客',
 
   'topPodcast.quizTitle': '不过，有一个播客最让您着迷。猜猜是哪一个？',
-  'topPodcast.quizHint': '请选择一个',
+  'topPodcast.quizHint': '请滑动并选择一个',
+  'topPodcast.chooseHint': '请点按播客进行选择',
   'topPodcast.confirm': '就是它！',
   'topPodcast.correct': '完全正确！',
   'topPodcast.wrong': '差一点！',
@@ -38,7 +39,7 @@ export default {
 
   'topShows.title': { other: '您的播客 Top {count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': '收听了 {episodes}',
+  'topShows.listened': { other: '收听了 {episodes}' },
 
   'bestMonth.quizTitle': '今年有一个月，您听得特别多。猜猜是几月？',
   'bestMonth.quizHint': '请选择一个',

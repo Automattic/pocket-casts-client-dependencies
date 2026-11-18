@@ -29,7 +29,8 @@ export default {
   'shows.artwork': 'Dina favoritpodcasts',
 
   'topPodcast.quizTitle': 'Men en podcast fick mest av din uppmärksamhet. Kan du gissa vilken?',
-  'topPodcast.quizHint': 'Välj en',
+  'topPodcast.quizHint': 'Svep och välj en',
+  'topPodcast.chooseHint': 'Tryck på en podcast för att välja den',
   'topPodcast.confirm': 'Den här!',
   'topPodcast.correct': 'Exakt!',
   'topPodcast.wrong': 'Inte riktigt!',
@@ -40,7 +41,7 @@ export default {
 
   'topShows.title': { one: 'Här är din favoritpodcast', other: 'Här är din topp {count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': 'Lyssnade på {episodes}',
+  'topShows.listened': { one: 'Lyssnade på {episodes}', other: 'Lyssnade på {episodes}' },
 
   'bestMonth.quizTitle': 'Ditt lyssnande toppade en månad i år. Kan du gissa vilken?',
   'bestMonth.quizHint': 'Välj en',

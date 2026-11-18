@@ -13,6 +13,10 @@
 // A move is a Web Animation per cover, from its pose to the next on the move's curve,
 // with a keyframe at every slot it passes (poses are linear between slots), so it runs
 // on the compositor, exactly, and the rig can seek it. A swipe sets the poses directly.
+//
+// The nudge (PCIOS-1351, designed: the video has none) shows the swipe once, with nobody
+// touching it: the ring peeks part of a slot towards the next cover, as a finger starting a
+// swipe would take it, and springs back, the pick where it was.
 
 import { h } from './dom.js';
 
@@ -36,6 +40,29 @@ export const CAROUSEL_MOTION = {
   // seconds into the move, linearly.
   dot: { out: [0.29, 0.355], in: [0.565, 0.627] },
 };
+
+/** The nudge, in seconds and slots (designed). */
+export const NUDGE = {
+  // Towards the next cover, a little under halfway, so the pick does not change.
+  peek: 0.4,
+  out: { duration: 0.45, ease: [0.42, 0, 0.58, 1] },
+  hold: 0.1,
+  // Let go: a spring back, over a little (about 5 px) and settled.
+  back: { duration: 0.8, period: 0.6, damping: 0.55 },
+};
+export const NUDGE_DURATION = NUDGE.out.duration + NUDGE.hold + NUDGE.back.duration;
+
+/** How far the nudge has the ring from where it was, in slots, `t` seconds in. */
+export function nudgeAt(t) {
+  const { peek, out, hold, back } = NUDGE;
+  if (t <= 0) return 0;
+  if (t < out.duration) return peek * bezier(out.ease)(t / out.duration);
+  t -= out.duration + hold;
+  if (t <= 0) return peek;
+  if (t >= back.duration) return 0;
+  const w = (2 * Math.PI) / back.period, z = back.damping, wd = w * Math.sqrt(1 - z * z);
+  return peek * Math.exp(-z * w * t) * (Math.cos(wd * t) + ((z * w) / wd) * Math.sin(wd * t));
+}
 
 const lerp = (a, b, u) => a + (b - a) * u;
 
@@ -92,14 +119,17 @@ export function bezier([x1, y1, x2, y2]) {
  * The carousel. `options` are the quiz's ({id, podcast}), in ring order; `start` is the
  * option in the middle at first. `onPick(option, move)` is called as a move to a new
  * pick starts (`move`: {at, duration, ease}, `at` in ms on performance.now()), or with
- * no move when a swipe has already brought it to the middle.
+ * no move when a swipe has already brought it to the middle. `onChoose(option)` is called
+ * on a tap on the cover in the middle, which stays where it is (PCIOS-1351), and `onTouch`
+ * as a finger comes down on the ring or its surface, or an arrow key moves it.
  *
  * `surface` is a second place to swipe: the middle of the screen, over the big cover
- * (PCIOS-1315). It drags the same ring, and only swipes; a tap there is the story's.
+ * (PCIOS-1315). It drags the same ring, and only swipes; a tap there is the story's, unless
+ * `onTap(event)` takes it (it stops it going on to the story).
  *
- * @returns {{el: HTMLElement, surface: HTMLElement, pick: () => object, moveTo: (id: string) => void, destroy: () => void}}
+ * @returns {{el: HTMLElement, surface: HTMLElement, pick: () => object, moveTo: (id: string) => void, nudge: () => void, destroy: () => void}}
  */
-export function topCarousel(options, { artwork, label, start = 0, rtl = false, animate = true, onPick = () => {} }) {
+export function topCarousel(options, { artwork, label, start = 0, rtl = false, animate = true, onPick = () => {}, onChoose = () => {}, onTouch = () => {}, onTap = () => {} }) {
   const M = CAROUSEL_MOTION;
   const n = options.length;
   const E = ringSize(n);
@@ -118,7 +148,11 @@ export function topCarousel(options, { artwork, label, start = 0, rtl = false, a
       'aria-label': real ? o.podcast.title : null,
       'data-testid': real ? `option-${o.id}` : null,
       tabindex: '-1',
-      onClick: () => { if (!dragged) go(nearest(k)); },
+      onClick: () => {
+        if (dragged) return;
+        if (nearest(k) === target) onChoose(pickAt(target));
+        else go(nearest(k));
+      },
     }, h('span', { class: 'tp-option-frame' }), artwork(o.podcast, false));
     items.push(el);
   }
@@ -159,8 +193,12 @@ export function topCarousel(options, { artwork, label, start = 0, rtl = false, a
    */
   const home = (t) => centred(t, E) % n;
 
-  /** Where a move has the ring now. */
-  const position = (now = performance.now()) => (move ? lerp(move.from, move.to, move.ease(Math.min(1, (now - move.at) / (move.duration * 1000)))) : s);
+  /** Where a move (or the nudge, its own `path`) has the ring now. */
+  function position(now = performance.now()) {
+    if (!move) return s;
+    const u = Math.min(1, (now - move.at) / (move.duration * 1000));
+    return move.path ? move.path(u) : lerp(move.from, move.to, move.ease(u));
+  }
 
   function stop() {
     for (const it of items) for (const a of it.getAnimations()) a.cancel();
@@ -203,6 +241,30 @@ export function topCarousel(options, { artwork, label, start = 0, rtl = false, a
   }
   const go = (to) => { if (to !== target) run(to); };
 
+  /**
+   * The nudge (NUDGE): the ring out towards the next cover and back, where it was. Its path
+   * curves through no slot but the one it starts on, so a frame per display frame (60 a
+   * second) keeps every cover on its pose; a touch takes over from wherever it is.
+   */
+  function nudge() {
+    if (!animate || move || drag) return;
+    const from = s, D = NUDGE_DURATION, at = performance.now();
+    stop();
+    const path = (u) => from + nudgeAt(u * D);
+    move = { from, to: from, at, duration: D, path };
+    const N = Math.ceil(D * 60);
+    const timing = { duration: D * 1000, easing: 'linear', fill: 'forwards' };
+    for (let k = 0; k < E; k++) {
+      const d0 = offset(k, from, E);
+      if (Math.abs(d0) > SLOTS.length + 0.5) continue;
+      const frames = [];
+      for (let i = 0; i <= N; i++) frames.push({ ...style(pose(d0 - nudgeAt((i / N) * D))), offset: i / N });
+      items[k].animate(frames, timing);
+    }
+    const done = move;
+    items.find((it) => it.getAnimations().length)?.getAnimations()[0]?.finished.then(() => { if (move === done) { move = null; s = from; layout(); stop(); } }, () => {});
+  }
+
   function dotMove() {
     const [a, b] = M.dot.out, [c, d] = M.dot.in;
     const D = M.move.duration;
@@ -228,6 +290,7 @@ export function topCarousel(options, { artwork, label, start = 0, rtl = false, a
   for (const area of [el, surface]) {
     area.addEventListener('pointerdown', (e) => {
       if (!e.isPrimary || e.button > 0) return;
+      onTouch();
       drag = { x: e.clientX, s, t: performance.now(), v: 0, last: e.clientX, id: e.pointerId };
       dragged = false;
     });
@@ -250,10 +313,12 @@ export function topCarousel(options, { artwork, label, start = 0, rtl = false, a
     area.addEventListener('pointerup', end);
     area.addEventListener('pointercancel', end);
   }
+  surface.addEventListener('click', (e) => { if (!dragged && onTap(e)) e.stopPropagation(); });
   el.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     e.preventDefault();
     e.stopPropagation();
+    onTouch();
     go(Math.round(target) + ((e.key === 'ArrowRight') === !rtl ? 1 : -1));
     requestAnimationFrame(() => items[centred(target, E) % n]?.focus({ preventScroll: true }));
   });
@@ -264,6 +329,7 @@ export function topCarousel(options, { artwork, label, start = 0, rtl = false, a
     surface,
     pick: () => pickAt(target),
     moveTo(id) { const k = options.findIndex((o) => o.id === id); if (k >= 0) go(nearest(k)); },
+    nudge,
     destroy() { stop(); },
   };
 }

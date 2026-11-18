@@ -116,7 +116,7 @@ export function summaryView(ctx) {
   const arts = [
     () => h('div', { class: 'sc-grid' }, d.grid.map((p, i) => h('div', { class: 'sc-cover', style: `--c: ${i % 3}; --r: ${Math.floor(i / 3)}` }, artwork(p)))),
     () => h('div', { class: 'sc-stack' }, d.stack.map((p, i) => h('div', { class: 'sc-cover', 'data-slot': String(3 - i) }, artwork(p))).reverse()),
-    () => h('div', { class: 'sc-bubbles', 'aria-hidden': 'true' }, SUMMARY_BUBBLES.map((b, i) => h('div', { class: 'sc-bubble', 'data-bubble': String(i), style: `--x: ${b.x}; --y: ${b.y}; --d: ${b.size}; --sx: ${b.share.x}; --sy: ${b.share.y}; --sd: ${b.share.size}` }))),
+    () => h('div', { class: 'sc-bubbles', 'aria-hidden': 'true' }, SUMMARY_BUBBLES.map((b, i) => h('div', { class: 'sc-bubble', 'data-bubble': String(i), 'data-edge': b.share.edge, style: `--x: ${b.x}; --y: ${b.y}; --d: ${b.size}; --sx: ${b.share.x}; --sy: ${b.share.y}; --sd: ${b.share.size}` }))),
   ];
   const cards = SUMMARY_VARIANTS.map((v, k) => h('section', {
     class: 'sc-card',
@@ -265,11 +265,13 @@ export function summaryView(ctx) {
     go(target + ((e.key === 'ArrowRight') === !rtl ? 1 : -1), 'page');
   });
 
-  /** A number or a role wider than its column is drawn smaller, to fit it (`--fit`). */
+  /** A number or a role wider than its column is drawn smaller, to fit it (`--fit`), and so is
+   * the share image's title wider than its room (one line, as Figma's: a second would reach the
+   * artwork under it). */
   function fit() {
-    for (const el of article.querySelectorAll('.sc-number, .sc-role-name')) {
+    for (const el of article.querySelectorAll('.sc-number, .sc-role-name, .sc-share-title')) {
       el.style.removeProperty('--fit');
-      const room = el.parentElement.clientWidth;
+      const room = el.classList.contains('sc-share-title') ? parseFloat(getComputedStyle(el).maxWidth) : el.parentElement.clientWidth;
       if (room && el.scrollWidth > room) el.style.setProperty('--fit', (room / el.scrollWidth).toFixed(4));
     }
   }

@@ -86,7 +86,7 @@ For the writing team, design and the reviewers; none is a translation's to settl
 | `topPodcast.quizTitle`, `quizHint`, `confirm` | the first quiz: guess your top show from your own top shows on a carousel, then "This one!" |
 | `topPodcast.correct`, `wrong`, `timeout`, `direct` | the verdict, big, after the guess (`direct`: when there was no quiz, only one show); then `topPodcast.episodes` on the next line |
 | `topPodcast.listened` | under the top show's cover: its minutes |
-| `topShows.*` | the top 5 list: title ("Here’s your top 5"; one show: "Here’s your top show"), `#1`, "Listened to 70 episodes" |
+| `topShows.*` | the top 5 list: title ("Here’s your top 5"; one show: "Here’s your top show"), `#1`, "Listened to 70 episodes". `topShows.listened` (11 pt, on one line beside `#1`, in about 180 pt on a small phone) is chosen by the show's episodes, so a sentence can agree with the number (es *1 episodio escuchado*, *10 episodios escuchados*: design's copy, PCIOS-1353); keep it short and put the number first where the language allows |
 | `bestMonth.*` | the second quiz: twelve month discs; the same verdicts, then "You listened to 1,234 minutes in March" |
 | `minutes.title` | over the user's minutes drawn huge: "You spent 40,400 minutes listening to podcasts this year. And you made them count!" |
 | `comparison.*` | over two circles, last year and this: up, down, or about the same (under 1%) |

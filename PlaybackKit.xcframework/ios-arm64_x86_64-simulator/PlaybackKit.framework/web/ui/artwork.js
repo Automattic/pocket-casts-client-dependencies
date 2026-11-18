@@ -28,6 +28,42 @@ export function coverImage(url) {
   return img;
 }
 
+/**
+ * Fetches and decodes covers ahead of the pages that draw them (POC-1032), all at once, and
+ * holds them for as long as the returned images are kept. A page that comes in later then
+ * draws its covers on its first frame from what is already decoded, rather than decoding
+ * them after it (`decoding = 'async'`) and counting on being painted again: on devices, the
+ * top show's carousel sometimes left its far covers out until the ring moved. A host with no
+ * CORS gets the request again without it, as `artwork` does.
+ * @param {string[]} urls
+ * @returns {HTMLImageElement[]}
+ */
+export function preloadCovers(urls) {
+  return urls.map((url) => {
+    const img = coverImage(url);
+    // Decoded once loaded (again, if the CORS request failed and the plain one then loads).
+    img.addEventListener('load', () => img.decode().catch(() => {}));
+    img.addEventListener('error', () => { if (img.crossOrigin) img.removeAttribute('crossorigin'); });
+    return img;
+  });
+}
+
+/**
+ * Resolves once a cover (`artwork`'s element) shows what it will: its image loaded and
+ * decoded, or, with no image or once the image has failed for good, its tile. A cross-origin
+ * image that fails is tried once more without CORS first (below), so only its going counts.
+ */
+export function coverLoaded(el) {
+  const img = el?.querySelector('img');
+  if (!img || !img.parentNode) return Promise.resolve();
+  return new Promise((resolve) => {
+    const loaded = () => img.decode().then(resolve, resolve);
+    img.addEventListener('load', loaded, { once: true });
+    img.addEventListener('error', () => { if (!img.parentNode) resolve(); });
+    if (img.complete && img.naturalWidth) loaded();
+  });
+}
+
 export function artwork(podcast, label) {
   const [a, b] = tileColours(podcast);
   const el = h(

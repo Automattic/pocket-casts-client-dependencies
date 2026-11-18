@@ -28,7 +28,8 @@ export default {
   'shows.artwork': '你最常聽的 Podcast',
 
   'topPodcast.quizTitle': '不過，有一個節目最讓你著迷。猜得到是哪一個嗎？',
-  'topPodcast.quizHint': '選一個吧',
+  'topPodcast.quizHint': '滑動選一個吧',
+  'topPodcast.chooseHint': '點一下 Podcast 就能選擇',
   'topPodcast.confirm': '就是它！',
   'topPodcast.correct': '完全正確！',
   'topPodcast.wrong': '差一點！',
@@ -39,7 +40,7 @@ export default {
 
   'topShows.title': { other: '你的 Podcast 前 {count} 名' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': '收聽了 {episodes}',
+  'topShows.listened': { other: '收聽了 {episodes}' },
 
   'bestMonth.quizTitle': '今年有一個月，你聽得特別多。猜猜是哪個月？',
   'bestMonth.quizHint': '選一個吧',

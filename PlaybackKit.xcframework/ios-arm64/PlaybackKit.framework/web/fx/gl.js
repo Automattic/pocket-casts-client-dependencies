@@ -9,6 +9,32 @@ void main() {
   gl_Position = vec4(p, 0.0, 1.0);
 }`;
 
+/**
+ * GLSL: dither a premultiplied colour on its way into 8 bits per channel (the canvas, or a
+ * target without 16 bits). A smooth gradient there steps a level at a time, and where it
+ * changes slowly (the summary's cards, Wave's large fields) each step is a band many pixels
+ * wide with a contour along its edge (PCIOS-1354). Adding noise of up to a level either way
+ * before the rounding (triangular, the sum of two uniform ones, so the error left is the same
+ * whatever the colour) spreads every step into a fine grain at the same average colour.
+ * Keyed on the pixel, not the time: the same grain at every frame, so it does not shimmer.
+ * Scaled by alpha, so what is transparent stays so. `on` 0 leaves the colour alone.
+ */
+export const DITHER = `
+uvec2 ditherHash(uvec2 v) {
+  // PCG 2D (Jarzynski and Olano, 2020).
+  v = v * 1664525u + 1013904223u;
+  v.x += v.y * 1664525u; v.y += v.x * 1664525u;
+  v ^= v >> 16u;
+  v.x += v.y * 1664525u; v.y += v.x * 1664525u;
+  v ^= v >> 16u;
+  return v;
+}
+vec4 dither8(vec4 c, float on) {
+  vec2 r = vec2(ditherHash(uvec2(gl_FragCoord.xy)) & 0xffffu) / 65535.0;
+  float n = (r.x + r.y - 1.0) / 255.0;
+  return vec4(clamp(c.rgb + n * on * c.a, 0.0, c.a), c.a);
+}`;
+
 export function createGL(canvas, attrs = {}) {
   const gl = canvas.getContext('webgl2', {
     alpha: false,
@@ -68,12 +94,14 @@ export function createGL(canvas, attrs = {}) {
   /**
    * A texture-backed render target. `levels` > 1 allocates a mip chain; `float` asks for
    * 16 bits per channel where the device can render to it (smooth gradients that get
-   * stretched band at 8).
+   * stretched band at 8). The target's own `float` says whether it got them: a pass
+   * writing a smooth gradient into one that did not dithers (DITHER, below).
    */
   function target(w, h, { levels = 1, float = false } = {}) {
+    const deep = float && canFloat;
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texStorage2D(gl.TEXTURE_2D, levels, float && canFloat ? gl.RGBA16F : gl.RGBA8, w, h);
+    gl.texStorage2D(gl.TEXTURE_2D, levels, deep ? gl.RGBA16F : gl.RGBA8, w, h);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, levels > 1 ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
@@ -83,7 +111,7 @@ export function createGL(canvas, attrs = {}) {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     return {
-      tex, fbo, w, h, levels,
+      tex, fbo, w, h, levels, float: deep,
       dispose() { gl.deleteTexture(tex); gl.deleteFramebuffer(fbo); },
     };
   }

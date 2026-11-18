@@ -9,6 +9,9 @@
 // plumbing: this engine's conventions (canvas pixels y down, the fitted reference
 // frame, one full-screen triangle per pass) instead of their player's.
 //
+// The waves travel on the entry's own clock, unwrapped: a document held on a stretch
+// (`hold`) or looping holds or loops its keyframes, but its waves go on forward.
+//
 //   1 bar       a rectangle filled with the layer's gradient
 //   2 blur      a separable Gaussian, in two stages, BEFORE the waves
 //   3 warp      wave 2, wave 1 and the mirror as one backwards lookup, supersampled
@@ -23,6 +26,7 @@
 // bar at the bottom, so it reads in reverse there.
 
 import { normaliseRamp } from './ramp.js';
+import { DITHER } from './gl.js';
 
 /** Parameter defaults, for documents that leave a parameter out. */
 export const DEFAULTS = {
@@ -55,16 +59,24 @@ const DEFAULT_TAN = [[0.2472897, 0.0728201], [0, 0], [0, 0.1666667], [0, 0], [0.
 const MAX_STOPS = 8;
 /** Lattice steps across the reference frame for the mesh. */
 const MESH_STEPS = 48;
+/** A phase in periods (a wave's, or turns round Colorama's wheel), less its whole ones (0..1). */
+const periods = (x) => x - Math.floor(x);
 
+// Every pass after the bar dithers what it writes when that is 8 bits a channel (`uDither`
+// 1: the canvas, or a target where the device has no 16-bit ones), as each of them carries
+// the gradient on, and Colorama stretches a step of the waves' brightness into a wider one
+// of colour.
 const HEADER = `#version 300 es
 precision highp float;
 precision highp int;
 uniform vec2 uRes;
+uniform float uDither;
 out vec4 frag;
 // The canvas position this fragment covers, 0..1, y down.
 vec2 canvasUv() { return vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uRes; }
 // A canvas position to a (bottom-up) texture coordinate.
 vec2 fbuv(vec2 uv) { return vec2(uv.x, 1.0 - uv.y); }
+${DITHER}
 `;
 
 // ── 1 · the bar: a rectangle with a linear gradient, premultiplied ─────────────────
@@ -117,7 +129,7 @@ void main() {
     acc += texture(uTex, uv + dir * o) * w;
     wsum += w;
   }
-  frag = acc / wsum;
+  frag = dither8(acc / wsum, uDither);
 }`;
 
 // ── 3 · the two wave warps and the mirror, one lookup walked backwards ─────────────
@@ -169,7 +181,7 @@ void main() {
       acc += texture(uTex, fbuv(suv)) * inside;
     }
   }
-  frag = acc / float(M * M);
+  frag = dither8(acc / float(M * M), uDither);
 }`;
 
 // ── 4 · Colorama ───────────────────────────────────────────────────────────────────
@@ -214,7 +226,7 @@ void main() {
       c = vec4(mix(cycleAt(dot(straight, LW) * uRepeat + uPhase), straight, uBlend) * c.a, c.a);
     }
   }
-  frag = c * uOpacity;
+  frag = dither8(c * uOpacity, uDither);
 }`;
 
 // ── 5 · mesh warp ──────────────────────────────────────────────────────────────────
@@ -262,11 +274,14 @@ void main() {
 
 const FS_MESH = `#version 300 es
 precision highp float;
+precision highp int;
 uniform sampler2D uTex;
 uniform float uOpacity;
+uniform float uDither;
 in vec2 vUv;
 out vec4 frag;
-void main() { frag = texture(uTex, vec2(vUv.x, 1.0 - vUv.y)) * uOpacity; }`;
+${DITHER}
+void main() { frag = dither8(texture(uTex, vec2(vUv.x, 1.0 - vUv.y)) * uOpacity, uDither); }`;
 
 // ── 6 · ripple ────────────────────────────────────────────────────────────────────
 // A sine displacement along the radius from a centre: rings. One turn of Phase is one
@@ -306,7 +321,7 @@ void main() {
       sum += texture(uTex, fbuv(clamp(rippleUv(uv0 + off * texel), 0.0, 1.0)));
     }
   }
-  frag = sum / (fn * fn) * uOpacity;
+  frag = dither8(sum / (fn * fn) * uOpacity, uDither);
 }`;
 
 // The stage viewer's window onto one buffer, opaque.
@@ -339,6 +354,8 @@ export function createWaveEffect(kit, shared = null) {
   // session that never shows this effect never pays for them. 16 bits where the device
   // can: the bar is a smooth gradient that the blur flattens and the waves stretch.
   let wanted = [0, 0];
+  /** Whether a pass dithers what it writes into `rt` (null: the canvas): when that is 8 bits. */
+  const dithers = (rt) => (rt?.float ? 0 : 1);
   function resize(w, h) {
     wanted = [w, h];
   }
@@ -391,14 +408,15 @@ export function createWaveEffect(kit, shared = null) {
   /**
    * Draw one layer over whatever is on the canvas, premultiplied.
    * @param {object} values  the layer's parameters at this moment
-   * @param {object} o       {F: fitted frame, samples: supersampling per axis, t: the
-   *   layer's local time (the wave speeds are rates), layer: for `fx`, canvas: the
+   * @param {object} o       {F: fitted frame, samples: supersampling per axis, clock: the
+   *   entry's own unbounded time (the wave speeds are rates, so the waves travel on it, never
+   *   wrapping or turning back with the document's loop or hold), layer: for `fx`, canvas: the
    *   document's authored canvas [w, h] (what the ripple's rings are measured on), override: a ramp
    *   replacing Colorama's output cycle (the colours seen), stage, opacity: the whole
    *   layer's, applied by the pass that draws onto the canvas, target: where to draw it
    *   (default the canvas; a box's own, sized as this instance)}
    */
-  function render(values, { F, samples = 3, t = 0, layer = null, canvas = null, override = null, stage = null, opacity = 1, target = null }) {
+  function render(values, { F, samples = 3, clock = 0, layer = null, canvas = null, override = null, stage = null, opacity = 1, target = null }) {
     allocate();
     const v = { ...DEFAULTS, ...values };
     const S = F.S;
@@ -427,24 +445,29 @@ export function createWaveEffect(kit, shared = null) {
         gl.uniform2f(loc('uRes'), W, H);
         gl.uniform1f(loc('uSigma'), s);
         gl.uniform1i(loc('uVertical'), vertical);
+        gl.uniform1f(loc('uDither'), dithers(to));
       });
     }
     if (stage === 'blur') return blit(C);
 
-    // 3 · waves and mirror. Phase runs against speed so a positive speed travels down.
+    // 3 · waves and mirror. Phase runs against speed so a positive speed travels down, on
+    // the entry's own clock: forward for as long as the page shows (POC-1031). In whole
+    // periods (a wave is the same a period on), taken off here, in doubles, so the
+    // shader's floats keep their precision however long that is.
     kit.pass(P.warp, B, (loc, bind) => {
       bind('uTex', C.tex);
       gl.uniform2f(loc('uRes'), W, H);
       gl.uniform1i(loc('uSamples'), Math.max(1, Math.min(6, Math.round(samples))));
       const on1 = Math.round(v.w1On) === 1 ? 1 : 0, on2 = Math.round(v.w2On) === 1 ? 1 : 0;
-      gl.uniform3f(loc('uWave1'), (v.w1Height / 100) * S * on1, (v.w1Width / 100) * S * 2, v.w1Phase / 360 - v.w1Speed * t);
+      gl.uniform3f(loc('uWave1'), (v.w1Height / 100) * S * on1, (v.w1Width / 100) * S * 2, periods(v.w1Phase / 360 - v.w1Speed * clock));
       gl.uniform1f(loc('uDir1'), ((v.w1Dir - 180) * Math.PI) / 180);
-      gl.uniform3f(loc('uWave2'), (v.w2Height / 100) * S * on2, (v.w2Width / 100) * S * 2, v.w2Phase / 360 - v.w2Speed * t);
+      gl.uniform3f(loc('uWave2'), (v.w2Height / 100) * S * on2, (v.w2Width / 100) * S * 2, periods(v.w2Phase / 360 - v.w2Speed * clock));
       gl.uniform1f(loc('uDir2'), ((v.w2Dir - 180) * Math.PI) / 180);
       gl.uniform1i(loc('uMirror'), Math.round(v.mirrorOn));
       gl.uniform2f(loc('uMirrorC'), F.x(v.mirrorX), F.y(v.mirrorY));
       gl.uniform2f(loc('uFrameC'), F.ox + F.w / 2, F.oy + F.h / 2);
       gl.uniform1f(loc('uMirrorA'), (v.mirrorAngle * Math.PI) / 180);
+      gl.uniform1f(loc('uDither'), dithers(B));
     });
     if (stage === 'warp') return blit(B);
 
@@ -462,10 +485,12 @@ export function createWaveEffect(kit, shared = null) {
       gl.uniform4fv(loc('uCycC'), cycC);
       gl.uniform1fv(loc('uCycP'), cycP);
       gl.uniform1i(loc('uCycN'), n);
-      gl.uniform1f(loc('uPhase'), v.colorPhase / 100);
+      // In turns round the wheel, whole ones taken off (a colour at a rate: summary card 10's).
+      gl.uniform1f(loc('uPhase'), periods(v.colorPhase / 100));
       gl.uniform1f(loc('uRepeat'), v.colorRepeat);
       gl.uniform1f(loc('uBlend'), v.colorBlend / 100);
       gl.uniform1f(loc('uOpacity'), toBuffer ? 1 : opacity);
+      gl.uniform1f(loc('uDither'), dithers(toBuffer ? A : target));
     }, { blend: !toBuffer });
     if (stage === 'colour') return blit(A);
     if (!meshOn) {
@@ -495,6 +520,7 @@ export function createWaveEffect(kit, shared = null) {
     gl.uniform2f(P.mesh.loc('uRefO'), F.ox / W, F.oy / H);
     gl.uniform2f(P.mesh.loc('uRefS'), F.w / W, F.h / H);
     gl.uniform1f(P.mesh.loc('uOpacity'), ripple ? 1 : opacity);
+    gl.uniform1f(P.mesh.loc('uDither'), dithers(ripple ? C : target));
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, A.tex);
     gl.uniform1i(P.mesh.loc('uTex'), 0);
@@ -525,6 +551,7 @@ export function createWaveEffect(kit, shared = null) {
       gl.uniform1f(loc('uFreq'), v.rippleScale * 2);
       gl.uniform1f(loc('uPhase'), v.ripplePhase / 100);
       gl.uniform1f(loc('uOpacity'), opacity);
+      gl.uniform1f(loc('uDither'), dithers(target));
     }, { blend: true });
   }
 

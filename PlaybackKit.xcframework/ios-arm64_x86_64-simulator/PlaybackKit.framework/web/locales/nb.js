@@ -28,7 +28,8 @@ export default {
   'shows.artwork': 'Favorittpodcastene dine',
 
   'topPodcast.quizTitle': 'Men én podcast fikk mest oppmerksomhet. Klarer du å gjette hvilken?',
-  'topPodcast.quizHint': 'Velg én',
+  'topPodcast.quizHint': 'Sveip og velg én',
+  'topPodcast.chooseHint': 'Trykk på en podcast for å velge den',
   'topPodcast.confirm': 'Denne!',
   'topPodcast.correct': 'Akkurat!',
   'topPodcast.wrong': 'Ikke helt!',
@@ -39,7 +40,7 @@ export default {
 
   'topShows.title': { one: 'Her er favorittpodcasten din', other: 'Her er din topp {count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': 'Lyttet til {episodes}',
+  'topShows.listened': { one: 'Lyttet til {episodes}', other: 'Lyttet til {episodes}' },
 
   'bestMonth.quizTitle': 'I én måned i år lyttet du mer enn ellers. Gjett hvilken?',
   'bestMonth.quizHint': 'Velg én',

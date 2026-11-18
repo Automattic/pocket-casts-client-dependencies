@@ -30,7 +30,8 @@ export default {
   'shows.artwork': 'Deine Top-Podcasts',
 
   'topPodcast.quizTitle': 'Aber ein Podcast hat dich am meisten gefesselt. Errätst du, welcher?',
-  'topPodcast.quizHint': 'Wähl einen aus',
+  'topPodcast.quizHint': 'Wisch und wähl einen aus',
+  'topPodcast.chooseHint': 'Tipp auf einen Podcast, um ihn auszuwählen',
   'topPodcast.confirm': 'Der hier!',
   'topPodcast.correct': 'Genau!',
   'topPodcast.wrong': 'Nicht ganz!',
@@ -41,7 +42,7 @@ export default {
 
   'topShows.title': { one: 'Hier ist dein Top-Podcast', other: 'Hier sind deine Top {count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': '{episodes} gehört',
+  'topShows.listened': { one: '{episodes} gehört', other: '{episodes} gehört' },
 
   'bestMonth.quizTitle': 'In einem Monat hast du dieses Jahr besonders viel gehört. Rate mal, welcher?',
   'bestMonth.quizHint': 'Wähl einen aus',

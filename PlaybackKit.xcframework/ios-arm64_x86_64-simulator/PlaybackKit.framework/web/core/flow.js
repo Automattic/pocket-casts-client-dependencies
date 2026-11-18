@@ -1,7 +1,10 @@
 // The flow: a reducer over (pages, state). It owns navigation, quiz state, the
 // auto-reveal timer, timed steps inside a page (the intro, which then moves on by
-// itself, through a transition of its own into the next page), sharing and restart. It knows nothing about the DOM or the host: it takes
-// actions and returns state plus *effects* (messages for the host).
+// itself, through a transition of its own into the next page), a page that moves on by
+// itself once it has shown everything for a while (`holds`: every page that asks
+// nothing of the user, POC-1019, but the summary and Play again; the view says when, `shown`),
+// sharing and restart. It knows nothing about the DOM or the host: it takes actions and
+// returns state plus *effects* (messages for the host).
 //
 // It can start before it has every page (PCIOS-1324): the host opens the story at once and
 // reads the user's listening history while the intro plays. Until `load` brings the rest
@@ -81,6 +84,12 @@ export function createFlow({ pages, rules, clock, startAt, restored = {}, pendin
     // Moving on was asked for (a tap, or the page moving on by itself) while the pages after
     // this one are still to come: the flow moves on once they are (`load`).
     waiting: false,
+    // A page that `holds`: when it had shown everything (its answer, on a quiz), in ms after
+    // entering it, as the view saw it (`shown`); null until then. It moves on `holds` after.
+    shownAt: null,
+    // Shared from: the page stays where it is for the rest of the visit, however long the
+    // share sheet is up (the host does not say when it goes), and waits for a tap.
+    stays: false,
   };
 
   /** Restores earlier answers, validating them against the current quizzes. */
@@ -124,6 +133,18 @@ export function createFlow({ pages, rules, clock, startAt, restored = {}, pendin
     return (state.step === rest ? state.stepAt : stepStart(page, rest)) + page.steps[rest].ms;
   }
 
+  /**
+   * When a page that `holds` moves on by itself, in ms after entering it: `holds` after it
+   * has shown everything (the view's `shown`, and its own timeline, `shows` and `plays`).
+   * Null when it does not hold, has not shown everything yet, is a quiz still asking, was
+   * shared from, or has nothing after it.
+   */
+  function heldUntil() {
+    const page = pageAt();
+    if (!page.holds || page.steps || state.shownAt == null || state.stays || isBlocked(page) || !hasNext() || state.waiting) return null;
+    return Math.max(state.shownAt, Math.max(page.shows || 0, page.plays || 0) * 1000) + page.holds * 1000;
+  }
+
   /** Moves on to the next page, or, while that is still to come, waits for it. */
   function moveOn(effects) {
     if (state.index < pages.length - 1) enter(state.index + 1, effects);
@@ -159,6 +180,8 @@ export function createFlow({ pages, rules, clock, startAt, restored = {}, pendin
       step: revisit && page.steps ? restOf(page) : 0,
       stepAt: revisit && page.steps ? -(page.steps[restOf(page)].settled ?? 0) : 0,
       waiting: false,
+      shownAt: null,
+      stays: false,
     };
     effects.push({ type: 'page', pageId: page.id, index, count: count(), revisit });
     if (page.kind === 'outro' && !state.finished) {
@@ -234,10 +257,24 @@ export function createFlow({ pages, rules, clock, startAt, restored = {}, pendin
           for (let at = movesOnAt(); at != null && elapsed() >= at && state.index === index; at = movesOnAt()) advance(effects, at);
           if (state.index !== index) break;
         }
+        // Held as long as it holds once it has shown everything, the page moves on as a tap would.
+        const held = heldUntil();
+        if (held != null && state.pausedAt == null && elapsed() >= held) {
+          moveOn(effects);
+          break;
+        }
         // Auto-reveal so nobody is stuck on a quiz. Spec: after X minutes with no pick.
         if (page.quiz && !state.answers[page.id].revealed && state.answers[page.id].selectedId == null && state.pausedAt == null && elapsed() >= rules.revealTimeoutMs) {
           reveal('timeout', effects);
         }
+        break;
+      }
+      case 'shown': {
+        // The view: everything on the page has come in (`visit` is the visit it watched, so a
+        // late word from one before is not taken for this one). Only a page that holds needs it,
+        // and a quiz only once its answer shows.
+        if (!page.holds || action.visit !== state.visit || state.shownAt != null || isBlocked(page)) break;
+        state = { ...state, shownAt: elapsed() };
         break;
       }
       case 'pause': {
@@ -252,8 +289,16 @@ export function createFlow({ pages, rules, clock, startAt, restored = {}, pendin
         if (page.kind === 'summary' && SUMMARY_VARIANTS.includes(action.variant)) state = { ...state, summaryVariant: action.variant };
         break;
       }
+      case 'stay': {
+        // A page that holds stays where it is for the rest of the visit, as after a share: for
+        // what watches a page longer than it holds (the performance walk, host/perf.js).
+        if (page.holds && !state.stays) state = { ...state, stays: true };
+        break;
+      }
       case 'share': {
         if (!page.shareable || isBlocked(page)) break;
+        // A page that holds stays: it must not move on under the share sheet (PCIOS-1352).
+        if (page.holds && !state.stays) state = { ...state, stays: true };
         effects.push({
           type: 'share',
           pageId: page.id,
@@ -326,18 +371,37 @@ export function createFlow({ pages, rules, clock, startAt, restored = {}, pendin
     /** True unless the current page is still playing the steps before the one it rests on. */
     stepsDone: () => !pageAt().steps || state.step >= restOf(pageAt()),
     /**
+     * How long the current page will stay once it has shown everything, before it moves on by
+     * itself, in ms (its `holds`): 0 when it waits for a tap instead (no `holds`, a quiz still
+     * asking, shared from, or nothing after it). The view watches for `shown` while it is not 0.
+     */
+    holdMs() {
+      const p = pageAt();
+      return p.holds && !p.steps && !state.stays && !isBlocked(p) && hasNext() ? p.holds * 1000 : 0;
+    },
+    /**
+     * How long until a page that holds moves on by itself, in ms from now (0 once due): null
+     * until it has shown everything (`shown`), and on a page that does not hold. Paused time
+     * does not count. Dispatch a `tick` when it runs out. (The intro's is its `step()`'s.)
+     */
+    untilMovesOnMs() {
+      const at = heldUntil();
+      return at == null ? null : Math.max(0, at - elapsed());
+    },
+    /**
      * How long until the current page's own timeline has shown everything on it, in ms from
      * now (0 once it has): its steps, then its last step's `shows`, from when that step began
      * (the intro: the wave washing in, as it moves on), or until it moves on, where it does by
      * itself (the intro, once its transition has run: its segment is full as it goes), or the
      * page's `shows`, from entering it (what its backdrop draws after the DOM has settled: the
-     * completion rate's sweep). The DOM's own animations are the view's to add (ui/app.js).
+     * completion rate's sweep), or its `plays` (the shows' covers coming round their deck). The
+     * DOM's own animations are the view's to add (ui/app.js).
      * Paused time does not count. A transition not due yet (the intro waiting for the data)
      * counts for nothing.
      */
     untilShownMs() {
       const p = pageAt();
-      if (!p.steps) return Math.max(0, (p.shows || 0) * 1000 - elapsed());
+      if (!p.steps) return Math.max(0, Math.max(p.shows || 0, p.plays || 0) * 1000 - elapsed());
       const last = p.steps.length - 1;
       const ahead = p.steps[last].transition && state.step < last;
       const lastAt = state.step === last ? state.stepAt : ahead ? movesOnAt() : stepStart(p, last);

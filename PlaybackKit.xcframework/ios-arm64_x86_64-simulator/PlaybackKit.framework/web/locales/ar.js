@@ -4,7 +4,9 @@
 // - Gender: nothing is addressed to "you" in a form that picks one. Verbs about the listener
 //   are in the past tense, written the same for both ("استمعت"); buttons are verbal nouns
 //   (مشاركة، إغلاق، تخطي) rather than imperatives (شارك/شاركي); "Pick one" is a question
-//   ("أيها برأيك؟"); the sentences use nouns where English has adjectives.
+//   ("أيها برأيك؟"), and the top show's "Swipe and select one" the same question led by a
+//   verbal noun ("بالتمرير، أيها برأيك؟"), its "Tap a podcast to choose it" a verbal noun
+//   phrase ("النقر على البودكاست لاختياره"); the sentences use nouns where English has adjectives.
 // - The five names: الرحّالة (Flâneur) fits anyone; the other four are the generic masculine
 //   (جامع النوادر، الطليعي، الشغوف، الموسوعي) under "شخصيتك هي…". A neutral alternative
 //   would be welcome.
@@ -49,7 +51,8 @@ export default {
   'shows.artwork': 'برامجك الأكثر استماعًا',
 
   'topPodcast.quizTitle': 'لكن برنامجًا واحدًا استحوذ على معظم اهتمامك. هل يمكنك تخمينه؟',
-  'topPodcast.quizHint': 'أيها برأيك؟',
+  'topPodcast.quizHint': 'بالتمرير، أيها برأيك؟',
+  'topPodcast.chooseHint': 'النقر على البودكاست لاختياره',
   'topPodcast.confirm': 'هذا!',
   'topPodcast.correct': 'بالضبط!',
   'topPodcast.wrong': 'ليس تمامًا!',
@@ -74,7 +77,7 @@ export default {
     other: 'أفضل {count} برنامج لديك',
   },
   'topShows.rank': '#{rank}',
-  'topShows.listened': 'استمعت إلى {episodes}',
+  'topShows.listened': { zero: 'استمعت إلى {episodes}', one: 'استمعت إلى {episodes}', two: 'استمعت إلى {episodes}', few: 'استمعت إلى {episodes}', many: 'استمعت إلى {episodes}', other: 'استمعت إلى {episodes}' },
 
   'bestMonth.quizTitle': 'بلغ استماعك ذروته في شهر واحد هذا العام. هل يمكنك تخمينه؟',
   'bestMonth.quizHint': 'أي شهر برأيك؟',

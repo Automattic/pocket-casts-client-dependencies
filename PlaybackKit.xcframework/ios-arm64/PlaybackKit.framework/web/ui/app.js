@@ -19,11 +19,17 @@
 // The progress bar is a story's (POC-1019): the pages before this one full, the ones after
 // empty, and this one's segment filling, linearly, as the page comes in, full once
 // everything on it has: its last finite animation (or the share button's) has ended, and
-// whatever its steps or backdrop still bring in (`flow.untilShownMs`). What loops for as
-// long as the page shows (the cover stack's cycle, the role's shine) does not count. A quiz
-// fills half while it asks and the rest as its answer comes in. Only the intro moves on by
+// whatever its steps, backdrop or covers still bring in (`flow.untilShownMs`): the cover stack
+// counts until its deck has come round once (PCIOS-1350). What loops on after that, or for as
+// long as the page shows (the role's shine), does not count. A quiz
+// fills half while it asks and the rest as its answer comes in. The intro moves on by
 // itself, 6.85 s into its title, through its wave into the first stat as its segment fills
-// (POC-1020): the rest of the story is tapped through, and quizzes wait for a pick.
+// (POC-1020), and so does every page after it that asks nothing of the user, once it has all
+// come in and held (`holds`, POC-1019: 5 s; shows and episodes 1 s after its deck has come
+// round, PCIOS-1350; the top show's answer 6 s, PCIOS-1352): this container tells the flow
+// when one has (`shown`: its last finite animation ended, its cover loaded), and its segment
+// fills until it moves on; sharing from it keeps it there. Quizzes wait for a pick, then their
+// answers hold; the summary and Play again wait for the user.
 //
 // The host's data can come late (PCIOS-1324): the app opens the story at once and reads the
 // user's listening history while the intro plays (`PLAYBACK_ENV.pending`, then `load`, which
@@ -39,10 +45,9 @@
 // (the top show: a pick, then the reveal) is also rendered once per visit.
 
 import { h } from './dom.js';
-import { coverImage } from './artwork.js';
-import { DECK_MAX } from './stack.js';
+import { preloadCovers } from './artwork.js';
 import { renderPage } from './views.js';
-import { BACK_FADE, INTRO_BLOB_OUT } from '../core/pages.js';
+import { BACK_FADE, INTRO_BLOB_OUT, INTRO_HOLD_MS, INTRO_WAIT_CAP_MS, storyCovers } from '../core/pages.js';
 import { createSession } from '../core/session.js';
 import { PLAYBACK_YEAR } from '../core/config.js';
 import { createTranslator, displayLocale } from '../core/copy.js';
@@ -107,11 +112,11 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
   // What the views read from the payload before there is one (the intro's title).
   const placeholder = { year: env.year ?? PLAYBACK_YEAR, locale };
 
-  // Covers come over the network: the ones the story draws (no page draws past the cover
-  // stack's) are fetched now, during the intro, and kept, so they are there when their
-  // pages come in.
+  // Covers come over the network: every one the story draws is fetched and decoded as soon
+  // as the story starts (here, or once late data comes), during the intro, and kept, so
+  // each page draws its covers on its first frame (POC-1032).
   let covers = [];
-  const fetchCovers = () => { covers = session.stats.ranking.slice(0, DECK_MAX).filter((p) => p.artworkUrl).map((p) => coverImage(p.artworkUrl)); };
+  const fetchCovers = () => { covers = preloadCovers(storyCovers(session.pages)); };
   if (session.stats) fetchCovers();
 
   const dispatch = (action) => flow.dispatch(action);
@@ -127,8 +132,10 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
   const share = h('button', { type: 'button', class: 'share-bar', 'data-testid': 'share', onClick: () => dispatch({ type: 'share' }) },
     h('span', { class: 'share-icon' }, h('img', { src: 'assets/share.svg', alt: '', width: '20', height: '20' })),
     h('span', null, t('chrome.share')));
+  // The logo white on the red badge, red on the white one (the summary's cards).
   const badge = h('div', { class: 'share-badge', 'aria-hidden': 'true' },
-    h('img', { src: 'assets/share-badge.svg', alt: '', width: '26', height: '26' }),
+    h('img', { class: 'on-red', src: 'assets/share-badge.svg', alt: '', width: '26', height: '26' }),
+    h('img', { class: 'on-white', src: 'assets/share-badge-red.svg', alt: '', width: '26', height: '26' }),
     h('span', null, t('chrome.shareBadge')));
   const back = h('button', { type: 'button', class: 'step step-back', 'data-testid': 'back', onClick: () => dispatch({ type: 'back' }) }, t('chrome.back'));
   const next = h('button', { type: 'button', class: 'step step-next', 'data-testid': 'next', onClick: () => dispatch({ type: 'next' }) }, t('chrome.next'));
@@ -150,6 +157,8 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
   };
   // The current segment's fill: the visit and the phase of it it is filling for, and its animation.
   let fill = { visit: '', phase: '', from: 0, to: 0, anim: null };
+  // The visit of a page that holds whose coming in is being watched (`watchShown`).
+  let watched = '';
 
   function render() {
     const state = flow.getState();
@@ -210,7 +219,8 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
       track(share.animate([{ opacity: 0 }, { opacity: 1 }], { duration: BACK_MS, easing: 'linear' }));
     }
     setLoading(flow.isWaiting());
-    fillSegment(visit, `${revealed}:${step?.index ?? ''}`, state.index, revealed);
+    fillSegment(visit, fillPhase(), state.index, revealed);
+    watchShown(visit);
     back.hidden = !isStory || !flow.canGoBack();
     next.hidden = !isStory || !flow.canGoNext();
     renderHud();
@@ -247,11 +257,22 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
   }
 
   /**
+   * The phase of a visit the segment fills for: the step, the answer, and on a page that holds,
+   * whether it is still coming in, has (`shown`: when it moves on is known), or stays (shared).
+   */
+  function fillPhase() {
+    const hold = flow.holdMs() ? (flow.untilMovesOnMs() == null ? 'in' : 'held') : '';
+    return `${flow.isRevealed()}:${flow.step()?.index ?? ''}:${hold}`;
+  }
+
+  /**
    * Fills the current page's segment from where it is to `to` (all of it, or QUIZ_ASKED of a
    * quiz still asking), linearly, ending once the page has shown everything for now: once its
    * last finite animation (the page's, the share button's) has ended and its own timeline
-   * (flow.untilShownMs) has run. Once per phase of a visit (a step, the answer); a pick
-   * changes nothing. A new visit starts from empty.
+   * (flow.untilShownMs) has run; on a page that holds, as it moves on, that long after (or once
+   * it is known when it does, then). Once per phase of a visit (a step, the answer, the page
+   * that holds having come in or been shared from); a pick changes nothing. A new visit starts
+   * from empty.
    */
   function fillSegment(visit, phase, index, revealed) {
     if (visit === fill.visit && phase === fill.phase) return;
@@ -260,10 +281,28 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     fill.anim?.cancel();
     const to = revealed ? 1 : QUIZ_ASKED;
     const view = stage.querySelector(':scope > .page:not([data-leaving])');
-    const ms = Math.max(flow.untilShownMs(), untilSettledMs([...(view?.getAnimations({ subtree: true }) ?? []), ...share.getAnimations()]));
+    const ms = flow.untilMovesOnMs() ?? Math.max(flow.untilShownMs(), untilSettledMs([...(view?.getAnimations({ subtree: true }) ?? []), ...share.getAnimations()])) + flow.holdMs();
     const anim = segments[index].firstChild.animate([{ transform: `scaleX(${at})` }, { transform: `scaleX(${Math.max(at, to)})` }], { duration: ms, easing: 'linear', fill: 'forwards' });
     if (flow.getState().pausedAt != null) anim.pause();
     fill = { visit, phase, from: at, to: Math.max(at, to), anim };
+  }
+
+  /**
+   * On a page that holds (every page but the intro, the summary and Play again), tells the flow
+   * once everything on it has come in (`shown`): its last finite animation (the page's, the
+   * share button's) has ended, and the view has nothing left to load (`loaded`: the top show's
+   * cover). Animations pause with the app, so paused time does not count. Once per visit, from
+   * when it holds (a quiz: its answer showing).
+   */
+  function watchShown(visit) {
+    if (!flow.holdMs() || watched === visit) return;
+    watched = visit;
+    const view = stage.querySelector(':scope > .page:not([data-leaving])');
+    const playing = [...(view?.getAnimations({ subtree: true }) ?? []), ...share.getAnimations()]
+      .filter((a) => a.playState !== 'idle' && Number.isFinite(a.effect?.getComputedTiming().endTime));
+    const { visit: n } = flow.getState();
+    Promise.all([...playing.map((a) => a.finished.catch(() => {})), view?.loaded?.()])
+      .then(() => dispatch({ type: 'shown', visit: n }));
   }
 
   /** How much of the current segment is filled now. */
@@ -342,13 +381,12 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     }
   }
 
+  /** Ticks the flow when the next step is due, or the page moving on by itself (a step's, or a hold's). */
   function scheduleStep() {
     clearTimeout(stepTimer);
-    const due = flow.step()?.remainingMs;
-    if (due == null) {
-      if (!flow.step()) delete root.dataset.step;
-      return;
-    }
+    if (!flow.step()) delete root.dataset.step;
+    const due = flow.step()?.remainingMs ?? flow.untilMovesOnMs();
+    if (due == null) return;
     // A paused flow (app in the background) cannot advance; resuming re-renders.
     if (flow.getState().pausedAt != null) return;
     stepTimer = setTimeout(() => {
@@ -362,19 +400,35 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     const page = flow.getPage();
     const left = flow.revealCountdownMs();
     const step = flow.step();
-    hud.textContent = `${page.id} · ${flow.getState().index + 1}/${flow.count()}` + (flow.isPending() ? ' · data pending' : '') + (step ? ` · ${step.id}` : '') + (left == null ? '' : ` · auto-reveal ${Math.ceil(left / 1000)}s`);
+    const held = flow.untilMovesOnMs();
+    hud.textContent = `${page.id} · ${flow.getState().index + 1}/${flow.count()}` + (flow.isPending() ? ' · data pending' : '') + (step ? ` · ${step.id}` : '') + (left == null ? '' : ` · auto-reveal ${Math.ceil(left / 1000)}s`) + (held == null ? '' : ` · moves on ${Math.ceil(held / 1000)}s`);
   }
 
   // Effects go to the host; the page never talks to the host any other way.
   flow.subscribe((state, effects, action) => {
     for (const e of effects) bridge.send(e);
-    if (action.type === 'share') return;
+    // Sharing re-renders nothing, so nothing replays under the capture; a page that held now
+    // stays, so its segment fills only as far as the page has come in.
+    if (action.type === 'share') {
+      if (fill.visit) fillSegment(fill.visit, fillPhase(), state.index, flow.isRevealed());
+      return;
+    }
+    // A page having come in (`shown`) or staying (`stay`) changes no pixels either, only when
+    // it moves on: re-rendering would build a page that does not update itself again, its way
+    // in playing twice (the covers coming in, going, and coming in again). Its segment fills
+    // to the move, and the timer is set for it.
+    if (action.type === 'shown' || action.type === 'stay') {
+      if (fill.visit) fillSegment(fill.visit, fillPhase(), state.index, flow.isRevealed());
+      renderHud();
+      return scheduleStep();
+    }
     // Pausing and resuming change no pixels; re-rendering would only move focus. The
     // page's animations (the intro's steps) stop and start with the clock.
     if (action.type === 'pause' || action.type === 'resume') {
       const paused = flow.getState().pausedAt != null;
       root.toggleAttribute('data-paused', paused);
       pauseFill(paused);
+      stage.querySelector(':scope > .page:not([data-leaving])')?.pause?.(paused);
       for (const a of moving) if (paused) a.pause(); else a.play();
       return scheduleStep();
     }
@@ -427,7 +481,44 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     renderHud();
   }, TICK_MS);
 
-  const onVisibility = () => dispatch({ type: document.hidden ? 'pause' : 'resume' });
+  // What holds the story's clocks (the intro's steps, auto-reveal) besides the app being in the
+  // background: its first frame not on screen yet, and on a cold start what the intro draws not
+  // there yet (POC-1029). The flow pauses only when that changes: resuming replays nothing.
+  const holds = new Set();
+  const clockState = () => {
+    const pause = document.hidden || holds.size > 0;
+    if (pause !== (flow.getState().pausedAt != null)) dispatch({ type: pause ? 'pause' : 'resume' });
+  };
+  const hold = (why) => { holds.add(why); clockState(); };
+  const release = (why) => { if (holds.delete(why)) clockState(); };
+  const onVisibility = clockState;
+
+  /**
+   * The intro the story opens on waits for what it draws (`ready`: its documents and logos) when
+   * that comes in late (pages.js INTRO_HOLD_MS), never longer than INTRO_WAIT_CAP_MS. Without its
+   * logo step (Reduced Motion's still), it waits on the bare ground from the start.
+   */
+  function waitForIntro(ready) {
+    if (!flow.getPage().steps) return;
+    let done = false;
+    const there = Promise.race([ready, new Promise((r) => setTimeout(r, INTRO_WAIT_CAP_MS))]).then(() => { done = true; });
+    if (flow.step()?.id !== 'logo') {
+      hold('intro');
+      there.then(() => release('intro'));
+      return;
+    }
+    // Held at the logo's beat, on the flow's clock (it starts with the first frame on screen).
+    const check = () => {
+      const s = flow.step();
+      if (done || s?.id !== 'logo') return;
+      const left = INTRO_HOLD_MS - s.elapsedMs;
+      if (left > 0 || flow.getState().pausedAt != null) { setTimeout(check, Math.max(16, left)); return; }
+      hold('intro');
+      there.then(() => release('intro'));
+    };
+    check();
+  }
+  const introWaits = [];
   const onKey = (e) => {
     if (e.target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
     if (e.key === 'ArrowRight') dispatch({ type: rtl ? 'back' : 'next' });
@@ -444,10 +535,13 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
   // The clocks (the intro's steps, auto-reveal) start with the first frame on screen,
   // not at mount: a web view can mount out of sight, or paint a beat later on a slow
   // device. Animation frames do not run while hidden; visibilitychange resumes too.
-  dispatch({ type: 'pause' });
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    if (!document.hidden) dispatch({ type: 'resume' });
-  }));
+  // What the intro waits for is known by the first frame (the backdrop's, `waitForIntro`).
+  hold('frame');
+  for (const img of stage.querySelectorAll('.page-intro img')) introWaits.push(img.decode().catch(() => {}));
+  requestAnimationFrame(() => {
+    waitForIntro(Promise.all(introWaits));
+    requestAnimationFrame(() => release('frame'));
+  });
 
   /**
    * The host's data, now that it has it (`PLAYBACK_ENV.pending`): the rest of the story. Tells
@@ -484,6 +578,8 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     reduceMotion,
     locale,
     load,
+    /** What the intro the story opens on draws, arriving (the backdrop's documents): it waits for it (POC-1029). */
+    waitForIntro: (p) => introWaits.push(p),
     /** Called once a late payload has been rejected and the error state shows (main.js stops the backdrop). */
     onFail: null,
     destroy() {

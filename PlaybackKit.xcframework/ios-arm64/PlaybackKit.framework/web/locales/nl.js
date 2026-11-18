@@ -28,7 +28,8 @@ export default {
   'shows.artwork': 'Je toppodcasts',
 
   'topPodcast.quizTitle': 'Maar één podcast kreeg de meeste aandacht. Raad je welke?',
-  'topPodcast.quizHint': 'Kies er één',
+  'topPodcast.quizHint': 'Swipe en kies er één',
+  'topPodcast.chooseHint': 'Tik op een podcast om hem te kiezen',
   'topPodcast.confirm': 'Deze!',
   'topPodcast.correct': 'Precies!',
   'topPodcast.wrong': 'Net niet!',
@@ -39,7 +40,7 @@ export default {
 
   'topShows.title': { one: 'Dit is je toppodcast', other: 'Dit is je top {count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': '{episodes} beluisterd',
+  'topShows.listened': { one: '{episodes} beluisterd', other: '{episodes} beluisterd' },
 
   'bestMonth.quizTitle': 'Eén maand luisterde je dit jaar veel meer dan anders. Raad je welke?',
   'bestMonth.quizHint': 'Kies er één',

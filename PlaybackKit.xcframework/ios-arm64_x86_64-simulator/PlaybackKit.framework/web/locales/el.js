@@ -31,7 +31,8 @@ export default {
   'shows.artwork': 'Τα κορυφαία σου podcasts',
 
   'topPodcast.quizTitle': 'Ένα podcast όμως κέρδισε την περισσότερη προσοχή σου. Μαντεύεις ποιο;',
-  'topPodcast.quizHint': 'Διάλεξε ένα',
+  'topPodcast.quizHint': 'Σύρε και διάλεξε ένα',
+  'topPodcast.chooseHint': 'Πάτησε ένα podcast για να το διαλέξεις',
   'topPodcast.confirm': 'Αυτό!',
   'topPodcast.correct': 'Ακριβώς!',
   'topPodcast.wrong': 'Όχι ακριβώς!',
@@ -42,7 +43,7 @@ export default {
 
   'topShows.title': { one: 'Το κορυφαίο σου podcast', other: 'Τα κορυφαία σου {count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': 'Άκουσες {episodes}',
+  'topShows.listened': { one: 'Άκουσες {episodes}', other: 'Άκουσες {episodes}' },
 
   'bestMonth.quizTitle': 'Φέτος υπήρξε ένας μήνας που άκουσες περισσότερο από κάθε άλλον. Μαντεύεις ποιος;',
   'bestMonth.quizHint': 'Διάλεξε έναν',

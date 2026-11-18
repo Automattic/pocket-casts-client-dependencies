@@ -30,7 +30,8 @@ export default {
   'shows.artwork': 'I tuoi podcast più ascoltati',
 
   'topPodcast.quizTitle': 'Ma un podcast ha catturato la tua attenzione più di tutti. Indovini quale?',
-  'topPodcast.quizHint': 'Scegline uno',
+  'topPodcast.quizHint': 'Scorri e scegline uno',
+  'topPodcast.chooseHint': 'Tocca un podcast per sceglierlo',
   'topPodcast.confirm': 'Questo!',
   'topPodcast.correct': 'Esatto!',
   'topPodcast.wrong': 'Non proprio!',
@@ -41,7 +42,7 @@ export default {
 
   'topShows.title': { one: 'Ecco il tuo podcast preferito', other: 'Ecco la tua top {count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': 'Hai ascoltato {episodes}',
+  'topShows.listened': { one: 'Hai ascoltato {episodes}', other: 'Hai ascoltato {episodes}' },
 
   'bestMonth.quizTitle': 'Quest’anno c’è stato un mese in cui hai ascoltato più di tutti. Indovini quale?',
   'bestMonth.quizHint': 'Scegline uno',

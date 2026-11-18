@@ -30,7 +30,8 @@ export default {
   'shows.artwork': 'Els teus pòdcasts preferits',
 
   'topPodcast.quizTitle': 'Però hi ha un pòdcast que s’ha endut la major part de la teva atenció. Endevines quin?',
-  'topPodcast.quizHint': 'Tria’n un',
+  'topPodcast.quizHint': 'Llisca i tria’n un',
+  'topPodcast.chooseHint': 'Toca un pòdcast per triar-lo',
   'topPodcast.confirm': 'Aquest!',
   'topPodcast.correct': 'Exacte!',
   'topPodcast.wrong': 'Gairebé!',
@@ -41,7 +42,7 @@ export default {
 
   'topShows.title': { one: 'Aquest és el teu pòdcast preferit', other: 'Aquest és el teu top {count}' },
   'topShows.rank': '#{rank}',
-  'topShows.listened': 'Has escoltat {episodes}',
+  'topShows.listened': { one: 'Has escoltat {episodes}', other: 'Has escoltat {episodes}' },
 
   'bestMonth.quizTitle': 'Enguany hi ha hagut un mes en què has escoltat més que mai. Endevines quin?',
   'bestMonth.quizHint': 'Tria’n un',

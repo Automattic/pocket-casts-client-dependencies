@@ -271,7 +271,8 @@ body { touch-action: pan-y; }
    which shrinks the whole stack when the space is shorter than designed. Every cover is
    a front-sized box at the front slot, put in its slot by a transform (ui/stack.js
    animates them through the deck, scaled about their top centre), so they move on the
-   compositor. The page comes in once the intro's tagline has gone (STACK_MOTION). */
+   compositor. The page comes in once the intro's tagline has gone, the stack partway
+   through one of its moves (STACK_MOTION). */
 .page-shows-and-episodes { padding: 31.5px 22px 0; }
 .page-shows-and-episodes .story-title { animation: pb-fade-in 0.27s linear 0.56s both; }
 /* Moving on, it fades out (0.25 s) before the top show comes in over the same wave. */
@@ -306,6 +307,8 @@ body { touch-action: pan-y; }
   transform-origin: 50% 0;
 }
 .stack-card, .stack-item .art { width: 100%; height: 100%; border-radius: 2px; }
+/* The way in moves the card within its slot's pose, scaled about the same top centre. */
+.stack-card { transform-origin: 50% 0; }
 .stack-item .art { box-shadow: 0 1.503px 26.01px rgba(0, 0, 0, 0.25); }
 
 @keyframes pb-fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -337,7 +340,7 @@ body { touch-action: pan-y; }
 .tp-verdict > span { display: block; }
 /* Figma's place for the hint is under two lines of title; a longer one (the English too, in 320 pt)
    moves it down (--title-extra, ui/dom.js). */
-.tp-hint { top: calc(var(--chrome-top) + 124px + var(--title-extra, 0px)); left: 0; right: 0; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
+.tp-hint { top: calc(var(--chrome-top) + 124px + var(--title-extra, 0px)); left: 18px; right: 18px; text-align: center; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
 .tp-slot, .tp-cover { left: calc(50% + 0.5px - var(--size) / 2); top: calc(var(--cy) - var(--size) / 2); width: var(--size); height: var(--size); }
 .tp-slot { visibility: hidden; pointer-events: none; }
 /* The guess's logos are drawn by the backdrop in these boxes: Figma's for its two shader
@@ -386,22 +389,28 @@ body { touch-action: pan-y; }
 .tp-option .art { position: absolute; inset: 4px; border-radius: 2px; box-shadow: 0 2.444px 73.308px rgba(0, 0, 0, 0.2); }
 .tp-option:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 4px; }
 .tp-dot { position: absolute; left: -2px; top: 46px; width: 4px; height: 4px; border-radius: 50%; background: #fff; }
+/* "This one!" is dim until a show is chosen, or the nudge has shown how (PCIOS-1351): the top
+   month's button, the same pill at 0.4 with black type, lit the same way. */
 .tp-confirm {
   position: absolute;
+  z-index: 0;
   left: calc(50% - 54.5px);
   bottom: calc(var(--share-bottom) - 4px);
   width: 109px;
   height: 46px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 100px;
-  background: #fff;
-  color: var(--pb-ground);
+  border: 0;
+  background: none;
+  color: #000;
   font: 800 calc(14px * var(--text-scale))/normal var(--pb-font);
   pointer-events: auto;
   cursor: pointer;
 }
-.tp-confirm:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.tp-confirm::before { content: ''; position: absolute; inset: 0; z-index: -1; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 100px; background: #fff; opacity: 0.4; }
+.tp-confirm[data-ready] { color: var(--pb-ground); }
+.tp-confirm[data-ready]::before { opacity: 1; }
+.page-top-podcast[data-phase='guess'] .tp-confirm[data-ready]::before { animation: tm-ready 0.063s linear 0.075s both; }
+.tp-confirm:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 100px; }
 .page-top-podcast[data-phase='guess'] :is(.tp-verdict, .tp-details) { visibility: hidden; }
 .page-top-podcast[data-phase='result'] :is(.tp-ask, .tp-hint, .tp-pick) { display: none; }
 
@@ -477,7 +486,8 @@ body { touch-action: pan-y; }
 }
 .top-card .art { flex: none; height: 100%; aspect-ratio: 1; }
 .top-body { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 12px 12px 17px; }
-.top-meta { display: flex; justify-content: space-between; gap: 8px; font-size: calc(10px * var(--text-scale)); line-height: normal; }
+/* The rank and the count at 11 pt, a point over Figma's 10 (design, PCIOS-1353). */
+.top-meta { display: flex; justify-content: space-between; gap: 8px; font-size: calc(11px * var(--text-scale)); line-height: normal; }
 .top-rank { font-weight: 800; }
 .top-count { font-weight: 600; letter-spacing: 0.1px; white-space: nowrap; }
 .top-names { margin-top: auto; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -565,8 +575,8 @@ body { touch-action: pan-y; }
 .page-best-month:not([data-phase='guess']) .tm-label, .tm-month[aria-pressed='true'] .tm-label { color: #fff; }
 
 @keyframes tm-grow { from { scale: 0.7609; } to { scale: 1; } }
-/* The answer's bounce (MONTH_MOTION.reveal): 15% past its size by 55%, then back, at rest at each end and at the turn. */
-@keyframes tm-resize { from { scale: var(--from); animation-timing-function: cubic-bezier(0.45, 0, 0.45, 1); } 55% { scale: calc(1 + (1 - var(--from)) * 0.15); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); } to { scale: 1; } }
+/* The answer's soft bounce (MONTH_MOTION.reveal): 6% past its size by 60%, then back, at rest at each end and at the turn. */
+@keyframes tm-resize { from { scale: var(--from); animation-timing-function: cubic-bezier(0.4, 0, 0.3, 1); } 60% { scale: calc(1 + (1 - var(--from)) * 0.06); animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1); } to { scale: 1; } }
 @keyframes tm-flat-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes tm-flat-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes tm-white { from { color: var(--tm-label); } to { color: #fff; } }
@@ -589,15 +599,15 @@ body { touch-action: pan-y; }
 /* The answer: "This one!" gives under the finger, and 0.042 s on what asked drifts up and
    fades (title, "Pick one"), "This one!" fades; every month, one after another
    (--reveal), turns to its bubble as a pick does (its disc giving way, its label white)
-   and bounces to its listening's size (MONTH_MOTION.reveal: not the video's snap); the verdict
-   comes in, the minutes under it, and the share button. */
+   and bounces softly to its listening's size over 1 s (MONTH_MOTION.reveal: not the
+   video's snap); the verdict comes in, the minutes under it, and the share button. */
 .page-best-month[data-phase='reveal'] .tm-ask { --drift: 11.79px; animation: tp-drift 0.4336s cubic-bezier(0.906, 0, 0.894, 0.761) 0.3424s both, tp-out 0.2478s linear 0.5732s both; }
 .page-best-month[data-phase='reveal'] .tm-hint { --drift: 16.23px; animation: tp-drift 0.473s cubic-bezier(0.837, 0.037, 0.755, 0.609) 0.4239s both, tp-out 0.2628s linear 0.6298s both; }
 .page-best-month[data-phase='reveal'] .tm-confirm { animation: tm-press 0.17s linear both, tp-out 0.1947s linear 0.4934s both; }
 .page-best-month[data-phase='reveal'] .tm-verdict-head { --rise: 13.48px; animation: pb-fade-in 0.3324s linear 0.7752s both, tp-rise 0.8079s cubic-bezier(0.092, 0.457, 0.189, 1) 0.8051s both; }
 .page-best-month[data-phase='reveal'] .tm-verdict-detail { --rise: 6.86px; animation: pb-fade-in 0.3282s linear 0.8615s both, tp-rise 0.7098s cubic-bezier(0.128, 0.685, 0.422, 0.95) 0.9127s both; }
-.page-best-month[data-phase='reveal'] .tm-disc { animation: tm-resize 0.65s var(--reveal) both, tm-flat-out 0.3s linear calc(var(--reveal) + 0.067s) both; }
-.page-best-month[data-phase='reveal'] .tm-month[aria-pressed='true'] .tm-disc { animation: tm-resize 0.65s var(--reveal) both; }
+.page-best-month[data-phase='reveal'] .tm-disc { animation: tm-resize 1s var(--reveal) both, tm-flat-out 0.3s linear calc(var(--reveal) + 0.067s) both; }
+.page-best-month[data-phase='reveal'] .tm-month[aria-pressed='true'] .tm-disc { animation: tm-resize 1s var(--reveal) both; }
 .page-best-month[data-phase='reveal'] .tm-label { animation: tm-white 0.1s linear calc(var(--reveal) + 0.05s) both; }
 .page-best-month[data-phase='reveal'] .tm-month[aria-pressed='true'] .tm-label { animation: none; }
 .pb-root[data-page='best-month'] .share-bar:not([data-leaving]) { animation: tf-share-in 0.4667s cubic-bezier(0.715, 1.174, 0.218, 0.864) 0.6515s both; }
@@ -1195,6 +1205,7 @@ body { touch-action: pan-y; }
 [data-increase-contrast] { --pb-track: rgba(255, 255, 255, 0.6); --pb-card: rgba(0, 0, 0, 0.5); }
 [data-increase-contrast] .page-best-month { --tm-label: #fff; }
 [data-increase-contrast] .tm-confirm::before { opacity: 0.7; }
+[data-increase-contrast] .tp-confirm:not([data-ready])::before { opacity: 0.7; }
 [data-increase-contrast] .sc-dot { opacity: 0.6; }
 
 /* While the host takes a share image (setCaptureMode), the story is laid out as the image: a 9:16
@@ -1205,16 +1216,19 @@ body { touch-action: pan-y; }
    of the height, its tools down the right 14% of the width to 35% down, its caption field
    over the bottom 8%. Its safe area is Figma's share frames (393 × 853, Sections 5 and 6 of
    the QA page) fitted by their height, which the 9:16 image is wider than: titles 14% down
-   (120 px), the badge 12% up (Figma's 100 px under it), Figma's 68 px between the artwork
-   and what is above and below it, and titles 14% in from the sides, clear of the tools. The
-   pages are laid out between them, as they are between the chrome and the share button. */
+   (120 px), the badge 12% up (Figma's 100 px under it), and titles 14% in from the sides,
+   clear of the tools. The pages are laid out between them, as they are between the chrome and
+   the share button. Figma's frames are taller than the image, so between the title and the
+   badge the artwork has 20 pt above and below it (--share-gap, as the summary's: Figma's 68 pt
+   left it a third smaller than Figma's), and the badge is sized in the image's points (393
+   across, --badge-u), as the summary is, so it is the same in every image on every phone. */
 :root.capture {
   --share-box: min(100vw, calc(100vh * 9 / 16));
   --share-box-h: calc(var(--share-box) * 16 / 9);
   --share-safe-top: calc(var(--share-box-h) * 0.14);
   --share-safe-bottom: calc(var(--share-box-h) * 0.12);
   --share-safe-x: calc(var(--share-box) * 0.14);
-  --share-gap: calc(var(--share-box-h) * 0.08);
+  --share-gap: calc(var(--share-box) * 20 / 393);
   --safe-top: 0px;
   --safe-right: 0px;
   --safe-bottom: 0px;
@@ -1248,13 +1262,28 @@ body { touch-action: pan-y; }
 /* The summary's image is the card being shared as a story of its own (POC-1023: Figma's share
    frames, nodes 1002-9036 and 1002-9063, and the QA page's 1439-20238): the card fills the
    image, its background with it, under "My Playback 2026" in place of the logo and "Playback
-   2026"; its artwork enlarged, its copy at the frames' sizes, no footer. Positions are the frames' pt (--u: the frame fitted to the image by its
-   height, as above) from its top, and from the left of its 393 pt column, centred (--x0); the
-   bubbles spread across the image as they do across the frame, so the ones at its edges still
-   bleed off them. The track holds still under its card, and the card reaches past the image by
-   the corner the backdrop rounds its background to (in a border: what is in it fills the image). */
+   2026"; its artwork enlarged, its copy a point over the frames' sizes (below), no footer.
+   Positions are the frames' pt from their top, and from the left of their 393 pt column (--x0).
+   The frame is fitted to the image by its width, as Figma's frame fills the phone (PCIOS-1355:
+   fitted by its height, everything was 18% smaller than Figma's once Instagram shows the image
+   at the phone's width), which leaves the image 698.667 pt of the frame's 853. The title keeps
+   to the safe area's top (14%, as Figma's 120 pt) and the badge to its bottom (12% up), clear
+   of Instagram's controls. Between them, Figma's gaps are tightened so the artwork is as big
+   as it can be: the copy's bottom 20 pt over the badge (Figma's 59; the copy is 117.3 pt from
+   its top to the role's bottom, --copy-y its top), the artwork 20 pt under the title's line
+   (Figma's 43.68, --art-y) and Figma's 26.5 pt over the copy, drawn at the size that leaves
+   (--art-s: Figma's 315 pt of it, 199 to 514, into about 262). The bubbles keep their place
+   across the width, so the ones at its sides still bleed off them, and the two at the frame's
+   top and bottom corners stay at the image's. The track holds still under its card, and the
+   card reaches past the image by the corner the backdrop rounds its background to (in a
+   border: what is in it fills the image). */
 .capture .page-summary :is(.sc-logo, .sc-title, .sc-mark, .sc-footer) { visibility: hidden; }
-.capture .page-summary, .capture .page-summary .sc-deck { --u: calc(var(--share-box-h) / 853); }
+.capture .page-summary, .capture .page-summary .sc-deck { --u: calc(var(--share-box) / 393); }
+.capture .page-summary {
+  --copy-y: calc(393 * 16 / 9 * 0.88 - 36 - 20 - 117.3);
+  --art-y: calc(393 * 16 / 9 * 0.14 + 35.318 + 20);
+  --art-s: calc((var(--copy-y) - 26.5 - var(--art-y)) / 315);
+}
 .capture .page-summary :is(.sc-deck, .sc-track) { inset: 0; width: auto; height: auto; }
 .capture .page-summary .sc-track { transform: none !important; }
 .capture .page-summary .sc-card[data-current] { inset: -4px; width: auto; height: auto; border: 4px solid transparent; }
@@ -1262,32 +1291,44 @@ body { touch-action: pan-y; }
 .sc-share-title { display: none; }
 .capture .sc-share-title {
   display: block;
-  top: calc(120 * var(--u));
+  top: var(--share-safe-top);
   left: 0;
   right: 0;
   width: max-content;
   max-width: calc(var(--share-box) - 2 * var(--share-safe-x));
   margin-inline: auto;
   color: #fff;
-  font: 600 calc(24 * var(--u))/calc(35.318 * var(--u)) var(--pb-font);
+  font: 600 calc(24 * var(--u) * var(--fit, 1))/calc(35.318 * var(--u)) var(--pb-font);
   text-align: center;
-  text-wrap: balance;
+  white-space: nowrap; /* one line, drawn smaller where it is wider than its room (ui/summary.js) */
 }
-.capture .sc-grid .sc-cover { left: calc(var(--x0) + (39.85 + var(--c) * 108.04) * var(--u)); top: calc((200 + var(--r) * 107.194) * var(--u)); width: calc(99.277 * var(--u)); height: calc(99.277 * var(--u)); }
-.capture .sc-stack .sc-cover { left: calc(var(--x0) + (195.8 - var(--d) / 2) * var(--u)); }
+/* The grid and the stack: Figma's, scaled by --art-s under --art-y about their own middles
+   (Figma's 197.529 and 195.8 pt). */
+.capture .sc-grid .sc-cover { left: calc(var(--x0) + (197.529 + ((var(--c) - 1) * 108.04 - 49.639) * var(--art-s)) * var(--u)); top: calc((var(--art-y) + (1 + var(--r) * 107.194) * var(--art-s)) * var(--u)); width: calc(99.277 * var(--art-s) * var(--u)); height: calc(99.277 * var(--art-s) * var(--u)); }
+.capture .sc-stack .sc-cover { left: calc(var(--x0) + (195.8 - var(--d) * var(--art-s) / 2) * var(--u)); top: calc((var(--art-y) + (var(--y) - 199) * var(--art-s)) * var(--u)); width: calc(var(--d) * var(--art-s) * var(--u)); height: calc(var(--d) * var(--art-s) * var(--u)); }
 .capture .sc-stack [data-slot='0'] { --d: 88.667; --y: 199; }
 .capture .sc-stack [data-slot='1'] { --d: 113.555; --y: 239.444; }
 .capture .sc-stack [data-slot='2'] { --d: 147.778; --y: 279.111; }
 .capture .sc-stack [data-slot='3'] { --d: 182; --y: 332; }
-.capture .sc-bubble { left: calc((var(--sx) + var(--sd) / 2) / 393 * 100% - var(--sd) / 2 * var(--u)); top: calc(var(--sy) * var(--u)); width: calc(var(--sd) * var(--u)); height: calc(var(--sd) * var(--u)); }
-.capture .sc-card .sc-label { font-size: calc(11.867 * var(--u)); }
-.capture .sc-card .sc-top { inset-inline-start: calc(var(--x0) + 39.39 * var(--u)); top: calc(540.5 * var(--u)); width: calc(143.59 * var(--u)); gap: calc(6.61 * var(--u)); }
-.capture .sc-card .sc-shows { gap: calc(3.56 * var(--u)); font-size: calc(11.867 * var(--u)); }
-.capture .sc-card :is(.sc-minutes, .sc-role) { inset-inline-start: calc(var(--x0) + 237.74 * var(--u)); width: calc(115.87 * var(--u)); gap: calc(6.83 * var(--u)); }
-.capture .sc-card .sc-minutes { top: calc(540.5 * var(--u)); }
-.capture .sc-card .sc-role { top: calc(608.82 * var(--u)); }
-.capture .sc-card .sc-number { font-size: calc(32.945 * var(--u) * var(--fit, 1)); }
-.capture .sc-card .sc-role-name { font-size: calc(20.937 * var(--u) * var(--fit, 1)); }
+/* The bubbles scaled as the artwork: their middles where Figma's are across the width, down the
+   height mapped as the artwork's; the two at the frame's corners scaled about the image's. */
+.capture .sc-bubble { --sd2: calc(var(--sd) * var(--art-s)); left: calc((var(--sx) + var(--sd) / 2) / 393 * 100% - var(--sd2) / 2 * var(--u)); top: calc((var(--art-y) + (var(--sy) - 199) * var(--art-s)) * var(--u)); width: calc(var(--sd2) * var(--u)); height: calc(var(--sd2) * var(--u)); }
+.capture .sc-bubble[data-edge='top'] { left: calc(var(--sx) * var(--art-s) * var(--u)); top: calc(var(--sy) * var(--art-s) * var(--u)); }
+.capture .sc-bubble[data-edge='bottom'] { left: calc(var(--sx) * var(--art-s) * var(--u)); top: calc((393 * 16 / 9 - (853 - var(--sy)) * var(--art-s)) * var(--u)); }
+/* Its copy a point over the frames' (PCIOS-1355: the list was hard to read once Instagram scales
+   the image down again), the three labels one size. The columns grow with it (by --grow, the
+   labels' and the list's 12.867 over 11.867 pt), so a show or a label that fit at the frames'
+   size still does, and the role is as much further under the minutes as they grow (Figma's
+   68.32 pt, now 69.5), so the gap between them stays the frames'. */
+.capture .sc-card { --grow: 1.0843; }
+.capture .sc-card .sc-label { font-size: calc((11.867 + 1) * var(--u)); }
+.capture .sc-card .sc-top { inset-inline-start: calc(var(--x0) + 39.39 * var(--u)); top: calc(var(--copy-y) * var(--u)); width: calc(143.59 * var(--grow) * var(--u)); gap: calc(6.61 * var(--u)); }
+.capture .sc-card .sc-shows { gap: calc(3.56 * var(--u)); font-size: calc((11.867 + 1) * var(--u)); }
+.capture .sc-card :is(.sc-minutes, .sc-role) { inset-inline-start: calc(var(--x0) + 237.74 * var(--u)); width: calc(115.87 * var(--grow) * var(--u)); gap: calc(6.83 * var(--u)); }
+.capture .sc-card .sc-minutes { top: calc(var(--copy-y) * var(--u)); }
+.capture .sc-card .sc-role { top: calc((var(--copy-y) + 69.5) * var(--u)); }
+.capture .sc-card .sc-number { font-size: calc((32.945 + 1) * var(--u) * var(--fit, 1)); }
+.capture .sc-card .sc-role-name { font-size: calc((20.937 + 1) * var(--u) * var(--fit, 1)); }
 /* Shows and episodes: the title clear of the tools, the stack Figma's gap from it and from
    the badge (the stage stops 11 px over the badge), shrinking to fit between. */
 .capture .page-shows-and-episodes .story-title { max-width: calc(var(--share-box) - 2 * var(--share-safe-x)); }
@@ -1317,16 +1358,23 @@ body { touch-action: pan-y; }
   translate: -50% 0;
   display: flex;
   align-items: center;
-  gap: 10.3px;
-  height: 36px;
-  padding: 0 18.7px 0 5.14px;
-  border-radius: 30.429px;
+  --badge-u: calc(var(--share-box) / 393);
+  gap: calc(10.3 * var(--badge-u));
+  height: calc(36 * var(--badge-u));
+  padding: 0 calc(18.7 * var(--badge-u)) 0 calc(5.14 * var(--badge-u));
+  border-radius: calc(30.429 * var(--badge-u));
   background: #f43e37;
   color: #fff;
-  font: 600 16.29px/normal -apple-system, 'SF Pro Display', system-ui, Roboto, sans-serif;
+  font: 600 calc(16.29 * var(--badge-u))/normal -apple-system, 'SF Pro Display', system-ui, Roboto, sans-serif;
   white-space: nowrap;
 }
-.share-badge img { width: 25.714px; height: 25.714px; }
+.share-badge img { width: calc(25.714 * var(--badge-u, 1px)); height: calc(25.714 * var(--badge-u, 1px)); }
+.share-badge .on-white { display: none; }
+/* On the summary's cards the badge is white, its logo and name Pocket Casts red (PCIOS-1355):
+   the red one was lost on the cards' reds and magentas, and white stands out from all of them. */
+.capture .pb-root[data-page='summary'] .share-badge { background: #fff; color: #f43e37; }
+.capture .pb-root[data-page='summary'] .share-badge .on-red { display: none; }
+.capture .pb-root[data-page='summary'] .share-badge .on-white { display: block; }
 
 @media (prefers-reduced-motion: no-preference) {
   .wireframe .btn, .wireframe .option { transition: background-color 0.12s, color 0.12s; }

@@ -48,6 +48,8 @@ import { createGovernor, quality, LAST_RUNG } from './governor.js';
 
 // The most buffer pixels a point a `sharp` backdrop is drawn at (see connectBackdrop).
 const SHARP_DENSITY = 1.25;
+// The share image's width in pixels, which the hosts scale the share layout's box to.
+const SHARE_IMAGE_WIDTH = 1080;
 
 /**
  * @param {ReturnType<import('./app.js').mountPlayback>} controller
@@ -69,6 +71,15 @@ export function connectBackdrop(controller, canvas, env = {}) {
   const backdrop = createBackdrop(canvas, {
     ...settings,
     still: controller.reduceMotion,
+    // A backdrop that `waits` out a frame held up (the top month's answer, resizing) holds
+    // the page's own animations back as long: those under way when it was held up, finished
+    // since or not (a disc's fade-out, over before the frame came) (fx/backdrop.js tick).
+    onStall: (ms, before) => {
+      for (const a of document.getAnimations()) {
+        if (a.startTime == null || a.startTime > before || a.playState === 'paused' || a.playState === 'idle') continue;
+        if (a.startTime + (a.effect?.getComputedTiming().endTime ?? Infinity) / (a.playbackRate || 1) > before) a.startTime += ms;
+      }
+    },
     onError: (e) => controller.bridge.send({ type: 'warning', message: `backdrop: ${e.message || e}` }),
     onWarning: (message) => env.debug && console.warn(message),
   });
@@ -95,7 +106,17 @@ export function connectBackdrop(controller, canvas, env = {}) {
   // The performance walk measures a fixed setting, so it keeps the ladder off unless asked.
   let rung = 0;
   let level = quality(0, 0, base);
-  const resolutionFor = (spec) => (spec?.sharp ? Math.max(level.resolution, level.sharp) : level.resolution);
+  // While the host takes the share image (capture mode), the backdrop is drawn at the image's
+  // own density, as the text over it is: at the screen's 1.25 it was scaled up about twice in
+  // the 1080 px image, its bubbles' rims and the cards' backgrounds softer than the covers and
+  // the copy. One frame, so what it costs is a frame's: no more than the screen's density
+  // (the image is cropped from the screen) and no more than the image needs.
+  let capturing = false;
+  const captureResolution = () => Math.min(window.devicePixelRatio || 1, SHARE_IMAGE_WIDTH / (canvas.clientWidth || SHARE_IMAGE_WIDTH));
+  const resolutionFor = (spec) => {
+    const own = spec?.sharp ? Math.max(level.resolution, level.sharp) : level.resolution;
+    return capturing ? Math.max(own, captureResolution()) : own;
+  };
 
   const stats = backdrop.stats;
   backdrop.stats = () => { const s = stats(); return s && { ...s, rung, ladder: governor?.events ?? null }; };
@@ -110,26 +131,38 @@ export function connectBackdrop(controller, canvas, env = {}) {
   if (settings.ladder !== false && !controller.reduceMotion) {
     const step = (by) => { rung += by; applyRung(governor.displayRate); env.debug && console.warn(`backdrop: rung ${rung}`); };
     governor = createGovernor({ maxRung: LAST_RUNG, onSlow: () => step(1), onRevert: () => step(-1) });
-    const watch = (now) => { governor.feed(now, current?.key ?? null); ladder = requestAnimationFrame(watch); };
+    // A share image's frames are its own page to the ladder: drawn at the image's density, a
+    // slow one says nothing about the device keeping up with the story.
+    const watch = (now) => { governor.feed(now, capturing ? 'capture' : current?.key ?? null); ladder = requestAnimationFrame(watch); };
     ladder = requestAnimationFrame(watch);
   }
 
   // Loaded up front, so a step never waits on an import. With the host's data still to come,
   // the intro's now and the rest's once the flow has them (`load`, below).
   const docs = new Map();
+  const arriving = new Map();
   let loaded = false;
   let loading = null;
+  const arrive = (id) => {
+    if (!arriving.has(id)) {
+      arriving.set(id, (async () => {
+        try {
+          docs.set(id, await loadBundledDocument(id));
+        } catch (e) {
+          controller.bridge.send({ type: 'warning', message: `backdrop: ${e.message}` });
+        }
+      })());
+    }
+    return arriving.get(id);
+  };
   const preload = (wanted) => {
     loaded = false;
-    const done = loading = Promise.all([loading, ...wanted.filter((id) => !docs.has(id)).map(async (id) => {
-      try {
-        docs.set(id, await loadBundledDocument(id));
-      } catch (e) {
-        controller.bridge.send({ type: 'warning', message: `backdrop: ${e.message}` });
-      }
-    })]).then(() => { if (loading === done) loaded = true; });
+    const done = loading = Promise.all([loading, ...wanted.map(arrive)]).then(() => { if (loading === done) loaded = true; });
   };
   preload(ids);
+  // The intro the story opens on waits for its own documents (POC-1029), and a frame after.
+  const opening = controller.flow.getPage();
+  if (opening.steps) controller.waitForIntro?.(Promise.all(documentsOf([opening]).map(arrive)).then(() => new Promise((r) => requestAnimationFrame(() => r()))));
 
   // What is showing, for carrying a document on into the next show and for showing the
   // same again when the layout moves or a cover's colours arrive.
@@ -259,9 +292,12 @@ export function connectBackdrop(controller, canvas, env = {}) {
       }
     }
     // What was showing makes way (`replaces`), on its own clock: to its document's exit
-    // where it has one (the logos shrinking back), or fading out underneath; going back,
+    // where it has one (the logos shrinking back), or fading out underneath; or over it, for
+    // a backdrop that comes in `under` what it replaces (the intro's wave, opaque edge to
+    // edge, washing in from the ground as the blob fades out over it, POC-1030); going back,
     // fading out as it comes in (BACK_FADE).
     const [a, b] = backward ? [0, BACK_FADE] : spec?.replaces ?? [];
+    const under = Boolean(spec?.under) && !backward;
     let replaced = 0;
     if (b != null && current && !controller.reduceMotion) {
       const out = [];
@@ -281,13 +317,14 @@ export function connectBackdrop(controller, canvas, env = {}) {
           out.push({ ...c, ...frozen, delay: 0, from: t - since, fade: [t + a, t + b, 0, fadeLevel(c.fade, t)] });
         }
       }
-      drawn.unshift(...out);
+      if (under) drawn.push(...out);
+      else drawn.unshift(...out);
       replaced = out.length;
     }
     for (const e of drawn) if (e.ramp === 'cover' && page.data?.podcast) e.colours = readyRamp(page.data.podcast, moodOf(e.document));
     // What a sharp backdrop replaces stays sharp while it makes way underneath.
     const sharp = Boolean(spec?.sharp) || (replaced > 0 && Boolean(current?.sharp));
-    current = { key, visit, page, lone: drawn.length - replaced === 1 ? drawn[replaced] : null, entries: drawn, sharp: Boolean(spec?.sharp), carries: Boolean(spec?.carries) };
+    current = { key, visit, page, lone: drawn.length - replaced === 1 ? drawn[under ? 0 : replaced] : null, entries: drawn, sharp: Boolean(spec?.sharp), carries: Boolean(spec?.carries), waits: Boolean(spec?.waits) };
     // Visible before the first frame, so the buffer is sized from the laid-out canvas.
     // A step without a document is the bare ground, which the page's CSS draws.
     root.classList.toggle('has-backdrop', drawn.length > 0);
@@ -298,6 +335,13 @@ export function connectBackdrop(controller, canvas, env = {}) {
       lowering = setTimeout(() => { if (current === mine) backdrop.setQuality({ resolution: resolutionFor(spec) }); }, b * 1000);
     }
     show(at);
+    // On a guess whose answer prepares, its boxes are made ready (again after a pick's show,
+    // which stops it); anywhere else, what was made ready is let go (what shows keeps its own).
+    if (!step && !revealed && page.revealBackdrop?.prepares) prepareReveal(page);
+    else {
+      clearTimeout(preparing);
+      backdrop.prepare(null);
+    }
     // A cover's colours arrive once its pixels are read: show the same with them.
     const pending = drawn.filter((e) => e.ramp === 'cover' && e.colours === undefined);
     for (const e of pending) coverRampFor(page, e.document)?.then((ramp) => { if (current?.entries.includes(e) && ramp) { e.colours = ramp; show(backdrop.clock()); } });
@@ -309,15 +353,54 @@ export function connectBackdrop(controller, canvas, env = {}) {
       ...e,
       place: e.anchor ? placed(e.anchor) : e.place,
       ramp: e.ramp === 'cover' ? e.colours ?? null : e.ramp,
+      ...(e.anchor?.box && { key: boxKey(e) }),
     }));
     // Where each was placed, for when it makes way and its anchor has gone.
     list.forEach((e, i) => { if (e.place) current.entries[i].lastPlace = e.place; });
-    backdrop.show(list.length ? list : null, { ground, at });
+    backdrop.show(list.length ? list : null, { ground, at, waits: Boolean(current.waits) });
+  }
+
+  /** A boxed entry's box, the same for the same document in the same place (a pick's bubble and the answer's). */
+  const boxKey = (e) => `${e.document.id ?? e.document}@${e.anchor.selector}`;
+
+  /**
+   * A quiz page whose answer's backdrop `prepares` has its boxes made ready on the guess
+   * (fx/backdrop.js prepare), once the guess has come in (`prepares.after` seconds into the
+   * page), so the answer's first frames make nothing. Placed where their anchors are on the
+   * guess: an entry that resizes from there (`size`, from `start`) is that place at 1/start
+   * of its scale (the top month's bubbles, from the guess's 80 pt slots to their own).
+   */
+  let preparing = 0;
+  function prepareReveal(page) {
+    clearTimeout(preparing);
+    const spec = page.revealBackdrop;
+    const after = spec?.prepares?.after;
+    if (after == null || controller.reduceMotion) return;
+    const wait = Math.max(0, after * 1000 - controller.flow.elapsedMs());
+    preparing = setTimeout(() => {
+      if (current?.page !== page || controller.flow.isRevealed()) return;
+      const list = entries(spec).flatMap((e) => {
+        const doc = docs.get(e.document);
+        const el = e.anchor?.box && doc && document.querySelector(e.anchor.selector);
+        const place = el && placeOf(e.anchor);
+        if (!place) return [];
+        // Its size as laid out (not as a way in scales it on the screen), from where it starts.
+        const unit = el.offsetWidth / e.anchor.span / (e.size?.[2] || 1);
+        return [{ ...e, document: doc, place: { ...place, unit }, key: boxKey({ ...e, document: doc }) }];
+      });
+      backdrop.prepare(list, { resolution: resolutionFor(spec) });
+    }, wait);
   }
 
   // A layout that moves (rotation, a resized window) moves what is placed on it.
   let relayout = 0;
   const onResize = () => {
+    // The share layout comes and goes with a resize (host/api.js setCaptureMode).
+    const sharing = root.classList.contains('capture');
+    if (sharing !== capturing) {
+      capturing = sharing;
+      backdrop.setQuality({ resolution: resolutionFor({ sharp: current?.sharp }) });
+    }
     if (!current?.entries.some((e) => e.anchor)) return;
     cancelAnimationFrame(relayout);
     relayout = requestAnimationFrame(() => show(backdrop.clock()));
@@ -335,6 +418,7 @@ export function connectBackdrop(controller, canvas, env = {}) {
     destroy() {
       unsubscribe?.();
       clearTimeout(lowering);
+      clearTimeout(preparing);
       cancelAnimationFrame(ladder);
       window.removeEventListener('resize', onResize);
       backdrop.destroy();

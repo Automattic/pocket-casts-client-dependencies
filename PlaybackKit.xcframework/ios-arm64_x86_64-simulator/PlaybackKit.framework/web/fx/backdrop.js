@@ -17,7 +17,7 @@
 // so a box on something that moves (a summary card) follows it every display frame
 // while what is in it changes at its document's cadence.
 
-import { createGL } from './gl.js';
+import { createGL, DITHER } from './gl.js';
 import { createPatternEffect, MAX_BLUR_LEVEL } from './pattern.js';
 import { createWaveEffect } from './wave.js';
 import { createThermalEffect } from './thermal.js';
@@ -31,10 +31,14 @@ out vec4 frag;
 void main() { frag = uColor; }`;
 
 // A layer drawn in its own box (a shader on a Figma layer): the part of the box that
-// was drawn, put on the canvas where the box is, turned with it.
+// was drawn, put on the canvas where the box is, turned with it. A box holding a smooth
+// gradient (Wave: the summary's cards) is 16 bits a channel, rounded to the canvas's 8
+// here, dithered (`uDither`, gl.js DITHER).
 const FS_PLACE = `#version 300 es
 precision highp float;
+precision highp int;
 uniform sampler2D uSrc;
+uniform float uDither;
 uniform vec2 uRes;
 uniform vec2 uCentre;
 uniform vec2 uHalf;
@@ -45,6 +49,7 @@ uniform float uRadius;
 uniform vec4 uOuter;
 uniform float uOuterRadius;
 out vec4 frag;
+${DITHER}
 // Signed distance to a box of half-size h with corners rounded by r, from its centre.
 float roundBox(vec2 p, vec2 h, float r) {
   vec2 d = abs(p) - h + r;
@@ -61,7 +66,7 @@ void main() {
   // is drawn on: a summary card's bubble, clipped to its card).
   float keep = uClip ? clamp(0.5 - roundBox(q - uHalf, uHalf, uRadius), 0.0, 1.0) : 1.0;
   if (uOuter.z > 0.0) keep *= clamp(0.5 - roundBox(c - uOuter.xy, uOuter.zw, uOuterRadius), 0.0, 1.0);
-  frag = texture(uSrc, vec2(w.x, 1.0 - w.y)) * keep;
+  frag = dither8(texture(uSrc, vec2(w.x, 1.0 - w.y)) * keep, uDither);
 }`;
 
 /**
@@ -106,6 +111,37 @@ function peakSize(size, at) {
   return peak;
 }
 
+/** The effects a document draws with. */
+const documentEffects = new WeakMap();
+function drawsWith(doc, effects) {
+  if (!documentEffects.has(doc)) documentEffects.set(doc, new Set(doc.screens.flatMap((sc) => sc.layers.filter((L) => L.type === 'effect').map((L) => L.effect))));
+  for (const fx of documentEffects.get(doc)) if (effects.has(fx)) return true;
+  return false;
+}
+
+/** Effects that draw large smooth gradients, which band at 8 bits a channel. */
+const SMOOTH_EFFECTS = new Set(['wave']);
+/** Whether a document draws any of them (a box for it is kept at 16 bits). */
+const smoothDocument = (doc) => drawsWith(doc, SMOOTH_EFFECTS);
+
+/**
+ * Effects that read across all of the box they draw in, not only near what shows: Wave's
+ * warps pull the field in from anywhere in it (what they pull from past its edge is empty:
+ * that carves its scallops) and its mesh stretches all of it. A box drawn with one is drawn
+ * whole wherever any of it shows, as a canvas that covers the screen is. Cut to the part on
+ * screen and BOX_MARGIN (enough for Pattern's reads), a summary card peeking in at the
+ * screen's edge drew another picture: its scallops carved at the cut, the ground through them.
+ */
+const WHOLE_EFFECTS = new Set(['wave']);
+/** Whether a box for this document is drawn whole (see WHOLE_EFFECTS). */
+const wholeDocument = (doc) => drawsWith(doc, WHOLE_EFFECTS);
+
+/**
+ * How many display intervals a frame can take before it counts as held up, for a show that
+ * `waits` (see tick): more than a dropped frame or two, which a resize rides through.
+ */
+const STALL_FRAMES = 3;
+
 /** Effects this build can draw. Layers naming any other effect are skipped. */
 export const SUPPORTED_EFFECTS = ['pattern-refraction', 'wave', 'thermal'];
 
@@ -142,9 +178,13 @@ export function createBackdrop(canvas, options = {}) {
   const onWarning = opts.onWarning || (() => {});
   const warned = new Set();
   let kit = null, effects = null, solid = null, placer = null;
-  // Boxed entries' own targets and Pattern instances, by stack index, and what was last
-  // drawn into each (`drawn`: the entry, its scale and the part of its box).
+  // Boxed entries' own targets and Pattern instances, by the entry's `key` (`box`) or its
+  // stack index, and what was last drawn into each (`drawn`: the entry, its scale and the
+  // part of its box).
   const boxes = new Map();
+  // Entries whose boxes are made ready before they show (`prepare`), and the frame that
+  // makes the next one.
+  let prepared = [], preparing = 0;
   // What is showing: documents bottom first, each with when it starts on the shared
   // clock (`delay`), how its time runs (`hold`, `once`) and how it is framed.
   let stack = [], doc = null, ramp = null, ground = null, stage = null;
@@ -153,7 +193,11 @@ export function createBackdrop(canvas, options = {}) {
   // The document clock: `base` seconds, plus wall time since `since` while playing and
   // visible.
   let base = 0, since = 0;
-  let lastTick = 0, interval = 0;
+  let lastTick = 0, lastWall = 0, interval = 0;
+  // While what shows is resizing (until `waitUntil` on the clock), a frame held up does not
+  // move it on (`waits`, see tick); `started` is when the show started, for a first frame
+  // held up before any was drawn.
+  let waits = false, waitUntil = 0, started = 0;
   // Each cadence's beat: when its entries last drew (ms, by frame interval).
   const beats = new Map();
   let lastT = 0;
@@ -209,6 +253,14 @@ export function createBackdrop(canvas, options = {}) {
     cssSize = box ? [box.inlineSize, box.blockSize] : [e.contentRect.width, e.contentRect.height];
   }) : null;
   sizer?.observe(canvas);
+  // A frame's animation callbacks, where it is drawn, run before its resize observations, so
+  // the first frame drawn after the window resizes would be drawn at the canvas's old size and
+  // stretched to the new, and hold until something else asked for a frame. The window's resize
+  // forgets the size, so that frame reads it from the layout. (The share image's layout, which
+  // resizes the window's way: taken on a slow Android device, the summary card's background
+  // was drawn to 80% of its height.)
+  const onWindowResize = () => { cssSize = null; };
+  window.addEventListener('resize', onWindowResize);
   canvas.addEventListener('webglcontextlost', onLost);
   canvas.addEventListener('webglcontextrestored', onRestored);
 
@@ -223,7 +275,8 @@ export function createBackdrop(canvas, options = {}) {
     }
     hidden = document.hidden;
     if (playing && !hidden) {
-      since = performance.now();
+      since = started = performance.now();
+      lastTick = lastWall = 0;
       invalidate();
       loop();
     }
@@ -397,13 +450,15 @@ export function createBackdrop(canvas, options = {}) {
    * turns), at `k` of its placed size. Only the part of the box that can reach the canvas
    * is drawn, unless the box is the document's authored canvas (`place.canvas`, a canvas
    * that covers the screen): that is drawn whole, its frame in its middle, as Creative
-   * Lab's runtime draws it.
+   * Lab's runtime draws it; so is a box whose effect reads across all of it (WHOLE_EFFECTS),
+   * wherever any of it shows.
    *
    * `refresh` (ms, the frame's time) draws the box afresh; 0 puts what was drawn into it
    * last where the box is now, as long as that is the same entry, at about the same scale,
-   * and covers all of the box that can show now.
+   * and covers all of the box that can show now. `dry` draws it into its box only, sized for
+   * all of its `size` from `at`, and puts nothing on the canvas (`prepare`).
    */
-  function drawBoxed(i, e, place, at, o, w, h, px, k, refresh) {
+  function drawBoxed(i, e, place, at, o, w, h, px, k, refresh, dry = false) {
     const { gl } = kit;
     const unit = place.unit * px * k;
     const Bw = (place.canvas ? e.doc.width : e.doc.refWidth) * unit, Bh = (place.canvas ? e.doc.height : e.doc.refHeight) * unit;
@@ -411,19 +466,25 @@ export function createBackdrop(canvas, options = {}) {
     const th = ((Number(place.rotate) || 0) * Math.PI) / 180, cos = Math.cos(th), sin = Math.sin(th);
     const inBox = ([x, y]) => [cos * (x - cx) + sin * (y - cy) + Bw / 2, -sin * (x - cx) + cos * (y - cy) + Bh / 2];
     const corners = [[0, 0], [w, 0], [0, h], [w, h]].map(inBox);
-    const m = place.canvas ? Infinity : (Number.isFinite(place.margin) ? place.margin : BOX_MARGIN) * unit;
+    // Drawn whole wherever any of it shows: the authored canvas, or a box whose effect reads
+    // across all of it (WHOLE_EFFECTS: a summary card's Wave).
+    const whole = Boolean(place.canvas) || wholeDocument(e.doc);
+    const margin = (Number.isFinite(place.margin) ? place.margin : BOX_MARGIN) * unit;
+    const m = whole ? 0 : margin;
     // Clipped to the box, as Figma clips a layer's shader (drawn a little past it, empty,
     // for the edge blur), unless `clip: false` lets it spill out as far as the margin
     // (`place.margin` authored px, BOX_MARGIN by default).
     const clip = place.clip !== false;
-    const spill = clip ? (Number.isFinite(place.edge) ? place.edge : EDGE_MARGIN) * unit : m;
+    const spill = clip ? (Number.isFinite(place.edge) ? place.edge : EDGE_MARGIN) * unit : margin;
     let x0 = Math.max(-spill, Math.floor(Math.min(...corners.map((q) => q[0])) - m));
     let y0 = Math.max(-spill, Math.floor(Math.min(...corners.map((q) => q[1])) - m));
     let x1 = Math.min(Math.ceil(Bw + spill), Math.ceil(Math.max(...corners.map((q) => q[0])) + m));
     let y1 = Math.min(Math.ceil(Bh + spill), Math.ceil(Math.max(...corners.map((q) => q[1])) + m));
     if (x1 - x0 < 1 || y1 - y0 < 1) return;
-    let box = boxes.get(i);
-    if (!box) boxes.set(i, (box = { fx: {}, rt: null, drawn: null }));
+    if (whole) [x0, y0, x1, y1] = [-spill, -spill, Math.ceil(Bw + spill), Math.ceil(Bh + spill)];
+    const id = e.box ?? i;
+    let box = boxes.get(id);
+    if (!box) boxes.set(id, (box = { fx: {}, rt: null, drawn: null }));
     // What was drawn into the box last, in its own pixels at its own scale (`unit`): the
     // part of the box it holds, now `r` times as large.
     const was = box.drawn;
@@ -441,8 +502,10 @@ export function createBackdrop(canvas, options = {}) {
       if (!clip || e.size) {
         const grid = (n) => Math.ceil(n / BOX_GRID) * BOX_GRID;
         let [tw, th] = [grid(bw), grid(bh)];
-        const peak = playing ? peakSize(e.size, at) : null;
-        if (peak && box.rt && box.rt.w >= tw && box.rt.h >= th && box.rt.w % BOX_GRID === 0 && box.rt.h % BOX_GRID === 0) [tw, th] = [box.rt.w, box.rt.h];
+        const peak = playing || dry ? peakSize(e.size, at) : null;
+        // A target as large or larger on the grid draws the same picture: kept, so a box made
+        // ready for its largest (`prepare`), or grown for it, is not made again smaller.
+        if (box.rt && box.rt.w >= tw && box.rt.h >= th && box.rt.w % BOX_GRID === 0 && box.rt.h % BOX_GRID === 0) [tw, th] = [box.rt.w, box.rt.h];
         else if (peak) {
           const g = Math.max(1, peak / k) * 1.02;
           [tw, th] = [grid(bw * g + 2), grid(bh * g + 2)];
@@ -451,9 +514,13 @@ export function createBackdrop(canvas, options = {}) {
         [bw, bh] = [tw, th];
         [x1, y0] = [x0 + tw, y1 - th];
       }
-      if (!box.rt || box.rt.w !== bw || box.rt.h !== bh) {
+      // A smooth gradient (Wave: the summary's cards) is kept at 16 bits, where the device has
+      // them, and dithered as it is put on the canvas (FS_PLACE), so 8 bits do not band it.
+      const smooth = smoothDocument(e.doc);
+      if (!box.rt || box.rt.w !== bw || box.rt.h !== bh || box.smooth !== smooth) {
         box.rt?.dispose();
-        box.rt = kit.target(bw, bh);
+        box.rt = kit.target(bw, bh, { float: smooth });
+        box.smooth = smooth;
       }
       const { screen, local } = screenAt(e.doc, documentTime(e.doc, timeline(e, at)));
       // An instance of each effect its layers use (Pattern's bubbles, Wave's cards), with
@@ -469,6 +536,7 @@ export function createBackdrop(canvas, options = {}) {
       box.drawn = { entry: e, unit, x0, y0, x1, y1 };
       e.drawnAt = refresh || performance.now();
     }
+    if (dry) return;
     // The part of the box it holds, in the box's pixels now.
     const s = keep ? r : 1, d = box.drawn;
     const win = [d.x0 / s, d.y0 / s, (d.x1 - d.x0) / s, (d.y1 - d.y0) / s];
@@ -480,6 +548,7 @@ export function createBackdrop(canvas, options = {}) {
       gl.uniform2f(loc('uRot'), cos, sin);
       gl.uniform4f(loc('uWin'), ...win);
       gl.uniform1i(loc('uClip'), clip ? 1 : 0);
+      gl.uniform1f(loc('uDither'), box.rt.float ? 1 : 0);
       gl.uniform1f(loc('uRadius'), Math.min((Number(place.radius) || 0) * px, Bw / 2, Bh / 2));
       const outer = place.within;
       if (outer) {
@@ -497,8 +566,9 @@ export function createBackdrop(canvas, options = {}) {
    * instance, `bounds` the box in it. `values` set parameters over the document's, and
    * `pixels` set them in CSS pixels (`px` buffer pixels each), whatever the frame's scale.
    * `rates` move parameters on from there, that much a second of `clock`, the entry's own
-   * time, unwrapped (a rate's: Thermal's drift, the comparison circles' colour), and `text`
-   * the type a Thermal layer draws instead of its document's.
+   * time plus its `phase`, unwrapped (a rate's: Thermal's drift, the comparison circles'
+   * colour, Wave's travelling waves), and `text` the type a Thermal layer draws instead of
+   * its document's.
    */
   function drawLayers(d, screen, local, F, { opacity = 1, phase = 0, clock = local + phase, ramp = null, into = null, bounds = null, drift = null, values: set = null, rates = null, pixels = null, px = 1, outline = false, text = null } = {}) {
     const { gl } = kit;
@@ -532,7 +602,6 @@ export function createBackdrop(canvas, options = {}) {
           override: ramp,
           layer: L,
           canvas: [d.width, d.height],
-          t: local + phase,
           clock,
           text,
           stage: into ? null : stage,
@@ -563,6 +632,21 @@ export function createBackdrop(canvas, options = {}) {
   function tick(now) {
     if (!playing || lost || destroyed) return;
     raf = requestAnimationFrame(tick);
+    // A frame held up (the device busy for longer than STALL_FRAMES display intervals) while
+    // what shows is resizing does not move it on: its clock waits out the time lost, and so
+    // does the page (`onStall`: its own animations, started before then). On a phone, the top
+    // month's answer was held up for half a second as its twelve bubbles came in, and both
+    // were then most of the way through: a jump, not a bounce. Each on its own clock: this
+    // one reads the time as it draws, the page's animations the frame's (`now`), so a frame
+    // held up before this runs in it is late here at once and for them a frame on.
+    const wall = performance.now();
+    if (waits) {
+      const iv = interval || 1000 / 60;
+      const held = wall - (lastWall || started) - iv, late = now - (lastTick || started) - iv;
+      if (held > (STALL_FRAMES - 1) * iv && clock() - held < waitUntil) since += held;
+      if (late > (STALL_FRAMES - 1) * iv && clock() < waitUntil) opts.onStall?.(late, lastTick || started);
+    }
+    lastWall = wall;
     // The display's own interval, measured from the frame callback itself.
     if (lastTick) {
       const dt = now - lastTick;
@@ -587,16 +671,88 @@ export function createBackdrop(canvas, options = {}) {
     draw(t, { shown, caps, now });
   }
 
+  /** A shown (or prepared) entry, from what `show` is given (see there). */
+  function entryOf(e) {
+    return {
+      doc: loadDocument(e.document),
+      delay: Math.max(0, Number(e.delay) || 0),
+      from: Number(e.from) || 0,
+      hold: Array.isArray(e.hold) && e.hold[1] > e.hold[0] ? e.hold : null,
+      once: e.loop === false,
+      fitCanvas: e.fit === 'canvas',
+      cover: e.fit === 'cover',
+      scale: Number(e.scale) > 0 ? Number(e.scale) : 1,
+      place: validPlace(e.place),
+      track: typeof e.place?.track === 'function' ? e.place.track : null,
+      fade: Array.isArray(e.fade) && e.fade[1] > e.fade[0] ? [e.fade[0], e.fade[1], unit(e.fade[2], 0), unit(e.fade[3], 1), ...(isEase(e.fade[4]) ? [e.fade[4].map(Number)] : [])] : null,
+      drift: e.drift && Array.isArray(e.drift.rate) ? { rate: e.drift.rate.map(Number), since: Number(e.drift.since) || 0 } : null,
+      ramp: Array.isArray(e.ramp) && e.ramp.length ? e.ramp : null,
+      text: typeof e.text === 'string' && e.text ? e.text : null,
+      phase: Number(e.phase) || 0,
+      stillAt: Number.isFinite(e.stillAt) ? e.stillAt : null,
+      outline: e.outline === true,
+      values: numbers(e.values),
+      rates: numbers(e.rates),
+      pixels: numbers(e.pixels),
+      size: Array.isArray(e.size) && e.size[1] > e.size[0] && Number(e.size[2]) >= 0 ? [Number(e.size[0]), Number(e.size[1]), Number(e.size[2]), ...(isEase(e.size[3]) ? [e.size[3].map(Number)] : isSegments(e.size[3]) ? [e.size[3].map(([x, y, b]) => [Number(x), Number(y), ...(isEase(b) ? [b.map(Number)] : [])])] : [])] : null,
+      scrub: Array.isArray(e.scrub) && e.scrub[1] > e.scrub[0] && [e.scrub[2], e.scrub[3]].every((v) => Number.isFinite(Number(v))) ? [...e.scrub.slice(0, 4).map(Number), ...(isEase(e.scrub[4]) ? [e.scrub[4].map(Number)] : [])] : null,
+      key: typeof e.key === 'string' && e.key ? e.key : null,
+    };
+  }
+
+  /**
+   * Each keyed entry's box (`box`): its key, the nth showing with the same key `key#n`, and
+   * boxes kept by key that nothing shows or is made ready for any more let go.
+   */
+  function claimBoxes() {
+    const seen = new Map();
+    for (const e of stack) {
+      if (!e.key) continue;
+      const n = seen.get(e.key) ?? 0;
+      seen.set(e.key, n + 1);
+      e.box = n ? `${e.key}#${n}` : e.key;
+    }
+    const used = new Set([...stack, ...prepared].map((e) => e.box));
+    for (const [id, b] of boxes) if (typeof id === 'string' && !used.has(id)) { disposeBox(b); boxes.delete(id); }
+  }
+
+  function disposeBox(b) {
+    b.rt?.dispose();
+    for (const fx of Object.values(b.fx)) fx.dispose();
+  }
+
+  /** Make the next entry `prepare` was given ready, a frame at a time. */
+  function prepareNext() {
+    preparing = 0;
+    const e = prepared.find((p) => !boxes.get(p.box)?.ready);
+    if (!e || lost || destroyed) return;
+    const at = e.from;
+    const o = { opacity: 1, phase: e.phase, clock: at + e.phase, ramp: e.ramp ?? ramp, values: e.values, rates: e.rates, pixels: e.pixels, px: e.px, outline: e.outline, text: e.text };
+    // At every scale its `size` takes it through (where it starts, ends and turns, and steps
+    // of √2 between): an effect's own targets can depend on it (Pattern's edge blur, on a
+    // coarser copy as the box gets smaller). Anywhere on a canvas it fits on: only its box's
+    // size matters here.
+    const ks = new Set([sizeLevel(e.size, at), 1, peakSize(e.size, at) ?? 1]);
+    const lo = Math.min(...ks), hi = Math.max(...ks);
+    for (let k = lo * Math.SQRT2; k < hi; k *= Math.SQRT2) ks.add(k);
+    for (const k of ks) if (k > 0) drawBoxed(-1, e, e.place, at, o, 1e5, 1e5, e.px, k, performance.now(), true);
+    const box = boxes.get(e.box);
+    if (box) box.ready = true;
+    preparing = requestAnimationFrame(prepareNext);
+  }
+
   const api = {
     ok: true,
     canvas,
     /**
      * Play a document from `at` seconds (default 0). `ramp` replaces every layer's own
      * gradient (colour from cover art); `ground` replaces the document's background.
-     * `hold: [a, b]` plays to b, then moves back and forth between a and b instead of
-     * looping: for a document whose stretch after its entrance is meant to last while
-     * the page does. `loop: false` plays it once and holds the last frame. `fit: 'canvas'`
-     * fits the document's authored canvas rather than its frame (see frame.js), and
+     * `hold: [a, b]` plays to b, then moves its keyframes back and forth between a and b
+     * instead of looping: for a document whose stretch after its entrance is meant to last
+     * while the page does. What runs at a rate (Wave's travelling waves) goes on forward
+     * through it, on the entry's own clock. `loop: false` plays it once and holds the last
+     * frame. `fit: 'canvas'` fits the document's authored canvas rather than its frame (see
+     * frame.js), and
      * `fit: 'cover'` draws that canvas whole, as Creative Lab's runtime does, as large as it
      * takes to cover the screen, cut at its sides (a document shown as the P2's videos show
      * Creative Lab's export). Pass null to show only the ground.
@@ -624,7 +780,7 @@ export function createBackdrop(canvas, options = {}) {
      * cubic-bezier's four numbers. `drift: {rate: [cx, cy], since}` slides
      * its relief that many % of the frame a second from `since` seconds of its own time.
      * `phase` runs the document's free-running motion (Wave's travelling waves) that
-     * many seconds ahead of its keyframes: what `motionTime()` reported for the same
+     * many seconds ahead of its own time: what `motionTime()` reported for the same
      * document, less where this show starts it, carries the waves on unbroken while the
      * keyframes jump. `ramp` is the entry's own colours (the show's `ramp` is the
      * default). `stillAt` is the moment a still (Reduced Motion) shows. `values` set
@@ -646,42 +802,27 @@ export function createBackdrop(canvas, options = {}) {
      * numbers, linear without), and holds it at `to` from then: a document whose clock is
      * a quantity (the completion rate's, the share revealed), moved to the user's.
      */
-    show(next, { ramp: r = null, ground: g = null, at = 0, hold: h = null, loop: looping = true, fit = 'frame' } = {}) {
+    show(next, { ramp: r = null, ground: g = null, at = 0, hold: h = null, loop: looping = true, fit = 'frame', waits: wait = false } = {}) {
       const entries = Array.isArray(next) ? next : next ? [{ document: next, hold: h, loop: looping, fit }] : [];
       try {
-        stack = entries.map((e) => ({
-          doc: loadDocument(e.document),
-          delay: Math.max(0, Number(e.delay) || 0),
-          from: Number(e.from) || 0,
-          hold: Array.isArray(e.hold) && e.hold[1] > e.hold[0] ? e.hold : null,
-          once: e.loop === false,
-          fitCanvas: e.fit === 'canvas',
-          cover: e.fit === 'cover',
-          scale: Number(e.scale) > 0 ? Number(e.scale) : 1,
-          place: validPlace(e.place),
-          track: typeof e.place?.track === 'function' ? e.place.track : null,
-          fade: Array.isArray(e.fade) && e.fade[1] > e.fade[0] ? [e.fade[0], e.fade[1], unit(e.fade[2], 0), unit(e.fade[3], 1), ...(isEase(e.fade[4]) ? [e.fade[4].map(Number)] : [])] : null,
-          drift: e.drift && Array.isArray(e.drift.rate) ? { rate: e.drift.rate.map(Number), since: Number(e.drift.since) || 0 } : null,
-          ramp: Array.isArray(e.ramp) && e.ramp.length ? e.ramp : null,
-          text: typeof e.text === 'string' && e.text ? e.text : null,
-          phase: Number(e.phase) || 0,
-          stillAt: Number.isFinite(e.stillAt) ? e.stillAt : null,
-          outline: e.outline === true,
-          values: numbers(e.values),
-          rates: numbers(e.rates),
-          pixels: numbers(e.pixels),
-          size: Array.isArray(e.size) && e.size[1] > e.size[0] && Number(e.size[2]) >= 0 ? [Number(e.size[0]), Number(e.size[1]), Number(e.size[2]), ...(isEase(e.size[3]) ? [e.size[3].map(Number)] : isSegments(e.size[3]) ? [e.size[3].map(([x, y, b]) => [Number(x), Number(y), ...(isEase(b) ? [b.map(Number)] : [])])] : [])] : null,
-          scrub: Array.isArray(e.scrub) && e.scrub[1] > e.scrub[0] && [e.scrub[2], e.scrub[3]].every((v) => Number.isFinite(Number(v))) ? [...e.scrub.slice(0, 4).map(Number), ...(isEase(e.scrub[4]) ? [e.scrub[4].map(Number)] : [])] : null,
-        }));
+        stack = entries.map(entryOf);
       } catch (err) {
         onError(err);
         stack = [];
       }
+      claimBoxes();
+      cancelAnimationFrame(preparing);
+      preparing = 0;
       doc = stack[0]?.doc ?? null;
       ramp = r;
       ground = g;
       base = at;
-      since = performance.now();
+      since = started = performance.now();
+      // Waits out a frame held up while anything is still to resize (see tick).
+      const resizing = stack.filter((e) => e.size);
+      waits = Boolean(wait) && resizing.length > 0 && !opts.still;
+      waitUntil = Math.max(0, ...resizing.map((e) => e.delay - e.from + e.size[1]));
+      if (!playing) lastTick = lastWall = 0;
       if (!doc) {
         playing = false;
         cancelAnimationFrame(raf);
@@ -720,7 +861,8 @@ export function createBackdrop(canvas, options = {}) {
     play() {
       if (playing || !doc || opts.still) return;
       playing = true;
-      since = performance.now();
+      since = started = performance.now();
+      lastTick = lastWall = 0;
       invalidate();
       loop();
     },
@@ -735,10 +877,11 @@ export function createBackdrop(canvas, options = {}) {
     /** The clock the shown documents share, in seconds since `show`'s `at`. */
     clock: () => clock(),
     /**
-     * Where a lone document's free-running motion is (its time plus `phase`), so the
-     * next show of the same document can carry it on; null for a stack or nothing.
+     * Where a lone document's free-running motion is (its own time, unwrapped, plus
+     * `phase`: what its waves travel on), so the next show of the same document can carry
+     * it on; null for a stack or nothing.
      */
-    motionTime: () => (stack.length === 1 ? api.time() + stack[0].phase : null),
+    motionTime: () => (stack.length === 1 ? clock() - stack[0].delay + stack[0].from + stack[0].phase : null),
     document: () => doc,
     setQuality({ resolution, samples, fps, maxFps, size, authored } = {}) {
       if (resolution > 0) opts.resolution = Math.min(resolution, 4);
@@ -749,6 +892,32 @@ export function createBackdrop(canvas, options = {}) {
       if (maxFps !== undefined) opts.maxFps = maxFps > 0 ? maxFps : 0;
       invalidate();
       if (!playing && doc) draw(lastT);
+    },
+    /**
+     * Make ready, before they show, the boxes of entries drawn in boxes of their own (their
+     * `place.box`, and a `key` naming each): a box's target, as large as its `size` makes it,
+     * and its effects' own instance, drawn once out of sight, an entry a frame, at
+     * `resolution` buffer pixels a CSS pixel (the one they will show at). Then the frames
+     * that first show them (by the same keys) make nothing: the top month's answer made
+     * twelve boxes and their Pattern instances as it came in, and a phone held its first
+     * frames up for half a second. Kept until the next `prepare`; `prepare(null)` lets them
+     * go. A `show` stops making them (call again to go on: what is ready is not made again).
+     */
+    prepare(list, { resolution = opts.resolution } = {}) {
+      cancelAnimationFrame(preparing);
+      preparing = 0;
+      const [cssW] = cssWidthHeight();
+      const cw = cssW || window.innerWidth || 1;
+      const px = Math.max(2, Math.round(cw * resolution)) / cw;
+      try {
+        prepared = (list || []).map(entryOf).filter((e) => e.key && e.place?.box && !e.cover);
+      } catch (err) {
+        onError(err);
+        prepared = [];
+      }
+      for (const e of prepared) Object.assign(e, { box: e.key, px });
+      claimBoxes();
+      if (prepared.length && !lost && !destroyed && !opts.still) preparing = requestAnimationFrame(prepareNext);
     },
     /** The stage viewer: an intermediate buffer instead of the finished frame. */
     setStage(s) {
@@ -779,12 +948,14 @@ export function createBackdrop(canvas, options = {}) {
       destroyed = true;
       playing = false;
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(preparing);
       sizer?.disconnect();
+      window.removeEventListener('resize', onWindowResize);
       canvas.removeEventListener('webglcontextlost', onLost);
       canvas.removeEventListener('webglcontextrestored', onRestored);
       document.removeEventListener('visibilitychange', onVisibility);
       if (lost) return;
-      for (const b of boxes.values()) { b.rt?.dispose(); for (const fx of Object.values(b.fx)) fx.dispose(); }
+      for (const b of boxes.values()) disposeBox(b);
       for (const e of Object.values(effects)) e.dispose();
     },
   };

@@ -322,6 +322,8 @@ export function startPerf(controller, { dwellMs = 15000, loops = 1, only = null,
     for (let guard = 0; guard < 60 && !stopped; guard++) {
       const page = flow.getPage();
       const id = page.id;
+      // Watched longer than it holds, a page would move on by itself (POC-1019): it stays.
+      dispatch({ type: 'stay' });
       // The intro's timed steps are watched to its title, then a moment longer.
       await watch(id, n);
       if (!flow.stepsDone()) await until(() => flow.stepsDone());
