@@ -35,7 +35,7 @@ function quizzesOf(pages) {
  * the transition runs once the page moves on from it.
  */
 function restOf(page) {
-  return page.steps.length - (page.steps.at(-1).transition ? 2 : 1);
+  return page.steps.length - (page.steps[page.steps.length - 1].transition ? 2 : 1);
 }
 
 /** The step a page's timeline has reached `ms` after entering it (up to the one it rests on). */

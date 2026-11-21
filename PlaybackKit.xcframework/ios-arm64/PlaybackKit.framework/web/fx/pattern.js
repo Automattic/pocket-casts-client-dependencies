@@ -42,6 +42,9 @@ export const STAGES = [
 
 const SHAPES = { circle: 0, rounded: 1, square: 2, custom: 3, ring: 4 };
 
+/** The most samples across the ridges a pixel at a wall takes (see FS_REFRACT). */
+export const MAX_WALL_SAMPLES = 16;
+
 const HEADER = `#version 300 es
 precision highp float;
 precision highp int;
@@ -151,6 +154,20 @@ void main() {
 // that into dark lines that flash. So a pixel that reaches a wall takes uWallSamples
 // across the ridges (about six per authored pixel, as dense as Creative Lab's own
 // supersampling); the rest keep the plain grid.
+//
+// Most pixels need none of those samples: on 94–99% of them (the roles' logos, the
+// completion rate, the top show's shape) every sample reads the same coverage, all inside
+// the shape or all outside it, and only the slices' edges differ. Away from a wall, where a
+// pixel's samples are read from is bounded: the push only grows from a lens's centre towards
+// its walls (up to uMono of a period from it; past that the pixel takes its samples), so
+// across the stretch of the ridges the pixel reaches, the push at either end bounds how much
+// it differs from the push at its centre. Every texel its samples can read is in a small box
+// around where the centre's push takes it, and the shape's coverage pyramid (FS_MINMAX: each
+// level the least and most coverage of a block twice the last's size) gives the least and
+// most there in 3 × 3 blocks or fewer. When they are the same, every sample would read that
+// value, and it is the answer: the same picture, for a lookup instead of the samples. Its own
+// program (FS_REFRACT_UNIFORM): one that never takes the lookup (Strength 0, one sample)
+// runs without its code, which cost a software GPU a fifth more even untaken.
 const FS_REFRACT = HEADER + `
 uniform sampler2D uSrc;
 uniform int uType, uWrap, uSamples, uWallSamples;
@@ -158,6 +175,13 @@ uniform vec2 uCentre, uAxis, uLens;
 uniform float uPeriod, uAmount, uSmooth, uFrost, uDispersion, uWallGap;
 uniform bool uSpectral;
 uniform vec4 uBounds;
+#ifdef UNIFORM_READS
+uniform int uLevels;       // the coverage pyramid's levels
+uniform float uMono;       // how far from a lens's centre (of a period) its push only grows
+uniform float uGradMax;    // the most a ridge's gradient can be (its kink or undulation)
+uniform float uGradSpread; // the most it can change across a pixel
+uniform sampler2D uMinMax1, uMinMax2, uMinMax3, uMinMax4, uMinMax5, uMinMax6;
+#endif
 bool outside(vec2 p) { return any(lessThan(p, uBounds.xy)) || any(greaterThan(p, uBounds.zw)); }
 float profile(float u) {
   float a = abs(u);
@@ -245,6 +269,64 @@ float coverage(vec2 p) {
   // pick a mip level from them would blur exactly where the relief is sharpest.
   return textureLod(uSrc, uv, 0.0).a;
 }
+#ifdef UNIFORM_READS
+// The least and most coverage of block c at a level of the pyramid (0: the texel itself).
+vec2 minMax(int level, ivec2 c) {
+  if (level == 0) return vec2(texelFetch(uSrc, c, 0).a);
+  if (level == 1) return texelFetch(uMinMax1, c, 0).rg;
+  if (level == 2) return texelFetch(uMinMax2, c, 0).rg;
+  if (level == 3) return texelFetch(uMinMax3, c, 0).rg;
+  if (level == 4) return texelFetch(uMinMax4, c, 0).rg;
+  if (level == 5) return texelFetch(uMinMax5, c, 0).rg;
+  return texelFetch(uMinMax6, c, 0).rg;
+}
+// The coverage every sample of the pixel at p0 reads, when they all read the same; -1 when
+// they may not (or that cannot be told here: they take their samples).
+float uniformCoverage(vec2 p0) {
+  // Where the pixel is across the ridges (of a period from its lens's centre, the walls half
+  // of one out), and how far its samples reach either way (its half-diagonal across them, and
+  // Frost's jitter), with a little to spare.
+  vec2 grad;
+  float x = fract(ridge(p0, grad)) - 0.5;
+  float reach = (0.71 * uGradMax / uPeriod + 0.15 * uFrost) * 1.01 + 1e-4;
+  if (abs(x) + reach > uMono) return -1.0;
+  // The push at the centre, and at either end of that stretch: the profile only climbs
+  // across it, so no sample's push is further from the centre's than the ends' are (its
+  // direction, the gradient, changes by uGradSpread at most).
+  float g0 = profile(x), gLo = profile(x - reach), gHi = profile(x + reach);
+  float spread = abs(uAmount) * (length(grad) * max(abs(gHi - g0), abs(g0 - gLo)) + uGradSpread * max(abs(gLo), abs(gHi)));
+  // The box every sample's read lies in, about where the centre's push takes the pixel: the
+  // pixel, that spread, and the bilinear filter's texel either side.
+  vec2 at = p0 + grad * uAmount * g0;
+  float r = 0.5 + spread * 1.02 + 0.02;
+  vec2 g = vec2(at.x, uRes.y - at.y);
+  ivec2 size = textureSize(uSrc, 0);
+  ivec2 lo = ivec2(floor(g - r - 0.5)), hi = ivec2(floor(g + r - 0.5)) + 1;
+  // Reads past the texture's edge (but for a clamped wrap) or the box's are empty: with
+  // any of those, only all-empty is the same everywhere.
+  bool edge = (uWrap != 1 && (any(lessThan(lo, ivec2(0))) || any(greaterThan(hi, size - 1))))
+    || any(lessThan(at - r, uBounds.xy)) || any(greaterThan(at + r, uBounds.zw));
+  if (uWrap >= 2 && edge) return -1.0;
+  lo = clamp(lo, ivec2(0), size - 1);
+  hi = clamp(hi, ivec2(0), size - 1);
+  // The finest level at which the box spans 3 blocks or fewer a side.
+  int level = 0;
+  while (level <= uLevels && any(greaterThan((hi >> level) - (lo >> level), ivec2(2)))) level++;
+  if (level > uLevels) return -1.0;
+  lo >>= level; hi >>= level;
+  vec2 m = vec2(1.0, 0.0);
+  for (int j = 0; j < 3; j++) {
+    for (int i = 0; i < 3; i++) {
+      ivec2 c = lo + ivec2(i, j);
+      if (c.x > hi.x || c.y > hi.y) continue;
+      vec2 b = minMax(level, c);
+      m = vec2(min(m.x, b.x), max(m.y, b.y));
+    }
+  }
+  if (m.y == 0.0) return 0.0;
+  return !edge && m.x == m.y ? m.y : -1.0;
+}
+#endif
 void main() {
   vec2 p0 = canvasPx();
   // A layer in a box of its own draws nothing outside it, and reads there are empty.
@@ -253,6 +335,12 @@ void main() {
   if (uType <= 2 && uWallSamples > uSamples && nearWall(p0)) {
     if (abs(uAxis.x) >= abs(uAxis.y)) n.x = uWallSamples; else n.y = uWallSamples;
   }
+#ifdef UNIFORM_READS
+  if (n.x * n.y > 1) {
+    float c = uniformCoverage(p0);
+    if (c >= 0.0) { frag = vec4(0.0, 0.0, 0.0, c); return; }
+  }
+#endif
   vec3 acc = vec3(0.0);
   for (int j = 0; j < n.y; j++) {
     for (int i = 0; i < n.x; i++) {
@@ -442,6 +530,87 @@ void main() {
   frag = vec4(uMode == 1 ? vec3(t.a) : uMode == 2 ? vec3(t.r) : t.rgb, 1.0);
 }`;
 
+const FS_REFRACT_UNIFORM = FS_REFRACT.replace('#version 300 es\n', '#version 300 es\n#define UNIFORM_READS\n');
+
+// The coverage pyramid (see FS_REFRACT): a level's block holds the least (red) and most
+// (green) coverage of the four blocks under it, from the shape's alpha at the first.
+const FS_MINMAX = HEADER + `
+uniform sampler2D uSrc;
+uniform bool uFromShape;
+void main() {
+  ivec2 c = ivec2(gl_FragCoord.xy) * 2, last = textureSize(uSrc, 0) - 1;
+  vec2 m = vec2(1.0, 0.0);
+  for (int j = 0; j < 2; j++) {
+    for (int i = 0; i < 2; i++) {
+      vec4 t = texelFetch(uSrc, min(c + ivec2(i, j), last), 0);
+      vec2 b = uFromShape ? vec2(t.a) : t.rg;
+      m = vec2(min(m.x, b.x), max(m.y, b.y));
+    }
+  }
+  frag = vec4(m, 0.0, 1.0);
+}`;
+
+/** The coverage pyramid's levels (FS_MINMAX): blocks of up to 2^PYRAMID_LEVELS pixels. */
+const PYRAMID_LEVELS = 6;
+
+/** The most a ridge's gradient can be, by Pattern Type (FS_REFRACT ridge: straight, kinked, undulating). */
+const GRAD_MAX = [1, Math.hypot(1, 0.357), Math.hypot(1, (0.6 * 2 * Math.PI) / 6.56)];
+/**
+ * The most it can change across a pixel, by Pattern Type, at a period of `p` pixels: not at
+ * all; across a kink, its sideways part flips; the undulation's slope turns by its rate times
+ * the distance along the ridges (taken as the pixel's diagonal, and 5% to spare).
+ */
+const GRAD_SPREAD = [() => 0, () => 2 * 0.357 * 1.05, (p) => (0.6 * ((2 * Math.PI) / 6.56) ** 2 * 1.42 * 1.05) / p];
+
+const smoothstep = (a, b, x) => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+/** FS_REFRACT's profile, in double precision: the push at `u` periods from a lens's centre. */
+function profileAt(u, lensX, lensY, smooth, wallGap) {
+  const a = Math.abs(u);
+  const q = 1 - Math.min(2 * a, 1) ** 13;
+  if (q <= 0 || a > 0.5 - wallGap) return 0;
+  const s = (lensX * 2 * u) / Math.sqrt(q);
+  const nz = 1 / Math.sqrt(1 + s * s), nx = s * nz;
+  const k = 1 - 6.25 * (1 - nz * nz);
+  if (k < 0) return 0;
+  const f = 2.5 * nz - Math.sqrt(k);
+  let g = ((lensY * f * nx) / (2.5 - f * nz)) * (1 + 1.1 * smooth ** 0.8);
+  if (smooth > 0) {
+    const cap = 0.43 + 0.02 / smooth;
+    g /= (1 + (Math.abs(g) / cap) ** 4) ** 0.25;
+    g *= 1 - 0.9 * smoothstep(0.5, 1, smooth) * smoothstep(0.44, 0.5, a);
+  }
+  return g;
+}
+
+/**
+ * How far from a lens's centre (of a period) its push only grows (FS_REFRACT uMono): the
+ * profile walked out from the centre, a 2048th of a period at a time, until it first falls
+ * back (total internal reflection, the wall's unpushed zone, Smoothness easing it down), less
+ * two steps to spare. Kept for the last few lens settings.
+ */
+const MONO_STEPS = 1024;
+const monotone = new Map();
+function monotonicReach(lensX, lensY, smooth, wallGap) {
+  const key = `${lensX},${lensY},${smooth},${wallGap}`;
+  let m = monotone.get(key);
+  if (m !== undefined) return m;
+  m = 0;
+  let last = 0;
+  for (let i = 1; i <= MONO_STEPS; i++) {
+    const g = Math.abs(profileAt((0.5 * i) / MONO_STEPS, lensX, lensY, smooth, wallGap));
+    if (!(g >= last)) break;
+    last = g;
+    m = (0.5 * Math.max(0, i - 2)) / MONO_STEPS;
+  }
+  if (monotone.size >= 64) monotone.delete(monotone.keys().next().value);
+  monotone.set(key, m);
+  return m;
+}
+
 // The baked mip chains of the last few ramps, by their stops (shared by every instance):
 // the intro switches between two ramps at every frame, and the month bubbles share theirs.
 const CHAINS = new Map();
@@ -459,9 +628,11 @@ export function createPatternEffect(kit, shared = null) {
   const P = shared?.P ?? {
     shape: kit.program(FS_SHAPE, 'pattern/shape'),
     refract: kit.program(FS_REFRACT, 'pattern/refract'),
+    refractUniform: kit.program(FS_REFRACT_UNIFORM, 'pattern/refract-uniform'),
     blur: kit.program(FS_BLUR, 'pattern/blur'),
     colour: kit.program(FS_COLOUR, 'pattern/colour'),
     blit: kit.program(FS_BLIT, 'pattern/blit'),
+    minmax: kit.program(FS_MINMAX, 'pattern/minmax'),
   };
   // The ramp with its whole mip chain, allocated once at its full size and filled level by
   // level from the CPU (setRamp): never redefined, never generateMipmap'd (see rampLevels).
@@ -486,6 +657,8 @@ export function createPatternEffect(kit, shared = null) {
   // `levels`: how many times the canvas can be halved, plus one (what a blur can reduce to).
   let W = 0, H = 0, levels = 1;
   let shapeRT = null, refractRT = null;
+  // The shape's coverage pyramid (FS_MINMAX), level 1 first.
+  let pyramid = [];
   const blurRTs = new Map();
   const rasters = {};
   const uploads = {};
@@ -507,6 +680,11 @@ export function createPatternEffect(kit, shared = null) {
     levels = Math.min(MAX_BLUR_LEVEL + 1, Math.floor(Math.log2(Math.max(w, h))) + 1);
     shapeRT = kit.target(w, h);
     refractRT = kit.target(w, h);
+    for (const rt of pyramid) rt.dispose();
+    pyramid = [];
+    for (let l = 1; l <= Math.min(PYRAMID_LEVELS, Math.floor(Math.log2(Math.max(w, h)))); l++) {
+      pyramid.push(kit.target(Math.max(1, Math.ceil(w / 2 ** l)), Math.max(1, Math.ceil(h / 2 ** l))));
+    }
   }
 
   // A blur at `level` writes its first pass at that level's width but the source's full
@@ -555,8 +733,8 @@ export function createPatternEffect(kit, shared = null) {
 
   /** Upload a Canvas2D raster (when it changed). */
   function uploadRaster(name, draw) {
-    const cache = (rasters[name] ||= rasterCache(W, H));
-    const tex = (uploads[name] ||= kit.texture());
+    const cache = rasters[name] || (rasters[name] = rasterCache(W, H));
+    const tex = uploads[name] || (uploads[name] = kit.texture());
     if (draw(cache)) kit.upload(tex, cache.canvas);
     return tex;
   }
@@ -588,9 +766,12 @@ export function createPatternEffect(kit, shared = null) {
    *                          else, target: where to draw it (default the canvas), bounds:
    *                          [x0, y0, x1, y1] pixels of it the layer is confined to (its
    *                          box: nothing refracts outside it or from outside it, so the
-   *                          edge blur rounds what meets it)}
+   *                          edge blur rounds what meets it), walls: the most samples
+   *                          across the ridges a pixel at a wall takes (16; the degrade
+   *                          ladder's lower rungs take fewer), reads: false, every pixel
+   *                          takes its samples (see FS_REFRACT; to measure what it saves)}
    */
-  function render(values, { F, samples = 3, ramp, stage = null, opacity = 1, target = null, bounds = null }) {
+  function render(values, { F, samples = 3, ramp, stage = null, opacity = 1, target = null, bounds = null, walls = MAX_WALL_SAMPLES, reads = true }) {
     const v = { ...DEFAULTS, ...values };
     // Nothing to draw: no size, no opacity, or a ring opened all the way.
     if (!(v.shapeSize > 0) || !(v.shapeAlpha > 0) || !(opacity > 0) || (Math.round(v.shape) === SHAPES.ring && v.ringInner >= v.ringOuter)) return;
@@ -645,36 +826,57 @@ export function createPatternEffect(kit, shared = null) {
     const patternCentre = shapeSpace
       ? [centre[0] + ((v.cx - 50) / 100) * d, centre[1] + ((v.cy - 50) / 100) * d]
       : [F.x(v.cx), F.y(v.cy)];
-    kit.pass(P.refract, refractRT, (loc, bind) => {
+    const type = Math.round(v.patternType);
+    // At Strength 0 the relief pushes nothing: every sample would read the same pixel.
+    const grid = v.amount === 0 ? 1 : Math.max(1, Math.min(6, Math.round(samples)));
+    // The ridge is 9.35 authored pixels high whatever the period; the second term puts
+    // the refracted push in the units uAmount scales (a push of 8.47 px per unit of
+    // Strength, along the bent ray).
+    const authoredPeriod = Math.max(1, 20 + 9.8 * v.radius);
+    const lens = [9.35 / authoredPeriod, (8.47 * authoredPeriod) / 230];
+    // The unpushed zone at a wall, a little wider than reflection alone gives (so
+    // seams come out as deep as theirs): 0.004 of a period at Radius 6, falling with
+    // the square of the period.
+    const wallGap = 0.004 * (78.8 / authoredPeriod) ** 2;
+    const smooth = clamp01(v.seamlessness / 100);
+    // Pixels whose samples all read the same coverage take none (FS_REFRACT): the shape's
+    // coverage pyramid, for the ridged types, when there are samples to save.
+    const uniform = reads && grid > 1 && type >= 0 && type <= 2 && stage !== 'refract' && pyramid.length > 0;
+    if (uniform) {
+      pyramid.forEach((rt, l) => kit.pass(P.minmax, rt, (loc, bind) => {
+        bind('uSrc', l ? pyramid[l - 1].tex : shapeRT.tex);
+        gl.uniform2f(loc('uRes'), rt.w, rt.h);
+        gl.uniform1i(loc('uFromShape'), l ? 0 : 1);
+      }));
+    }
+    kit.pass(uniform ? P.refractUniform : P.refract, refractRT, (loc, bind) => {
       bind('uSrc', shapeRT.tex);
       gl.uniform2f(loc('uRes'), W, H);
-      gl.uniform1i(loc('uType'), Math.round(v.patternType));
+      gl.uniform1i(loc('uType'), type);
       gl.uniform1i(loc('uWrap'), Math.round(v.pixelWrapMode));
-      // At Strength 0 the relief pushes nothing: every sample would read the same pixel.
-      const grid = v.amount === 0 ? 1 : Math.max(1, Math.min(6, Math.round(samples)));
       gl.uniform1i(loc('uSamples'), grid);
       // Across a wall, about six samples per authored pixel, however small it is drawn.
-      gl.uniform1i(loc('uWallSamples'), grid > 1 ? Math.max(grid, Math.min(16, Math.ceil(6 / u))) : grid);
+      gl.uniform1i(loc('uWallSamples'), grid > 1 ? Math.max(grid, Math.min(MAX_WALL_SAMPLES, walls, Math.ceil(6 / u))) : grid);
       gl.uniform2f(loc('uCentre'), patternCentre[0], patternCentre[1]);
       gl.uniform2f(loc('uAxis'), Math.cos(angle), Math.sin(angle));
       gl.uniform1f(loc('uPeriod'), period);
-      // The ridge is 9.35 authored pixels high whatever the period; the second term puts
-      // the refracted push in the units uAmount scales (a push of 8.47 px per unit of
-      // Strength, along the bent ray).
-      const authoredPeriod = Math.max(1, 20 + 9.8 * v.radius);
-      gl.uniform2f(loc('uLens'), 9.35 / authoredPeriod, (8.47 * authoredPeriod) / 230);
-      // The unpushed zone at a wall, a little wider than reflection alone gives (so
-      // seams come out as deep as theirs): 0.004 of a period at Radius 6, falling with
-      // the square of the period.
-      gl.uniform1f(loc('uWallGap'), 0.004 * (78.8 / authoredPeriod) ** 2);
+      gl.uniform2f(loc('uLens'), lens[0], lens[1]);
+      gl.uniform1f(loc('uWallGap'), wallGap);
       // Strength is a push in pixels that grows with the relief's slope, and the
       // slope of a relief of fixed depth falls as its period grows.
       gl.uniform1f(loc('uAmount'), (230 * v.amount * k * k * u * u) / period);
-      gl.uniform1f(loc('uSmooth'), clamp01(v.seamlessness / 100));
+      gl.uniform1f(loc('uSmooth'), smooth);
       gl.uniform1f(loc('uFrost'), clamp01(v.frost / 100));
       gl.uniform1f(loc('uDispersion'), v.iorDispersion / 100);
       gl.uniform1i(loc('uSpectral'), stage === 'refract' ? 1 : 0);
       gl.uniform4f(loc('uBounds'), ...(bounds ?? [-1e9, -1e9, 1e9, 1e9]));
+      if (uniform) {
+        gl.uniform1i(loc('uLevels'), pyramid.length);
+        gl.uniform1f(loc('uMono'), monotonicReach(lens[0], lens[1], smooth, wallGap));
+        gl.uniform1f(loc('uGradMax'), GRAD_MAX[type]);
+        gl.uniform1f(loc('uGradSpread'), GRAD_SPREAD[type](period));
+        for (let l = 1; l <= PYRAMID_LEVELS; l++) bind(`uMinMax${l}`, pyramid[l - 1]?.tex ?? blank);
+      }
     });
     if (stage === 'refract') return blit(refractRT.tex, 0);
 
@@ -733,8 +935,26 @@ export function createPatternEffect(kit, shared = null) {
     });
   }
 
+  /**
+   * Let the targets go, and the rasters and their uploads (the backdrop's, once nothing that
+   * shows draws with this instance): made again when it next draws. The ramp, the lattice
+   * and the programs stay.
+   */
+  function release() {
+    shapeRT?.dispose(); refractRT?.dispose();
+    shapeRT = refractRT = null;
+    for (const rt of pyramid) rt.dispose();
+    pyramid = [];
+    for (const rt of blurRTs.values()) rt.dispose();
+    blurRTs.clear();
+    for (const k of Object.keys(rasters)) delete rasters[k];
+    for (const [k, t] of Object.entries(uploads)) { gl.deleteTexture(t); delete uploads[k]; }
+    W = H = 0;
+  }
+
   function dispose() {
     shapeRT?.dispose(); refractRT?.dispose();
+    for (const rt of pyramid) rt.dispose();
     for (const rt of blurRTs.values()) rt.dispose();
     for (const t of [rampTex, blank, ...Object.values(uploads)]) gl.deleteTexture(t);
     if (shared) return;
@@ -742,7 +962,7 @@ export function createPatternEffect(kit, shared = null) {
     for (const p of Object.values(P)) gl.deleteProgram(p.p);
   }
 
-  return { resize, render, dispose, fork: () => createPatternEffect(kit, { P, latticeTex }) };
+  return { resize, render, release, dispose, fork: () => createPatternEffect(kit, { P, latticeTex }) };
 }
 
 function clamp01(x) {

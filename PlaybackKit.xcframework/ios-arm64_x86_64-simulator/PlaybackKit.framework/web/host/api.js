@@ -28,13 +28,19 @@ export function installApi(controller, env = {}, backdrop = null) {
      * has its data (only the first call counts).
      */
     setData: (payload) => controller.load(payload).ok,
-    /** Safe-area insets in CSS px. Android WebViews report env(safe-area-inset-*) as 0. */
+    /**
+     * Safe-area insets in CSS px. Android WebViews report env(safe-area-inset-*) as 0. Insets
+     * can change with no change of size; what follows the layout (the backdrop, on its anchors
+     * and the page's column) is told, as by a resize.
+     */
     setInsets({ top = 0, right = 0, bottom = 0, left = 0 } = {}) {
       const s = document.documentElement.style;
+      const was = s.cssText;
       s.setProperty('--inset-top', `${top}px`);
       s.setProperty('--inset-right', `${right}px`);
       s.setProperty('--inset-bottom', `${bottom}px`);
       s.setProperty('--inset-left', `${left}px`);
+      if (s.cssText !== was) window.dispatchEvent(new Event('resize'));
     },
     /**
      * The system's text size, Bold Text and Increase Contrast, when they change after launch (`PLAYBACK_ENV`

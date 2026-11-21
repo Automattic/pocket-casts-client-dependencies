@@ -30,12 +30,17 @@ const STEADY = 1.2;
 const SEVERE_MEDIAN = 30;
 const GRACE = 2;
 const MIN_FRAMES = 8;
+// A window with fewer frames than MIN_FRAMES is judged only when they are this many or more
+// and slow: a GPU far behind (Play again at 4 a second on a budget phone) leaves a window
+// too few frames to judge as shares, and every one of them late. Fewer is not enough to say.
+const SPARSE_FRAMES = 3;
 // A page coming in is a one-off cost (the buffer remade, shaders compiled, the DOM built,
 // its entrance animating): not a device that cannot keep up, and a step it caused would
 // last the whole session. So a page's first moments are not judged.
 const SETTLE_MS = 1500;
-// Gaps over this are the page being hidden or the thread blocked, not a slow draw.
-const MAX_GAP = 250;
+// Gaps over this are the page being hidden or the thread blocked, not a slow draw. A budget
+// phone's GPU can take a quarter of a second over a frame (Play again's, 4 a second): that is.
+const MAX_GAP = 500;
 // A step has helped if the late share fell by this much, or the median did.
 const HELPED_LATE = 0.75;
 const HELPED_MEDIAN = 0.9;
@@ -76,13 +81,16 @@ export function createGovernor({ onSlow, onRevert = () => {}, maxRung = Infinity
   function judge() {
     const sorted = gaps.slice().sort((a, b) => a - b);
     gaps = [];
-    if (sorted.length < MIN_FRAMES) return;
+    const median = sorted.length ? percentile(sorted, 0.5) : 0;
+    // Too few frames to judge, unless they are few because each is slow (SPARSE_FRAMES).
+    const sparse = sorted.length < MIN_FRAMES;
+    if (sparse && (sorted.length < SPARSE_FRAMES || median <= SEVERE_MEDIAN)) return;
     // The display's interval is the best window's mean gap. Not a low percentile: a page that
     // draws every other frame alternates short and long ones (12 and 21 ms on a 60 Hz phone),
     // and its 20th percentile reads as a display of 83 Hz, against which every frame is late.
     // The mean is the same for any such pattern, and a window that drops frames is longer.
-    display = Math.max(4, Math.min(display, sorted.reduce((a, g) => a + g, 0) / sorted.length));
-    const median = percentile(sorted, 0.5);
+    // (A sparse window's say nothing of the display.)
+    if (!sparse) display = Math.max(4, Math.min(display, sorted.reduce((a, g) => a + g, 0) / sorted.length));
     const late = sorted.filter((g) => g >= display * LATE).length / sorted.length;
     // Frames that all arrive at one pace are a display running at that rate, not frames
     // missed: a still page lets a phone drop from 90 Hz to 60, and 60 steady is smooth. What
@@ -152,6 +160,29 @@ export function createGovernor({ onSlow, onRevert = () => {}, maxRung = Infinity
 }
 
 /**
+ * GPUs that cannot keep up with the defaults, by the name the context gives, and the rung
+ * each starts on, so that their first pages are not the ladder's to find out (it takes a
+ * couple of seconds a page to step, and the intro is the first thing seen). From the device
+ * lab (2026-11-20; docs/effects.md, Performance): the moto g play 2024's Adreno 610, the
+ * Galaxy A06's Mali-G52 MC2, the Galaxy A15's Mali-G57 MC2, and the smaller GPUs of their
+ * families. Any other GPU, Apple's among them, starts at the defaults, and has the ladder.
+ */
+const BUDGET_GPUS = [
+  // Snapdragon 4 and 6 series: Adreno 505 to 512, 605 to 613.
+  [/\bAdreno \(TM\) (?:50[5-9]|51[0-2]|60\d|61[0-3])\b/, 1],
+  // Mali's smallest: G31, G51, G52, and G57 in two or three cores (MediaTek's Helio G and Dimensity 6000s).
+  [/\bMali-(?:G31|G51|G52|G57(?! MC(?:[4-9]|\d\d)))(?!\d)/, 1],
+  // MediaTek's Helio A, P and G35/G37.
+  [/\bPowerVR Rogue GE8\d{3}\b/, 1],
+];
+
+/** The rung a device starts on, from its GPU's name (see BUDGET_GPUS): 0 for any not listed. */
+export function deviceRung(gpu) {
+  const name = String(gpu || '');
+  return BUDGET_GPUS.find(([re]) => re.test(name))?.[1] ?? 0;
+}
+
+/**
  * The ladder, rung by rung (rung 0 is the defaults): what each step takes away, cheapest
  * to see first. `quality(rung, hz, base)` is what the backdrop is drawn with at that rung,
  * from the settings it started with (`base`: samples, the soft pages' resolution, the
@@ -168,10 +199,14 @@ export const LAST_RUNG = 4;
 
 export function quality(rung, hz, base) {
   const rate = hz > 0 ? hz : 60;
+  // A cap on a count the effect sets itself (0: none, its own).
+  const cap = (own, most) => (own > 0 ? Math.min(own, most) : most);
   return {
     samples: rung >= 1 ? Math.min(base.samples, 2) : base.samples,
     resolution: base.resolution * (rung >= 3 ? 0.5 : rung >= 1 ? 0.75 : 1),
     sharp: rung >= 3 ? Math.min(base.sharp, 1) : base.sharp,
     maxFps: rung >= 4 ? rate / Math.ceil(rate / 30) : rung >= 2 ? rate / 2 : 0,
+    walls: rung >= 3 ? cap(base.walls, 4) : rung >= 1 ? cap(base.walls, 8) : base.walls || 0,
+    ripple: rung >= 3 ? cap(base.ripple, 3) : rung >= 1 ? cap(base.ripple, 4) : base.ripple || 0,
   };
 }

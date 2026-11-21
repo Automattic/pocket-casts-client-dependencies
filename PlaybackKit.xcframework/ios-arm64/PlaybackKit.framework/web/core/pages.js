@@ -16,8 +16,8 @@
 // is still bringing in what the page shows, when that outlasts the page's own CSS
 // animations (seconds): its progress segment fills until then (ui/app.js). `plays` is how
 // long what the page is for takes to play through once, from entering it, where it loops
-// on after (seconds: the shows' covers coming round their deck, PCIOS-1350): the segment
-// fills until then too, and coming back to the page, it plays again from the start.
+// on or rests after (seconds: the shows' covers coming round their deck, PCIOS-1350): the
+// segment fills until then too, and coming back to the page, it plays again from the start.
 // `holds` is how long a page without steps stays once it has shown everything (a quiz,
 // once its answer has: the view says when, its cover loaded and its way in played), before
 // it moves on by itself, as a tap would (seconds; 0, the default: it waits for a tap). Its
@@ -30,7 +30,7 @@
 // every one the story draws as soon as the story starts (`storyCovers`, POC-1032).
 
 import { seededShuffle } from './random.js';
-import { DECK_MAX, deckRound } from '../ui/stack.js';
+import { DECK_MAX, STACK_MOTION, deckRound } from '../ui/stack.js';
 
 /** Creative Lab deliverables in `motion/developments deliverables/`, by page kind. */
 const MOTION = {
@@ -125,7 +125,8 @@ export const INTRO_STEPS = [
 /**
  * A cold start (POC-1029): what the intro draws can come in seconds after the story opens (the
  * app busy serving the files the page asks for once it is up; the GPU compiling the effects for
- * the first time). The intro waits for it rather than playing on without it, which skipped the
+ * the first time, which the rings' first frame waits for: fx/gl.js `compiled`). The intro waits
+ * for it rather than playing on without it, which skipped the
  * logo and the rings' first second: the logo (part of the page, ui/logos.js, so never late)
  * comes in at once and holds at its beat, INTRO_HOLD_MS into the logo step (before it shrinks
  * for the rings), until the rings are there; then it plays on. Picked over waiting on the bare
@@ -143,23 +144,34 @@ export const INTRO_STILL = [{ id: 'still', ms: 4000, backdrop: { document: 'intr
  * video does): the intro's wave carries on, from where the deliverable moves it on to
  * the first stat (6 s), and sinks to the bottom of the screen while it mutes to 0.71
  * of itself against the ground, as the video's does ("the pattern becomes more muted,
- * letting the podcasts be the protagonists"). Then it holds the pose it sank to (`hold`:
- * nothing is keyframed on that stretch), its waves travelling on forward for as long as the
- * page shows, never turning back (POC-1031). Its progress segment fills until the covers'
- * deck has come round, every show at the front in turn and the top show back there
- * (`plays`, `deckRound`, PCIOS-1350): the cycle is what the page is for. Reduced Motion:
- * one still of that pose, the covers still too.
+ * letting the podcasts be the protagonists"). It sinks and mutes as the page comes in, in
+ * step with it (SHOWS_SINK): from when the covers show until everything on the page has come
+ * in (the share button, the last, is in 1.01 s after entering), before the deck's first move
+ * (1.25 s). Its sink, 03's 6 → 7.63 s, plays in that 0.75 s (`scrub`) rather than its own
+ * 1.63 s from entering, which set it moving under the intro's tagline, before anything on the
+ * page showed, and still sinking through the deck's first move; it muted in the first 0.25 s,
+ * before the covers showed. Then it holds the pose it sank to (nothing is keyed after 7.63 s:
+ * the scrub's end holds it), its waves travelling on forward for as long as the page shows,
+ * never turning back (POC-1031). Its progress segment fills until the covers' deck has come
+ * round, every show at the front in turn and the top show back there (`plays`, `deckRound`,
+ * PCIOS-1350): the cycle is what the page is for. Reduced Motion: one still of that pose, the
+ * covers still too.
  */
-export const SHOWS_BACKDROP = { document: 'wave-transition', from: 6, hold: [7.7, 9.9], fade: [6, 6.25, 0.71] };
-export const SHOWS_STILL = { document: 'wave-transition', stillAt: 8.5, fade: [6, 6.25, 0.71] };
+export const SHOWS_SINK = [STACK_MOTION.start, 1];
+/** 03's last key: the wave's sink ends there (srcY 52.7 → 86.4 from 6 s). */
+const WAVE_SUNK = 7.6333;
+export const SHOWS_BACKDROP = { document: 'wave-transition', from: 6, scrub: [6 + SHOWS_SINK[0], 6 + SHOWS_SINK[1], 6, WAVE_SUNK], fade: [6 + SHOWS_SINK[0], 6 + SHOWS_SINK[1], 0.71] };
+export const SHOWS_STILL = { document: 'wave-transition', stillAt: 8.5, fade: SHOWS_BACKDROP.fade };
 
 /**
  * The top show (Figma "Top show 1–3", moving as the P2's "most listened" video does).
  *
  * The guess: Figma's two refracted logos at the top of the screen (composed documents,
  * web/scripts/import-motion.mjs), each drawn in its own Figma box placed on the page
- * (`anchor`, `box`; B turned as Figma turns it). They grow in with the guess (0.25 s in,
- * as the first stat's wave fades out under them: `replaces`), hold, and from the first
+ * (`anchor`, `box`; B turned as Figma turns it). They grow in with the guess (LOGOS_IN,
+ * 0.25 s in, as the first stat has faded out), and the first stat's wave fades out under
+ * them as they do (`replaces`, over WAVE_OUT from then): it used to fade out with the first
+ * stat, before them, leaving the bare ground between. They hold, and from the first
  * pick their relief slides on (`drift`: a period every 3.4 s, inwards, as the video's
  * does), on through every pick. The answer is the shape behind the cover, Creative Lab's
  * 04 as Figma and the video draw it (`top-shape`, composed in the importer), in that
@@ -174,9 +186,13 @@ export const SHOWS_STILL = { document: 'wave-transition', stillAt: 8.5, fade: [6
 const LOGO_DRIFT_PX = -22;
 /** The answer's relief once its ease is through (top-shape's `cx` from 3.45 s), in cx a second: the video's. */
 const TOP_SHAPE_SLIDE = -6.933;
+/** When the guess's logos start to grow, after entering it. */
+const LOGOS_IN = 0.25;
+/** How long the wave under them takes to fade out, from then. */
+const WAVE_OUT = 0.4;
 const logo = (id, span, rotate) => ({
   document: id,
-  delay: 0.25,
+  delay: LOGOS_IN,
   loop: false,
   hold: [1.6, 1.61],
   stillAt: 1.6,
@@ -185,7 +201,7 @@ const logo = (id, span, rotate) => ({
 const LOGOS = [logo('top-logo-a', 264.517), logo('top-logo-b', 714.372, -58.69)];
 /** The relief across its 45° ridges, in % of each box a second. */
 const drift = (L, height) => ({ ...L, drift: { rate: [(LOGO_DRIFT_PX * Math.SQRT1_2 * 100) / L.anchor.span, (LOGO_DRIFT_PX * Math.SQRT1_2 * 100) / height] } });
-export const TOP_GUESS_BACKDROP = { stack: { name: 'top-guess', layers: LOGOS }, replaces: [0, 0.25], sharp: true };
+export const TOP_GUESS_BACKDROP = { stack: { name: 'top-guess', layers: LOGOS }, replaces: [LOGOS_IN, LOGOS_IN + WAVE_OUT], sharp: true };
 export const TOP_PICK_BACKDROP = { stack: { name: 'top-pick', layers: [drift(LOGOS[0], 264), drift(LOGOS[1], 712.977)] }, sharp: true };
 export const TOP_REVEAL_BACKDROP = { document: 'top-shape', loop: false, anchor: { selector: '[data-backdrop-anchor]', span: 187.8 }, drift: { rate: [TOP_SHAPE_SLIDE, 0], since: 3.45 }, ramp: 'cover', replaces: [0.2, 0.75], stillAt: 2, sharp: true };
 
@@ -202,6 +218,17 @@ export const TOP_REVEAL_BACKDROP = { document: 'top-shape', loop: false, anchor:
 export const TOP_SHOWS_FADE_IN = { duration: 1.008, ease: [0.73, 1.273, 0.317, 0.609] };
 export const TOP_SHOWS_BACKDROP = { document: 'wave-transition', from: 2, hold: [2, 5.8], fade: [2, 2 + TOP_SHOWS_FADE_IN.duration, 1, 0, TOP_SHOWS_FADE_IN.ease], replaces: [0, 0.25] };
 export const TOP_SHOWS_STILL = { document: 'wave-transition', stillAt: 3.9 };
+
+/**
+ * The top show's answer on its way out to the top 5 (POC-1034, POC-1037, design's illustration
+ * and speed curve): its copy fades out as it did (0.25 s), and its cover lifts `pt` straight up
+ * as it goes, over `duration`, speeding up all the way on design's curve (its speed graph,
+ * fitted: 6 times its average speed at the end), to lead the eye up to where the list forms.
+ * The cover holds while the copy fades, and fades out over the second half of its lift, as it
+ * speeds away (`fadeFrom`). The shape behind it fades in place (TOP_SHOWS_BACKDROP `replaces`).
+ * Design's illustration lifts it about 15% of its height: 35 pt. playback.css draws it.
+ */
+export const TOP_COVER_LIFT = { pt: 35, duration: 0.25, ease: [0.85, 0, 0.95, 0.7], fadeFrom: 0.125 };
 
 /**
  * The top month (Figma "Top month 1–3", moving as the P2's best-months video does,
@@ -312,6 +339,14 @@ export function topMonthReveal(sizes) {
  */
 export const PAGE_OUT = 0.32;
 export const OVERLAP_IN = 0.1;
+/**
+ * With Reduced Motion, a page change (either way) fades the page left out over REDUCED_OUT, then
+ * the next in over REDUCED_IN: nothing moves, and two pages' copy never shows at once (the next
+ * page used to be all there at once, under the one leaving as it faded). iOS swaps its own slides
+ * for dissolves with Reduce Motion on (ui/app.js; the share button's in playback.css).
+ */
+export const REDUCED_OUT = 0.15;
+export const REDUCED_IN = 0.2;
 /**
  * Going back, the page comes back as it was left, its way in done: as it is BACK_SETTLED s
  * into its visit (every page's way in is done by then: the longest, the completion rate's
@@ -576,12 +611,13 @@ export const ARCHETYPE_OUT = 1.41;
  *
  * The way in is designed (the video opens on the page settled): the role goes as its video's
  * way out does, its logos shrinking back under the summary (`replaces`), and the summary comes in
- * as they shrink back (SUMMARY_IN), the role's name still sweeping out: the cards fade in, their backgrounds with them (`fade`, on the
- * DOM's curve, playback.css), as they rise. The way out (on to Play again) fades everything out
+ * as they shrink back (SUMMARY_IN), the role's name finishing its sweep out: the cards fade in, their backgrounds with them (`fade`, on the
+ * DOM's curve, playback.css), as they rise. SUMMARY_IN was 0.8 s (and 1.4 s before PCIOS-1258):
+ * the slowest page change of all, the screen all but bare 0.9–1 s after the tap. The way out (on to Play again) fades everything out
  * linearly over SUMMARY_OUT, the cards' backgrounds under Play again's wave (OUTRO_BACKDROP).
  * Reduced Motion: stills.
  */
-export const SUMMARY_IN = 0.8;
+export const SUMMARY_IN = 0.6;
 export const SUMMARY_OUT = 0.32;
 /** The cards' entrance (playback.css `.sc-card`), from SUMMARY_IN: their backgrounds fade in with them. */
 export const SUMMARY_CARD_IN = { at: 0.205, fade: 0.234 };
@@ -695,7 +731,7 @@ export function summaryCovers(ranking, n = SUMMARY_GRID) {
 }
 
 function page(id, extra = {}) {
-  return { id, kind: id, shareable: false, ownShare: false, quiz: null, steps: null, backdrop: null, pickBackdrop: null, revealBackdrop: null, leaves: 0, shows: 0, plays: 0, holds: 0, covers: [], motion: MOTION[id] ?? null, data: {}, ...extra };
+  return { id, kind: id, progress: true, shareable: false, ownShare: false, quiz: null, steps: null, backdrop: null, pickBackdrop: null, revealBackdrop: null, leaves: 0, shows: 0, plays: 0, holds: 0, covers: [], motion: MOTION[id] ?? null, data: {}, ...extra };
 }
 
 /**
@@ -787,10 +823,21 @@ export function introPage(options = {}) {
 }
 
 /**
- * The story's length with every page in it (each optional page earned), which the progress
- * bar shows while the host's data is still to come: most stories are this long or one short.
+ * The story's length with every page in it (each optional page earned), which the flow counts
+ * while the host's data is still to come (the `page` event's `count`): most stories are this
+ * long or one short.
  */
 export const STORY_LENGTH = 12;
+
+/**
+ * The progress bar's segments: one for each page it shows on, every page but the summary and
+ * Play again (`progress: false`: Figma's chrome there is the close alone), nor the empty page.
+ * Those come last, so a page's segment is at its index.
+ */
+export const segmentCount = (pages) => pages.filter((p) => p.progress).length;
+
+/** STORY_LENGTH's segments, which the progress bar shows while the host's data is still to come. */
+export const STORY_SEGMENTS = 10;
 
 /**
  * @param {ReturnType<import('./stats.js').deriveStats>} stats
@@ -799,7 +846,7 @@ export const STORY_LENGTH = 12;
  */
 export function buildPages(stats, archetype, options = {}) {
   if (!stats.eligible) {
-    return [page('empty', { backdrop: EMPTY_BACKDROP })];
+    return [page('empty', { progress: false, backdrop: EMPTY_BACKDROP })];
   }
 
   const pages = [];
@@ -833,6 +880,7 @@ export function buildPages(stats, archetype, options = {}) {
   pages.push(page('archetype', { shareable: true, holds: PAGE_HOLD, backdrop: ARCHETYPE_BACKDROP, data: archetype }));
   const grid = summaryCovers(stats.ranking, SUMMARY_GRID), stack = stats.ranking.slice(0, SUMMARY_STACK);
   pages.push(page('summary', {
+    progress: false,
     shareable: true,
     ownShare: true,
     backdrop: SUMMARY_BACKDROP,
@@ -846,6 +894,6 @@ export function buildPages(stats, archetype, options = {}) {
       archetype,
     },
   }));
-  pages.push(page('outro', { backdrop: OUTRO_BACKDROP, leaves: OUTRO_OUT }));
+  pages.push(page('outro', { progress: false, backdrop: OUTRO_BACKDROP, leaves: OUTRO_OUT }));
   return pages;
 }

@@ -273,7 +273,7 @@ export function createThermalEffect(kit) {
     if (key !== pyramidKey) {
       pyramidKey = key;
       levels = 0;
-      srcTex ??= kit.texture();
+      if (!srcTex) srcTex = kit.texture();
       drawText(srcTex, v, F, text, lay);
       blurInto(lv[0], tmp[0], srcTex, (v.soft / 100) * F.S);
       levels = 1;
@@ -286,7 +286,7 @@ export function createThermalEffect(kit) {
     const key = [text, lay.size, lay.gap, v.rows, v.textX, v.textY, v.tracking, v.maskGrow, v.maskBlur, W, H, geometry(F)].join('|');
     if (key === maskKey) return;
     maskKey = key;
-    maskTex ??= kit.texture();
+    if (!maskTex) maskTex = kit.texture();
     drawText(maskTex, v, F, text, lay, (v.maskGrow / 100) * F.S);
     blurInto(mk, mkT, maskTex, (v.maskBlur / 100) * F.S);
   }
@@ -361,11 +361,25 @@ export function createThermalEffect(kit) {
     });
   }
 
+  /**
+   * Let the targets, the type's textures and its raster go (the backdrop's, once nothing that
+   * shows draws with this): made, and the type drawn, again when it next draws.
+   */
+  function release() {
+    for (const rt of [...lv, ...tmp, mk, mkT]) rt?.dispose();
+    lv = []; tmp = []; mk = mkT = null;
+    for (const t of [srcTex, maskTex]) if (t) gl.deleteTexture(t);
+    srcTex = maskTex = null;
+    raster = null;
+    W = H = 0;
+    pyramidKey = ''; maskKey = ''; levels = 0;
+  }
+
   function dispose() {
     for (const rt of [...lv, ...tmp, mk, mkT]) rt?.dispose();
     for (const t of [srcTex, maskTex]) if (t) gl.deleteTexture(t);
     for (const p of Object.values(P)) gl.deleteProgram(p.p);
   }
 
-  return { resize, render, dispose };
+  return { resize, render, release, dispose };
 }

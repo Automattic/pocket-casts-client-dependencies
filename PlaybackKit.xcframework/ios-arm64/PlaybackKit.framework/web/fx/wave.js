@@ -57,6 +57,8 @@ const DEFAULT_CYCLE = [[0.0037135, 0.2705882, 0.0078431, 0.0352941], [0.5326382,
 const DEFAULT_MESH = [[-0.2157554, -0.1627686], [0.6161951, -0.1806025], [1.3209971, 0.0970551], [-0.038618, 0.3227171], [0.5516254, 0.4219033], [1.0596926, 0.7876861], [-0.187999, 1.1792522], [0.4196555, 1.117713], [1.0580529, 1.0422761]];
 const DEFAULT_TAN = [[0.2472897, 0.0728201], [0, 0], [0, 0.1666667], [0, 0], [0.2085439, 0.0967233], [-0.2416877, -0.092886], [-0.1956222, 0.1555357], [0, 0], [0, 0], [-0.1666667, 0], [0, 0.1666667], [0, 0], [0.2157856, -0.0239582], [0, 0], [0.0271903, 0.1582405], [0, -0.1666667], [0.2977779, 0.1720563], [-0.2948027, -0.1811201], [-0.0353231, 0.3514735], [0.0005496, -0.4076797], [0, 0], [-0.2923009, 0.1118383], [0, 0.1666667], [0, -0.1666667], [0.1666667, 0], [0, 0], [0, 0], [0.0785846, -0.1379877], [0.3669819, 0.068697], [-0.2132676, -0.0433974], [0, 0], [-0.1917964, -0.4177783], [0, 0], [-0.1666667, 0], [0, 0], [-0.0415175, -0.0807805]];
 const MAX_STOPS = 8;
+/** The most taps a side the ripple takes where its rings pinch (FS_RIPPLE). */
+export const MAX_RIPPLE_GRID = 6;
 /** Lattice steps across the reference frame for the mesh. */
 const MESH_STEPS = 48;
 /** A phase in periods (a wave's, or turns round Colorama's wheel), less its whole ones (0..1). */
@@ -298,6 +300,7 @@ uniform float uAmp;        // uv
 uniform float uFreq;       // rings per unit distance
 uniform float uPhase;      // turns
 uniform float uOpacity;
+uniform float uMaxGrid;    // taps a side at most (6; the degrade ladder's lower rungs take fewer)
 vec2 rippleUv(vec2 uv) {
   vec2 rel = (uv - uCentre) * uAspect;
   float d = length(rel);
@@ -310,7 +313,7 @@ void main() {
   vec2 w0 = rippleUv(uv0);
   vec2 gx = (rippleUv(uv0 + vec2(texel.x, 0.0)) - w0) / texel;
   vec2 gy = (rippleUv(uv0 + vec2(0.0, texel.y)) - w0) / texel;
-  int n = int(clamp(ceil(max(length(gx), length(gy))), 1.0, 6.0));
+  int n = int(clamp(ceil(max(length(gx), length(gy))), 1.0, uMaxGrid));
   float fn = float(n);
   vec4 sum = vec4(0.0);
   for (int j = 0; j < 6; j++) {
@@ -349,6 +352,9 @@ export function createWaveEffect(kit, shared = null) {
   const pins = new Float32Array(18), tans = new Float32Array(72);
   let W = 0, H = 0, A = null, B = null, C = null;
   let meshVao = null, meshVbo = null, meshCount = 0, meshKey = '';
+  // What C holds: the blurred bar, drawn for these inputs (see barKeyOf), or null. Nothing
+  // else writes C, so a frame whose bar is the bar C holds starts at the waves.
+  let barKey = null;
 
   // Targets follow the canvas but are only allocated when a layer is drawn, so a
   // session that never shows this effect never pays for them. 16 bits where the device
@@ -363,6 +369,7 @@ export function createWaveEffect(kit, shared = null) {
     const [w, h] = wanted;
     if (w === W && h === H && A) return;
     W = w; H = h;
+    barKey = null;
     for (const rt of [A, B, C]) rt?.dispose();
     A = kit.target(w, h, { float: true });
     B = kit.target(w, h, { float: true });
@@ -414,41 +421,70 @@ export function createWaveEffect(kit, shared = null) {
    *   document's authored canvas [w, h] (what the ripple's rings are measured on), override: a ramp
    *   replacing Colorama's output cycle (the colours seen), stage, opacity: the whole
    *   layer's, applied by the pass that draws onto the canvas, target: where to draw it
-   *   (default the canvas; a box's own, sized as this instance)}
+   *   (default the canvas; a box's own, sized as this instance), finish: the part of the
+   *   target the last pass draws ([x, y, w, h], GL pixels from its bottom left; the rest is
+   *   left as it is: a box whose part on screen is all that is put there), ripple: the most
+   *   taps a side the ripple takes where its rings pinch (6; the degrade ladder's lower rungs
+   *   take fewer)}
    */
-  function render(values, { F, samples = 3, clock = 0, layer = null, canvas = null, override = null, stage = null, opacity = 1, target = null }) {
+  function render(values, { F, samples = 3, clock = 0, layer = null, canvas = null, override = null, stage = null, opacity = 1, target = null, finish = null, ripple: rippleGrid = MAX_RIPPLE_GRID }) {
     allocate();
     const v = { ...DEFAULTS, ...values };
     const S = F.S;
 
-    // 1 · the bar
+    // 1 · the bar, and 2 · its blur: most of a frame's cost (on a budget phone's GPU, 50 of
+    // its 63 ms), and the same picture for as long as the bar is: a document's bar is still
+    // but for its entrance (or has no keys at all), and the waves move on over it. So it is
+    // drawn when what it is drawn from changes, and C keeps it until then.
     const grad = packGradient(layer?.gradient);
-    kit.pass(P.bar, A, (loc) => {
-      gl.uniform2f(loc('uRes'), W, H);
-      gl.uniform2f(loc('uCentre'), F.x(v.srcX) / W, F.y(v.srcY) / H);
-      gl.uniform2f(loc('uHalf'), ((v.srcW / 100) / 2) * (F.w / W), ((v.srcH / 100) / 2) * (F.h / H));
-      gl.uniform1f(loc('uGradAngle'), (v.gradAngle * Math.PI) / 180);
-      gl.uniform4fv(loc('uGradC'), gradC);
-      gl.uniform1fv(loc('uGradP'), gradP);
-      gl.uniform1i(loc('uGradN'), grad);
-    });
-    if (stage === 'bar') return blit(A);
-
-    // 2 · blur, on the unwarped bar. A small blur rounds the edge off to about the tap
-    // spacing first; Gaussians compose by variance, so the two land on the radius asked.
-    const sigma = (v.blur / 100) * S;
-    const s1 = Math.min(sigma, Math.max(2, sigma / 8));
-    const s2 = Math.sqrt(Math.max(0, sigma * sigma - s1 * s1));
-    for (const [to, from, vertical, s] of [[B, A, 0, s1], [C, B, 1, s1], [B, C, 0, s2], [C, B, 1, s2]]) {
-      kit.pass(P.blur, to, (loc, bind) => {
-        bind('uTex', from.tex);
+    const key = barKeyOf(v, F, grad);
+    if (key !== barKey || stage === 'bar' || stage === 'blur') {
+      barKey = null;
+      kit.pass(P.bar, A, (loc) => {
         gl.uniform2f(loc('uRes'), W, H);
-        gl.uniform1f(loc('uSigma'), s);
-        gl.uniform1i(loc('uVertical'), vertical);
-        gl.uniform1f(loc('uDither'), dithers(to));
+        gl.uniform2f(loc('uCentre'), F.x(v.srcX) / W, F.y(v.srcY) / H);
+        gl.uniform2f(loc('uHalf'), ((v.srcW / 100) / 2) * (F.w / W), ((v.srcH / 100) / 2) * (F.h / H));
+        gl.uniform1f(loc('uGradAngle'), (v.gradAngle * Math.PI) / 180);
+        gl.uniform4fv(loc('uGradC'), gradC);
+        gl.uniform1fv(loc('uGradP'), gradP);
+        gl.uniform1i(loc('uGradN'), grad);
       });
+      if (stage === 'bar') return blit(A);
+
+      // A small blur rounds the edge off to about the tap spacing first; Gaussians compose
+      // by variance, so the two land on the radius asked.
+      const sigma = (v.blur / 100) * S;
+      const s1 = Math.min(sigma, Math.max(2, sigma / 8));
+      const s2 = Math.sqrt(Math.max(0, sigma * sigma - s1 * s1));
+      // Each pass is drawn only as far as the bar reaches by then (its box and a pixel for its
+      // edge, spread by every pass so far 3 sigma, as far as its taps go, and two pixels for
+      // the filter): past that every tap reads nothing, and the target is cleared to the same.
+      // During an entrance this blur was most of a budget phone's frame, and the bar is often a
+      // small part of the canvas (03's grows from a line): the same picture, at half the cost.
+      const cx = F.x(v.srcX), cy = F.y(v.srcY);
+      const hx = (Math.abs(v.srcW) / 200) * F.w + 1, hy = (Math.abs(v.srcH) / 200) * F.h + 1;
+      let box = [cx - hx, cy - hy, cx + hx, cy + hy];
+      for (const [to, from, vertical, s] of [[B, A, 0, s1], [C, B, 1, s1], [B, C, 0, s2], [C, B, 1, s2]]) {
+        const reach = s < 0.5 ? 0 : Math.ceil(3 * s) + 2;
+        box = vertical ? [box[0], box[1] - reach, box[2], box[3] + reach] : [box[0] - reach, box[1], box[2] + reach, box[3]];
+        const x0 = Math.max(0, Math.floor(box[0])), x1 = Math.min(W, Math.ceil(box[2]));
+        const y0 = Math.max(0, Math.floor(box[1])), y1 = Math.min(H, Math.ceil(box[3]));
+        gl.bindFramebuffer(gl.FRAMEBUFFER, to.fbo);
+        gl.viewport(0, 0, W, H);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        if (x1 <= x0 || y1 <= y0) continue;
+        kit.pass(P.blur, to, (loc, bind) => {
+          bind('uTex', from.tex);
+          gl.uniform2f(loc('uRes'), W, H);
+          gl.uniform1f(loc('uSigma'), s);
+          gl.uniform1i(loc('uVertical'), vertical);
+          gl.uniform1f(loc('uDither'), dithers(to));
+        }, { scissor: [x0, H - y1, x1 - x0, y1 - y0] });
+      }
+      barKey = key;
+      if (stage === 'blur') return blit(C);
     }
-    if (stage === 'blur') return blit(C);
 
     // 3 · waves and mirror. Phase runs against speed so a positive speed travels down, on
     // the entry's own clock: forward for as long as the page shows (POC-1031). In whole
@@ -491,15 +527,16 @@ export function createWaveEffect(kit, shared = null) {
       gl.uniform1f(loc('uBlend'), v.colorBlend / 100);
       gl.uniform1f(loc('uOpacity'), toBuffer ? 1 : opacity);
       gl.uniform1f(loc('uDither'), dithers(toBuffer ? A : target));
-    }, { blend: !toBuffer });
+    }, { blend: !toBuffer, scissor: toBuffer ? null : finish });
     if (stage === 'colour') return blit(A);
     if (!meshOn) {
-      if (ripple) rippleOnto(A, v, F, canvas, opacity, target);
+      if (ripple) rippleOnto(A, v, F, canvas, opacity, target, finish, rippleGrid);
       return;
     }
 
     // 5 · the mesh, over whatever earlier layers put down, or into a cleared buffer when
-    // the ripple follows (it blends, so last frame's contents would accumulate).
+    // the ripple follows (it blends, so last frame's contents would accumulate): B, done
+    // with once Colorama has read it, not C, which keeps the blurred bar.
     P.mesh.ready();
     buildMesh(F);
     const mesh = layer?.fx?.mesh?.length === 9 ? layer.fx.mesh : DEFAULT_MESH;
@@ -507,11 +544,14 @@ export function createWaveEffect(kit, shared = null) {
     mesh.forEach((p, i) => { pins[i * 2] = p[0]; pins[i * 2 + 1] = p[1]; });
     tan.forEach((p, i) => { tans[i * 2] = p[0]; tans[i * 2 + 1] = p[1]; });
     gl.useProgram(P.mesh.p);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, ripple ? C.fbo : target ? target.fbo : null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, ripple ? B.fbo : target ? target.fbo : null);
     gl.viewport(0, 0, W, H);
     if (ripple) {
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
+    } else if (finish) {
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(...finish);
     }
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -520,7 +560,7 @@ export function createWaveEffect(kit, shared = null) {
     gl.uniform2f(P.mesh.loc('uRefO'), F.ox / W, F.oy / H);
     gl.uniform2f(P.mesh.loc('uRefS'), F.w / W, F.h / H);
     gl.uniform1f(P.mesh.loc('uOpacity'), ripple ? 1 : opacity);
-    gl.uniform1f(P.mesh.loc('uDither'), dithers(ripple ? C : target));
+    gl.uniform1f(P.mesh.loc('uDither'), dithers(ripple ? B : target));
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, A.tex);
     gl.uniform1i(P.mesh.loc('uTex'), 0);
@@ -528,10 +568,19 @@ export function createWaveEffect(kit, shared = null) {
     gl.drawArrays(gl.TRIANGLES, 0, meshCount);
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
+    gl.disable(gl.SCISSOR_TEST);
     if (ripple) {
-      if (stage === 'mesh') return blit(C);
-      rippleOnto(C, v, F, canvas, opacity, target);
+      if (stage === 'mesh') return blit(B);
+      rippleOnto(B, v, F, canvas, opacity, target, finish, rippleGrid);
     }
+  }
+
+  /**
+   * What the blurred bar is drawn from, as a string: its parameters, its gradient (packed,
+   * `n` stops), the frame and the buffer. The same key, the same picture in C.
+   */
+  function barKeyOf(v, F, n) {
+    return [W, H, F.ox, F.oy, F.w, F.h, v.srcX, v.srcY, v.srcW, v.srcH, v.gradAngle, v.blur, n, ...gradP.subarray(0, n), ...gradC.subarray(0, n * 4)].join(',');
   }
 
   /**
@@ -539,7 +588,7 @@ export function createWaveEffect(kit, shared = null) {
    * the document's canvas (buffer px: its shorter side at the frame's scale), so a document
    * drawn larger than authored has larger rings, as a picture of Creative Lab's would.
    */
-  function rippleOnto(src, v, F, canvas, opacity, target = null) {
+  function rippleOnto(src, v, F, canvas, opacity, target = null, finish = null, grid = MAX_RIPPLE_GRID) {
     const side = canvas ? Math.min(canvas[0], canvas[1]) * F.unit : Math.min(W, H);
     kit.pass(P.ripple, target, (loc, bind) => {
       bind('uTex', src.tex);
@@ -551,8 +600,9 @@ export function createWaveEffect(kit, shared = null) {
       gl.uniform1f(loc('uFreq'), v.rippleScale * 2);
       gl.uniform1f(loc('uPhase'), v.ripplePhase / 100);
       gl.uniform1f(loc('uOpacity'), opacity);
+      gl.uniform1f(loc('uMaxGrid'), Math.max(1, Math.min(MAX_RIPPLE_GRID, Math.round(grid))));
       gl.uniform1f(loc('uDither'), dithers(target));
-    }, { blend: true });
+    }, { blend: true, scissor: finish });
   }
 
   /** The layer's gradient into the bar's uniforms; returns the stop count. */
@@ -585,6 +635,17 @@ export function createWaveEffect(kit, shared = null) {
     });
   }
 
+  /**
+   * Let the targets go (the backdrop's, once nothing that shows draws with this instance):
+   * they are made again, and the bar drawn again, when it next draws.
+   */
+  function release() {
+    for (const rt of [A, B, C]) rt?.dispose();
+    A = B = C = null;
+    W = H = 0;
+    barKey = null;
+  }
+
   function dispose() {
     for (const rt of [A, B, C]) rt?.dispose();
     if (meshVao) gl.deleteVertexArray(meshVao);
@@ -593,5 +654,5 @@ export function createWaveEffect(kit, shared = null) {
     for (const p of Object.values(P)) gl.deleteProgram(p.p);
   }
 
-  return { resize, render, dispose, fork: () => createWaveEffect(kit, { P }) };
+  return { resize, render, release, dispose, fork: () => createWaveEffect(kit, { P }) };
 }

@@ -14,8 +14,8 @@ import { monthName, monthShort } from '../core/format.js';
 import { MONTH_MOTION, MONTH_SIZE, monthAt } from '../core/pages.js';
 
 /** Figma's grid: each month's centre, from the grid's centre (pt), and its disc. */
-const COLUMNS = [-115.5, 0.5, 117.5];
-const ROWS = [-182, -59, 64, 187];
+export const COLUMNS = [-115.5, 0.5, 117.5];
+export const ROWS = [-182, -59, 64, 187];
 
 export function topMonthView(ctx) {
   const { t, page, dispatch, payload } = ctx;

@@ -6,7 +6,42 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="color-scheme" content="light">
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="playback.css">
+  <link rel="stylesheet" href="playback.css" id="playback-css">
+  <script>
+    // Before anything else, in the oldest JavaScript (any engine runs it): what this web view
+    // can show. Lacking what the story's motion, layout and backdrop use (Chromium 104–105:
+    // an Android System WebView that never updates), it is shown with Reduced Motion and static
+    // backgrounds, laid out by legacy.css (host/legacy.js). Too old for the story's scripts to
+    // even parse (Chromium 79 and older), the page says so and sends `error`, so the app can
+    // close it as it does a payload it cannot read.
+    (function () {
+      var root = document.documentElement;
+      var supports = function (rule) { try { return CSS.supports(rule); } catch (e) { return false; } };
+      try {
+        new Function('var a = {}; return a?.b ?? 0;');
+      } catch (e) {
+        root.setAttribute('data-unsupported', '');
+        window.addEventListener('DOMContentLoaded', function () {
+          var message = { type: 'error', errors: ['unsupported web view: ' + navigator.userAgent] };
+          var wk = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.playback;
+          var send = wk ? function (m) { wk.postMessage(m); }
+            : window.PlaybackNative ? function (m) { window.PlaybackNative.postMessage(JSON.stringify(m)); }
+            : function (m) { (window.__playbackMessages = window.__playbackMessages || []).push(m); if (window.parent !== window) window.parent.postMessage({ source: 'playback', message: m }, '*'); };
+          var app = document.getElementById('app');
+          app.className = 'pb-root';
+          app.innerHTML = '<main class="stage"><article class="page page-error wireframe"><h1 class="title">We couldn’t load your Playback</h1><button type="button" class="btn primary">Close</button></article></main>';
+          app.querySelector('button').onclick = function () { send({ type: 'close', reason: 'error', finished: false }); };
+          send(message);
+        });
+        return;
+      }
+      if (!(supports('container-type: size') && supports('translate: 1px') && 'getAnimations' in Element.prototype)) {
+        root.setAttribute('data-legacy', '');
+        document.getElementById('playback-css').media = 'not all';
+        document.write('<link rel="stylesheet" href="legacy.css">');
+      }
+    })();
+  </script>
 </head>
 <body>
   <!-- The WebGL backdrop: one canvas for the whole session, under the DOM layer. Shown on

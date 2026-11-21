@@ -1,12 +1,15 @@
 // The shows-and-episodes cover stack (Figma "Total listened", cycling as the P2's
 // "centered covers" video does, measured from it frame by frame; see docs/effects.md).
 //
-// The top shows, #1 at the front, in Figma's four slots, cycle for as long as the page is
-// open: the front cover drops away and fades, the others move up a slot, and the next show
-// grows in at the back. The stack comes in partway through one of those moves, already
-// moving (POC-1038), and the deck carries on from there. After the last show the deck
-// comes round to the first again: the page's progress segment is full as it does
-// (`deckRound`, PCIOS-1350), and the deck goes on cycling.
+// The top shows, #1 at the front, in Figma's four slots, cycle once round: the front cover
+// drops away and fades, the others move up a slot, and the next show grows in at the back.
+// The stack comes in partway through one of those moves, already moving (POC-1038), and the
+// deck carries on from there. After the last show the deck comes round to the first again:
+// the page's progress segment is full as it does (`deckRound`, PCIOS-1350), and the deck
+// stops there, the stack as it opened, the top show at the front, for the page's hold
+// (`deckStop`): it used to cycle on, so the page moved on in the middle of the next move, the
+// top show already gone from the front. A page that stays instead (shared from) has no hold
+// to wait out, so its deck cycles on from where it is (`cycleOn`).
 //
 // Every cover runs CSS animations generated here (its own keyframes, one loop of the
 // deck long), so the stack is a function of the page's clock alone: deterministic,
@@ -59,6 +62,8 @@ export const STACK_MOTION = {
 };
 
 const r = (n, d = 4) => +n.toFixed(d);
+// A key's offset from the moment it marks, so two keys at one moment keep their order.
+const EPS = 0.001;
 const bezier = (b) => `cubic-bezier(${b.join(', ')})`;
 const pct = (n) => `${r(n * 100, 3)}%`;
 
@@ -84,6 +89,40 @@ export function deckRound(count, M = STACK_MOTION) {
   return n > 1 ? M.start + M.first + (n - 1) * M.period + M.move : 0;
 }
 
+/**
+ * Where the deck of `n` shows (2 or more) stops, in seconds into its loop: just after it has
+ * come round (`deckRound`), in the rest before the next move, where every cover is in its slot.
+ */
+export const deckStop = (n, M = STACK_MOTION) => (n - 1) * M.period + M.move + 2 * EPS;
+
+/**
+ * The timing that carries a cover's loop on from where it is, as Web Animations timing (ms):
+ * one still on its way round goes on looping; one stopped (`deckStop`) goes on from the pose
+ * it stopped in, the next move after the deck's usual rest, rather than from where it would
+ * be had it never stopped. Pure, so it can be checked.
+ */
+export function cycleTiming({ localTime, delay, duration, iterations }) {
+  const stop = delay + duration * iterations;
+  return localTime == null || localTime <= stop ? { iterations: Infinity } : { iterations: Infinity, delay: localTime - duration * iterations };
+}
+
+/** Sets the stopped (or stopping) deck in `root` cycling on (`cycleTiming`), once. */
+export function cycleOn(root) {
+  const list = root.querySelector('.stack:not(.stack-still)');
+  if (!list || list.dataset.cycling) return;
+  list.dataset.cycling = '';
+  for (const item of list.querySelectorAll('.stack-item')) {
+    for (const a of item.getAnimations()) {
+      const timing = a.effect?.getComputedTiming();
+      if (!timing) continue;
+      // A finished animation holds its end as its time: how long it has run is the timeline's
+      // since it started (none while paused: then its own time is right).
+      const ran = a.startTime == null || a.timeline?.currentTime == null ? timing.localTime : (a.timeline.currentTime - a.startTime) * a.playbackRate;
+      a.effect.updateTiming(cycleTiming({ ...timing, localTime: ran }));
+    }
+  }
+}
+
 /** A cubic-bezier's x and y at parameter s. */
 const bez = (b, s) => {
   const c = (p1, p2) => 3 * (1 - s) * (1 - s) * s * p1 + 3 * (1 - s) * s * s * p2 + s * s * s;
@@ -100,7 +139,7 @@ export const easeAt = (b, x) => (x <= 0 ? 0 : x >= 1 ? 1 : bez(b, bezParam(b, x)
 
 /** Where the next show grows in: `enter` of the back slot, about its centre. */
 function enterPose(slots, M) {
-  const back = slots.at(-1), front = slots[0];
+  const back = slots[slots.length - 1], front = slots[0];
   return { y: (back.top + (back.size * (1 - M.enter)) / 2 - front.top) / front.size, scale: (back.size * M.enter) / front.size };
 }
 
@@ -127,7 +166,7 @@ export function entryFrames(j, V, M = STACK_MOTION, slots = SLOTS.slice(0, V)) {
  * centre), played linearly: the curve is in the keys.
  */
 function entryKeyframes(name, frames, here) {
-  const T = frames.at(-1).t;
+  const T = frames[frames.length - 1].t;
   const keys = frames.map((f, i) => `${r((f.t / T) * 100, 3)}%{transform:${i === frames.length - 1 ? 'none' : `translateY(${pct((f.y - here.y) / here.scale)}) scale(${r(f.scale / here.scale, 5)})`}}`);
   return { css: `@keyframes ${name}{${keys.join('')}}`, duration: T };
 }
@@ -140,7 +179,6 @@ function entryKeyframes(name, frames, here) {
  */
 export function deckFrames(j, E, V, M = STACK_MOTION, slots = SLOTS.slice(0, V)) {
   const L = E * M.period;
-  const EPS = 0.001;
   const z = (s) => 2 + V - s;            // front on top
   const EXIT_Z = V + 3, WAIT_Z = 1;
   const enter = enterPose(slots, M);
@@ -231,7 +269,9 @@ export function coverStack(podcasts, { artwork, label, animate = true }) {
       if (cycles) {
         const name = `pb-deck-${E}-${V}-${j}`;
         css.push(loopKeyframes(name, deckFrames(j, E, V, M, slots), E * M.period));
-        const timing = `${r(E * M.period, 3)}s linear ${r(M.start + M.first, 3)}s infinite both`;
+        // Once round, to where it stops (a share of the loop: the loop is longer than a round for
+        // a short deck); the rest of the loop is what `cycleOn` plays.
+        const timing = `${r(E * M.period, 3)}s linear ${r(M.start + M.first, 3)}s ${r(deckStop(deck.length, M) / (E * M.period), 6)} both`;
         anims.push(`${name} ${timing}`, `${name}-z ${timing}`);
       } else {
         item.style.transform = transform(start);
@@ -251,7 +291,26 @@ export function coverStack(podcasts, { artwork, label, animate = true }) {
   // Front first, so a screen reader reads #1 first; z-index decides what paints on top. The
   // stack fades in as one, as it starts to move (a cover fading on its own would show the
   // ones behind through it).
+  const size = `--stack-h:${STACK_HEIGHT - base};--front-top:${slots[0].top - base}`;
   const fade = animate ? `;animation:pb-fade-in ${M.entry.fade}s linear ${r(M.start, 3)}s both` : '';
-  const list = h('ul', { class: 'stack', style: `--stack-h:${STACK_HEIGHT - base};--front-top:${slots[0].top - base}${fade}`, 'aria-label': label }, items);
-  return css.length ? [h('style', null, css.join('\n')), list] : [list];
+  const list = h('ul', { class: 'stack', style: `${size}${fade}`, 'aria-label': label }, items);
+  const out = css.length ? [h('style', null, css.join('\n')), list] : [list];
+  // The share image shows the stack at rest, #1 at the front, as it opens and comes round (and
+  // as the summary's stack card does), not wherever the deck has got to: it moves through the
+  // host's wait and the snapshot, so the image caught a different show each time, sometimes
+  // halfway through a move. A still copy, shown only in the share layout (playback.css), over the
+  // deck, which carries on underneath, so nothing replays once the image is taken.
+  if (cycles) out.push(stillStack(deck, slots, size, artwork));
+  return out;
+}
+
+/** The deck's first `slots.length` shows in their slots, as Reduced Motion draws them. */
+function stillStack(deck, slots, size, artwork) {
+  const items = slots.map((_, j) => {
+    const item = h('li', { class: 'stack-item' }, h('div', { class: 'stack-card' }, artwork(deck[j], false)));
+    item.style.transform = transform(pose(slots, j));
+    item.style.zIndex = String(2 + slots.length - j);
+    return item;
+  });
+  return h('ul', { class: 'stack stack-still', style: size, 'aria-hidden': 'true' }, items);
 }

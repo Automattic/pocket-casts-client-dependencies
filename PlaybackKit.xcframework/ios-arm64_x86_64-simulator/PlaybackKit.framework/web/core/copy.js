@@ -154,7 +154,7 @@ export function translationChain(tag) {
   if (language === 'es' && region !== 'ES') candidates.splice(1, 0, 'es-MX');
   if (language === 'pt') candidates.push('pt-BR');
   if (language === 'en' && !US_ENGLISH.has(region)) candidates.push('en-GB');
-  return [...new Set(candidates)].filter((c) => Object.hasOwn(TRANSLATIONS, c));
+  return [...new Set(candidates)].filter((c) => Object.prototype.hasOwnProperty.call(TRANSLATIONS, c));
 }
 
 /**

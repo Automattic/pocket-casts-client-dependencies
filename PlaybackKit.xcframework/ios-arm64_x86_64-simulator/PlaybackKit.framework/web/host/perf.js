@@ -146,6 +146,9 @@ export function pickBackdrop(series, displayHz, skipMs = 2000) {
  *                                                         (default: the screen's, up to 1.25; 0 = as `res`)
  *   backdrop=0  no backdrop at all: the DOM alone        only=a|b measure these pages only
  *   ladder=1    leave the degrade ladder on (it is off in a walk, so a setting is held; the report's `rung` is where it got to)
+ *   rung=N      draw at the ladder's rung N (ui/governor.js `quality`) throughout
+ *   walls=N     Pattern's samples across a ridge's wall at most  ripple=N  Wave's ripple taps a side at most
+ *   reads=0     every Pattern pixel takes all its samples, even where they would all read the same
  * Anything else is ignored. Returns the backdrop settings (`false` for none), the pages to
  * measure, and the text the report prints.
  * @param {string|null|undefined} text
@@ -164,6 +167,10 @@ export function parseTune(text) {
     else if (key === 'sharp' && n >= 0 && value !== '') out.backdrop.sharp = n;
     else if (key === 'backdrop' && value === '0') out.backdrop = false;
     else if (key === 'ladder' && value === '1' && out.backdrop) delete out.backdrop.ladder;
+    else if (key === 'rung' && Number.isInteger(n) && n >= 0 && value !== '' && out.backdrop) out.backdrop.rung = n;
+    else if (key === 'walls' && n >= 1 && out.backdrop) out.backdrop.walls = n;
+    else if (key === 'ripple' && n >= 1 && out.backdrop) out.backdrop.ripple = n;
+    else if (key === 'reads' && value === '0' && out.backdrop) out.backdrop.reads = false;
     else if (key === 'only' && value) out.only = value.split('|').map((x) => x.trim()).filter(Boolean);
     else continue;
     parts.push(`${key}=${value}`);

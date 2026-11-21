@@ -25,15 +25,21 @@
 // `zoom` scales the fitted frame about the canvas centre: for a design that shows a
 // document smaller (or larger) than either fit.
 //
+// `cx` centres the fitted frame on that column of the canvas instead of its middle (the
+// middle of the page's column, where a bar takes one side of the screen: the iPhone
+// Duo's), fitted to as much of the canvas as there is on both sides of it, so nothing
+// authored is cropped there either.
+//
 // `placeFrame` puts the frame's centre at a point instead, at a given scale: for a
 // document drawn behind something on the page (the cover the shape sits behind), which
 // follows the page's layout rather than the screen's.
 
-export function fitFrame(width, height, refWidth, refHeight, authoredWidth = 0, canvas = null, zoom = 1) {
+export function fitFrame(width, height, refWidth, refHeight, authoredWidth = 0, canvas = null, zoom = 1, cx = width / 2) {
+  const across = 2 * Math.min(cx, width - cx);
   const unit = (authoredWidth > 0 ? width / authoredWidth
-    : canvas ? Math.min(width / canvas[0], height / canvas[1])
-    : Math.min(width / refWidth, height / refHeight)) * zoom;
-  return placeFrame(width, height, refWidth, refHeight, width / 2, height / 2, unit);
+    : canvas ? Math.min(across / canvas[0], height / canvas[1])
+    : Math.min(across / refWidth, height / refHeight)) * zoom;
+  return placeFrame(width, height, refWidth, refHeight, cx, height / 2, unit);
 }
 
 /** The frame centred on (cx, cy), `unit` buffer pixels per authored pixel. */

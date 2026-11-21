@@ -12,12 +12,15 @@
 // stat comes in, the top month fades as total minutes comes in over it), the outgoing page
 // stays on stage, inert, until that animation ends; elsewhere a page change is a cut. The
 // share button fades out with the page, or stays where it is when the next page shares too
-// (`data-handover`). Going back, the page comes back as it was left, its way in done, and
-// crossfades in over the one leaving (BACK_MS); its backdrop does the same (ui/backdrop.js).
-// These are PCIOS-1258's; with Reduced Motion, going back is a cut.
+// (`data-handover`, once it has come in). Going back, the page comes back as it was left, its
+// way in done, and crossfades in over the one leaving (BACK_MS); its backdrop does the same
+// (ui/backdrop.js). These are PCIOS-1258's. A page left before it has all come in leaves from
+// where it had got to (`freeze`). With Reduced Motion, either way, the page left fades out and
+// then the next fades in (REDUCED_OUT, REDUCED_IN), nothing moving.
 //
-// The progress bar is a story's (POC-1019): the pages before this one full, the ones after
-// empty, and this one's segment filling, linearly, as the page comes in, full once
+// The progress bar is a story's (POC-1019), a segment for each page it shows on (not the
+// summary or Play again, which come last: `progress` in core/pages.js): the pages before this
+// one full, the ones after empty, and this one's segment filling, linearly, as the page comes in, full once
 // everything on it has: its last finite animation (or the share button's) has ended, and
 // whatever its steps, backdrop or covers still bring in (`flow.untilShownMs`): the cover stack
 // counts until its deck has come round once (PCIOS-1350). What loops on after that, or for as
@@ -47,7 +50,7 @@
 import { h } from './dom.js';
 import { preloadCovers } from './artwork.js';
 import { renderPage } from './views.js';
-import { BACK_FADE, INTRO_BLOB_OUT, INTRO_HOLD_MS, INTRO_WAIT_CAP_MS, storyCovers } from '../core/pages.js';
+import { BACK_FADE, INTRO_BLOB_OUT, INTRO_HOLD_MS, INTRO_WAIT_CAP_MS, REDUCED_IN, REDUCED_OUT, STORY_SEGMENTS, segmentCount, storyCovers } from '../core/pages.js';
 import { createSession } from '../core/session.js';
 import { PLAYBACK_YEAR } from '../core/config.js';
 import { createTranslator, displayLocale } from '../core/copy.js';
@@ -70,6 +73,13 @@ const OWN_DRAG = '[data-own-drag]';
 const QUIZ_ASKED = 0.5;
 /** Going back: how long the page left and the page come back to crossfade, in ms. */
 const BACK_MS = BACK_FADE * 1000;
+/** Reduced Motion: how long the page left takes to fade out, then the next to fade in, in ms. */
+const REDUCED_OUT_MS = REDUCED_OUT * 1000;
+const REDUCED_IN_MS = REDUCED_IN * 1000;
+/** A share button leaving with its page fades over this (playback.css `.share-bar[data-leaving]`), in ms. */
+const SHARE_OUT_MS = 250;
+/** A share button handed over before it had all come in finishes coming in over this, in ms. */
+const SHARE_FINISH_MS = 150;
 
 /**
  * @param {HTMLElement} root
@@ -123,7 +133,7 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
 
   const progress = h('div', { class: 'progress', role: 'progressbar', 'aria-valuemin': '1' });
   const segments = [];
-  setSegments(flow.count());
+  setSegments(flow.isPending() ? STORY_SEGMENTS : segmentCount(flow.pages));
   // Closed from the outro, the story is finished (bridge.md).
   const closeReason = () => (flow.getPage().kind === 'outro' ? 'finished' : 'closed');
   const close = h('button', { type: 'button', class: 'close', 'aria-label': t('chrome.close'), 'data-testid': 'close', onClick: () => dispatch({ type: 'close', reason: closeReason() }) },
@@ -166,6 +176,10 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     const answer = page.quiz ? state.answers[page.id] : null;
     const revealed = flow.isRevealed();
     const step = flow.step();
+    const visit = `${state.index}:${state.visit}`;
+    // The share button where it is as the page changes, before the next page's rules apply to
+    // it: how far its way in had got, if it was still coming in (`freeze`, setShare).
+    const shareWas = visit !== rendered ? freeze(share) : null;
 
     root.dataset.page = page.id;
     root.dataset.index = String(state.index);
@@ -173,9 +187,15 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     const isStory = page.kind !== 'empty';
 
     // Progress: every page before this one is filled; this one fills as it comes in (below).
-    const current = state.index + 1;
-    progress.setAttribute('aria-valuenow', String(current));
-    progress.setAttribute('aria-label', t('chrome.progress', { current, total: flow.count() }));
+    // Pages without it (the summary, Play again) fade it out, full, and hide it from screen readers.
+    root.toggleAttribute('data-no-progress', !page.progress);
+    if (!page.progress) progress.setAttribute('aria-hidden', 'true');
+    else {
+      progress.removeAttribute('aria-hidden');
+      const current = state.index + 1;
+      progress.setAttribute('aria-valuenow', String(current));
+      progress.setAttribute('aria-label', t('chrome.progress', { current, total: segments.length }));
+    }
     segments.forEach((s, i) => s.classList.toggle('done', i < state.index));
 
     // Pages drawn over their backdrop sit on the design's ground, not the placeholder.
@@ -183,7 +203,6 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
 
     // Page. The same visit of a stepped page only changes step; a page that updates
     // itself is told what changed.
-    const visit = `${state.index}:${state.visit}`;
     const onStage = stage.querySelector(':scope > .page:not([data-leaving])');
     const ctx = { page, state, answer, revealed, step, t, payload: session.payload ?? placeholder, dispatch, reduceMotion, rtl };
     let fading = false, entered = false;
@@ -198,7 +217,10 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
       fading = leave(onStage);
       entered = true;
       stage.append(view);
-      if (onStage && direction === 'back' && !reduceMotion) {
+      if (onStage && reduceMotion) {
+        // With Reduced Motion, either way, it fades in once the page left has faded out.
+        track(view.animate([{ opacity: 0 }, { opacity: 1 }], { duration: REDUCED_IN_MS, delay: REDUCED_OUT_MS, easing: 'linear', fill: 'backwards' }));
+      } else if (onStage && direction === 'back') {
         // The page comes back as it was left, its way in done, crossfading in.
         settle(view);
         track(view.animate([{ opacity: 0 }, { opacity: 1 }], { duration: BACK_MS, easing: 'linear' }));
@@ -212,11 +234,15 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
 
     // Share, once there is something to share (a quiz shares its result, not the question),
     // unless the page has a share button of its own (the summary's).
-    setShare(page.shareable && revealed && !page.ownShare, fading, entered);
-    if (entered && direction === 'back' && !reduceMotion && !share.hidden && !('leaving' in share.dataset) && !share.hasAttribute('data-handover')) {
-      // Back on a page that shares from one that did not: it comes in with the page.
-      settle(share);
-      track(share.animate([{ opacity: 0 }, { opacity: 1 }], { duration: BACK_MS, easing: 'linear' }));
+    setShare(page.shareable && revealed && !page.ownShare, fading, entered, shareWas);
+    if (entered && fading && (direction === 'back' || reduceMotion) && !share.hidden && !('leaving' in share.dataset) && !share.hasAttribute('data-handover')) {
+      // On a page that shares from one that did not, it comes in with the page: crossfading
+      // back, or with Reduced Motion, once the page left has faded out.
+      if (reduceMotion) track(share.animate([{ opacity: 0 }, { opacity: 1 }], { duration: REDUCED_IN_MS, delay: REDUCED_OUT_MS, easing: 'linear', fill: 'backwards' }));
+      else {
+        settle(share);
+        track(share.animate([{ opacity: 0 }, { opacity: 1 }], { duration: BACK_MS, easing: 'linear' }));
+      }
     }
     setLoading(flow.isWaiting());
     fillSegment(visit, fillPhase(), state.index, revealed);
@@ -227,8 +253,9 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
   }
 
   /**
-   * As many segments as the story has pages (or, while they are still to come, as it usually
-   * has). The ones there stay, so the current one's fill carries on as the count changes.
+   * As many segments as the story has pages that show the bar (or, while they are still to
+   * come, as it usually has). The ones there stay, so the current one's fill carries on as the
+   * count changes.
    */
   function setSegments(count) {
     while (segments.length > count) segments.pop().remove();
@@ -279,6 +306,11 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     const at = visit === fill.visit ? fillFraction() : 0;
     for (const [i, s] of segments.entries()) if (i !== index) s.firstChild.getAnimations().forEach((a) => a.cancel());
     fill.anim?.cancel();
+    // A page without the bar (the summary, Play again) has no segment to fill.
+    if (!segments[index]) {
+      fill = { visit, phase, from: 0, to: 0, anim: null };
+      return;
+    }
     const to = revealed ? 1 : QUIZ_ASKED;
     const view = stage.querySelector(':scope > .page:not([data-leaving])');
     const ms = flow.untilMovesOnMs() ?? Math.max(flow.untilShownMs(), untilSettledMs([...(view?.getAnimations({ subtree: true }) ?? []), ...share.getAnimations()])) + flow.holdMs();
@@ -322,16 +354,21 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
 
   /**
    * Takes the outgoing page off stage: at once, once the exit animation its CSS gives
-   * `[data-leaving]` has played, or, going back, once it has crossfaded out. Anything still
-   * leaving from before goes now.
+   * `[data-leaving]` has played, or, going back, once it has crossfaded out (with Reduced
+   * Motion, either way, once it has faded out, before the next fades in). Anything still
+   * leaving from before goes now. Moving on, what was still coming in leaves from where it had
+   * got to (`freeze`): the top 5's fall and the role's sweep replace the parts' ways in, which
+   * would otherwise show them whole, for a moment, on a tap before they had all come in.
    */
   function leave(page) {
     for (const el of stage.querySelectorAll(':scope > [data-leaving]')) el.remove();
     if (!page) return false;
+    if (direction !== 'back' && !reduceMotion) freeze(page);
     page.dataset.leaving = '';
     page.inert = true;
-    if (direction === 'back' && !reduceMotion) {
-      const out = track(page.animate([{ opacity: 1 }, { opacity: 0 }], { duration: BACK_MS, easing: 'linear', fill: 'forwards' }));
+    if (direction === 'back' || reduceMotion) {
+      const ms = reduceMotion ? REDUCED_OUT_MS : BACK_MS;
+      const out = track(page.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms, easing: 'linear', fill: 'forwards' }));
       out.finished.then(() => page.remove(), () => page.remove());
       return true;
     }
@@ -343,21 +380,33 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
 
   /**
    * Shows or hides the share button; hiding it with a page that fades out fades it too.
-   * Shown on a page entered from one that fades out while it showed, it is handed over:
-   * the next page's CSS fades it out with the page, then brings it in its own way.
+   * Shown on a page entered from one that fades out while it showed, it is handed over: it
+   * stays as it is. Tapped on while it was still coming in (`was`, from `freeze`), it never
+   * jumps to whole: at least half in, it is handed over and finishes coming in from there;
+   * barely in, it fades out with the page it was on and comes in the next page's way.
    */
-  function setShare(visible, fading, entered) {
-    if (entered) share.toggleAttribute('data-handover', visible && fading && !share.hidden && !('leaving' in share.dataset));
+  function setShare(visible, fading, entered, was = null) {
+    const coming = was != null && was.opacity < 0.5;
+    const finishing = was != null && !coming && was.opacity < 0.99;
+    if (entered) share.toggleAttribute('data-handover', visible && fading && !coming && !share.hidden && !('leaving' in share.dataset));
     if (visible) {
+      const showing = !share.hidden && !('leaving' in share.dataset);
       delete share.dataset.leaving;
       share.hidden = false;
+      thaw(share);
+      if (entered && finishing && share.hasAttribute('data-handover')) {
+        track(share.animate([{ opacity: was.opacity, translate: was.translate }, { opacity: 1, translate: 'none' }], { duration: SHARE_FINISH_MS, easing: 'linear' }));
+      } else if (entered && fading && showing && coming && was.opacity > 0) {
+        const at = { translate: was.translate };
+        track(share.animate([{ ...at, opacity: was.opacity }, { ...at, opacity: 0 }], { duration: reduceMotion ? REDUCED_OUT_MS : SHARE_OUT_MS, easing: 'linear' }));
+      }
       return;
     }
     if (share.hidden || 'leaving' in share.dataset) return;
-    if (!fading) { share.hidden = true; return; }
+    if (!fading) { share.hidden = true; thaw(share); return; }
     share.dataset.leaving = '';
     const exits = share.getAnimations().filter((a) => a.animationName === 'page-leave');
-    const done = () => { if ('leaving' in share.dataset) { delete share.dataset.leaving; share.hidden = true; } };
+    const done = () => { if ('leaving' in share.dataset) { delete share.dataset.leaving; share.hidden = true; thaw(share); } };
     if (!exits.length) return done();
     Promise.all(exits.map((a) => a.finished)).then(done, done);
   }
@@ -408,9 +457,11 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
   flow.subscribe((state, effects, action) => {
     for (const e of effects) bridge.send(e);
     // Sharing re-renders nothing, so nothing replays under the capture; a page that held now
-    // stays, so its segment fills only as far as the page has come in.
+    // stays, so its segment fills only as far as the page has come in, and the view is told
+    // (`stays`: shows and episodes' deck, stopped for the hold, cycles on).
     if (action.type === 'share') {
       if (fill.visit) fillSegment(fill.visit, fillPhase(), state.index, flow.isRevealed());
+      if (state.stays) stage.querySelector(':scope > .page:not([data-leaving])')?.stays?.();
       return;
     }
     // A page having come in (`shown`) or staying (`stay`) changes no pixels either, only when
@@ -419,6 +470,7 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     // to the move, and the timer is set for it.
     if (action.type === 'shown' || action.type === 'stay') {
       if (fill.visit) fillSegment(fill.visit, fillPhase(), state.index, flow.isRevealed());
+      if (state.stays) stage.querySelector(':scope > .page:not([data-leaving])')?.stays?.();
       renderHud();
       return scheduleStep();
     }
@@ -454,6 +506,9 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     press.moved = Math.hypot(dx, dy) >= TAP_SLOP_PX;
     if (storyNav() && !press.own && Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
       swiped = true;
+      // The summary's swipes are its cards': one that misses them (before they are in, or on the
+      // ground around them) turns nothing, never on to Play again. Skip is the way on.
+      if (flow.getPage().kind === 'summary') return;
       dispatch({ type: (rtl ? dx > 0 : dx < 0) ? 'next' : 'back' });
     }
   };
@@ -462,6 +517,8 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     press = null;
     if (swiped) { swiped = false; return; }
     if (!storyNav() || (p && p.moved) || e.target.closest(`${INTERACTIVE}, ${OWN_SWIPE}`)) return;
+    // A tap anywhere on Play again, the last screen, closes the story, as its close does.
+    if (flow.getPage().kind === 'outro') { dispatch({ type: 'close', reason: closeReason() }); return; }
     // The margins beside the column count as its edges, so a tap there goes the way the nearest edge does.
     const box = root.getBoundingClientRect();
     const x = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
@@ -564,7 +621,7 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
     for (const w of result.warnings) bridge.send({ type: 'warning', message: w });
     fetchCovers();
     bridge.send({ type: 'loaded', pages: session.pages.map((p) => p.id), archetype: session.archetype.id });
-    setSegments(session.pages.length);
+    setSegments(segmentCount(session.pages));
     flow.load(session.pages);
     return { ok: true };
   }
@@ -607,6 +664,37 @@ function settle(el) {
     const end = a.effect?.getComputedTiming().endTime;
     if (Number.isFinite(end)) a.finish();
   }
+}
+
+/**
+ * Writes what `el`'s animations (and those of everything in it) show now into their own style
+ * (`commitStyles`), so CSS that replaces those animations as `el` leaves (a way out over a way
+ * in) starts from what was showing, not from where the ways in end: its keyframes have no
+ * `from` of their own. Returns `el`'s opacity and translate then if anything finite on it was
+ * still playing (it had not all come in), or null.
+ */
+function freeze(el) {
+  let was = null;
+  for (const a of el.getAnimations({ subtree: true })) {
+    if (a.playState === 'idle') continue;
+    if (!was && a.playState !== 'finished' && Number.isFinite(a.effect?.getComputedTiming().endTime)) {
+      const style = getComputedStyle(el);
+      was = { opacity: Number(style.opacity), translate: style.translate };
+    }
+    // Only what is still coming in has anything to keep: a finished animation's end state is its
+    // element's own style already. (commitStyles on a finished one wrote wrong values in iOS's
+    // WebKit: the title and the second card vanished at once, the fifth jumped, on the top 5's
+    // way out.) An element not rendered (a hidden share button) shows nothing to keep.
+    if (a.playState === 'finished') continue;
+    try { a.commitStyles?.(); } catch { /* not rendered */ }
+  }
+  return was;
+}
+
+/** Lets go of what `freeze` wrote on the share button: its own CSS decides again. */
+function thaw(el) {
+  el.style.removeProperty('opacity');
+  el.style.removeProperty('translate');
 }
 
 /**

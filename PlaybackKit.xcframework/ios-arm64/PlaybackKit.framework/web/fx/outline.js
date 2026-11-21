@@ -80,7 +80,7 @@ export function rasterCache(width, height) {
 export function drawCustomShape(cache, F, v) {
   const pts = ringOf(v, 'pts');
   const smooth = (v.shapeSmooth ?? 70) / 100;
-  const key = ['shape', cache.canvas.width, cache.canvas.height, F.unit, v.shapeSize, v.shapeX, v.shapeY, smooth, v.shapeFill, v.shapeAlpha, v.shapeFade, v.shapeFillSize, v.shapeFillA, JSON.stringify(pts)].join();
+  const key = ['shape', cache.canvas.width, cache.canvas.height, F.unit, F.x(0), F.y(0), v.shapeSize, v.shapeX, v.shapeY, smooth, v.shapeFill, v.shapeAlpha, v.shapeFade, v.shapeFillSize, v.shapeFillA, JSON.stringify(pts)].join();
   if (cache.key === key) return false;
   const { ctx: c, canvas } = cache;
   c.setTransform(1, 0, 0, 1, 0, 0);
@@ -120,7 +120,7 @@ export function drawCustomShape(cache, F, v) {
 export function drawSolidRing(cache, F, v, id, grow) {
   const pts = ringOf(v, id);
   const smooth = (v.shapeSmooth ?? 70) / 100;
-  const key = [id, cache.canvas.width, cache.canvas.height, F.unit, v.shapeSize, v.shapeX, v.shapeY, smooth, grow.toFixed(2), JSON.stringify(pts)].join();
+  const key = [id, cache.canvas.width, cache.canvas.height, F.unit, F.x(0), F.y(0), v.shapeSize, v.shapeX, v.shapeY, smooth, grow.toFixed(2), JSON.stringify(pts)].join();
   if (cache.key === key) return false;
   const { ctx: c, canvas } = cache;
   c.setTransform(1, 0, 0, 1, 0, 0);

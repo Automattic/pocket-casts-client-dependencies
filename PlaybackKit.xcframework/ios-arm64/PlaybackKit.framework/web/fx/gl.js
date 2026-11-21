@@ -51,6 +51,9 @@ export function createGL(canvas, attrs = {}) {
   const vao = gl.createVertexArray();
   // Half-float targets need this to be renderable. Without it they fall back to 8 bits.
   const canFloat = !!gl.getExtension('EXT_color_buffer_float');
+  // Every program made, and whether the context can say when one has compiled (`compiled`).
+  const made = [];
+  const parallel = gl.getExtension('KHR_parallel_shader_compile');
 
   /**
    * `vs` replaces the full-screen triangle's vertex shader, for passes with geometry.
@@ -70,6 +73,7 @@ export function createGL(canvas, attrs = {}) {
     const p = gl.createProgram();
     for (const s of shaders) gl.attachShader(p, s);
     gl.linkProgram(p);
+    made.push(p);
     let checked = false;
     const ready = () => {
       if (checked) return;
@@ -89,6 +93,35 @@ export function createGL(canvas, attrs = {}) {
       return locs.get(name);
     };
     return { p, loc, ready };
+  }
+
+  /**
+   * Resolves once every program made so far has compiled and linked, without making the page
+   * wait for it: the context says so program by program (KHR_parallel_shader_compile), or a
+   * fence sent after them has passed. A WebView compiles in its GPU process in the order the
+   * programs were sent, and the first draw, or the first `ready`, waits for every one before
+   * it, used or not: on a cold start (no shader cache, after an install or an update) that is
+   * a quarter of a second or more, so whatever starts its clock first wants to know (the
+   * intro's rings, pages.js INTRO_HOLD_MS). Polled between frames, never with a wait.
+   */
+  function compiled() {
+    const fence = parallel ? null : gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    gl.flush();
+    let next = 0;
+    return new Promise((resolve) => {
+      const poll = () => {
+        if (gl.isContextLost()) return resolve();
+        if (parallel) {
+          while (next < made.length && gl.getProgramParameter(made[next], parallel.COMPLETION_STATUS_KHR)) next++;
+          if (next === made.length) return resolve();
+        } else if (!fence || gl.getSyncParameter(fence, gl.SYNC_STATUS) === gl.SIGNALED) {
+          if (fence) gl.deleteSync(fence);
+          return resolve();
+        }
+        setTimeout(poll, 16);
+      };
+      setTimeout(poll, 16);
+    });
   }
 
   /**
@@ -177,5 +210,5 @@ export function createGL(canvas, attrs = {}) {
     if (scissor) gl.disable(gl.SCISSOR_TEST);
   }
 
-  return { gl, program, target, texture, upload, pass };
+  return { gl, program, compiled, target, texture, upload, pass };
 }

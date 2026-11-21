@@ -119,6 +119,12 @@ function drawsWith(doc, effects) {
   return false;
 }
 
+/**
+ * Effects whose picture moves on a clock of their own, not only on their document's
+ * keyframes: Wave's travelling waves, Thermal's drift.
+ */
+const CLOCK_EFFECTS = new Set(['wave', 'thermal']);
+
 /** Effects that draw large smooth gradients, which band at 8 bits a channel. */
 const SMOOTH_EFFECTS = new Set(['wave']);
 /** Whether a document draws any of them (a box for it is kept at 16 bits). */
@@ -144,6 +150,17 @@ const STALL_FRAMES = 3;
 
 /** Effects this build can draw. Layers naming any other effect are skipped. */
 export const SUPPORTED_EFFECTS = ['pattern-refraction', 'wave', 'thermal'];
+const EFFECT_SETS = Object.fromEntries(SUPPORTED_EFFECTS.map((name) => [name, new Set([name])]));
+
+/**
+ * How long (ms) an effect's targets, or a box's, are kept once nothing that shows draws with
+ * them: then they are let go, and made again if a page draws with them again. A session kept
+ * every target it had made to its end (on a phone at 2.625×, 87 MB of textures by Play again,
+ * about half of them the pages left behind: Thermal's, Pattern's, the summary's cards'), and a
+ * budget phone's WebView counts them against the app. Long enough that stepping back to the
+ * page just left finds them still there.
+ */
+const IDLE_RELEASE_MS = 3000;
 
 export function supportsWebGL2() {
   try {
@@ -163,6 +180,12 @@ export function supportsWebGL2() {
  *   own setting. Cost grows with its square.
  * @param {number} [options.fps]  cadence override; 0 follows the display.
  * @param {number} [options.maxFps]  a ceiling on every cadence (the degrade ladder's); 0 none.
+ * @param {number} [options.walls]  the most samples across Pattern's ridges at a wall (the
+ *   degrade ladder's; fx/pattern.js MAX_WALL_SAMPLES by default).
+ * @param {number} [options.ripple]  the most taps a side Wave's ripple takes (the degrade
+ *   ladder's; fx/wave.js MAX_RIPPLE_GRID by default).
+ * @param {boolean} [options.reads=true]  false: every Pattern pixel takes all its samples, even
+ *   where they would all read the same (fx/pattern.js FS_REFRACT), to measure what that saves.
  * @param {[number, number]} [options.size]  a fixed buffer size instead of the canvas's
  *   CSS size times `resolution`.
  * @param {boolean} [options.authored]  lay the frame out as the document's own preview
@@ -188,6 +211,9 @@ export function createBackdrop(canvas, options = {}) {
   // What is showing: documents bottom first, each with when it starts on the shared
   // clock (`delay`), how its time runs (`hold`, `once`) and how it is framed.
   let stack = [], doc = null, ramp = null, ground = null, stage = null;
+  // The middle of the page's column across the canvas (CSS px from its left), what a document
+  // that is not placed is centred on; null, the canvas's middle (see `show`).
+  let centre = null;
   let lost = false, destroyed = false;
   let playing = false, raf = 0, hidden = document.hidden;
   // The document clock: `base` seconds, plus wall time since `since` while playing and
@@ -208,6 +234,10 @@ export function createBackdrop(canvas, options = {}) {
   // The canvas's CSS size, kept by a ResizeObserver (below): read from layout at every
   // frame, it would force a layout whenever the DOM had changed since the last.
   let cssSize = null;
+  // When each effect's own instance last drew (ms), and the sweep that lets go of what
+  // nothing showing draws with (see IDLE_RELEASE_MS).
+  const usedAt = new Map();
+  let sweeper = 0, lastSweep = 0;
 
   function build() {
     kit = createGL(canvas);
@@ -223,6 +253,7 @@ export function createBackdrop(canvas, options = {}) {
     // Sent now, so the GPU compiles them while the intro's logo shows, before anything draws.
     kit.gl.flush();
     boxes.clear();
+    usedAt.clear();
   }
 
   try {
@@ -230,7 +261,7 @@ export function createBackdrop(canvas, options = {}) {
   } catch (e) {
     onError(e);
     const none = () => {};
-    return { ok: false, canvas, show: none, setRamp: none, redraw: none, renderAt: none, play: none, pause: none, playing: () => false, time: () => 0, clock: () => 0, motionTime: () => null, document: () => null, setQuality: none, setStage: none, stats: () => null, finish: none, destroy: none };
+    return { ok: false, canvas, show: none, setCentre: none, setRamp: none, redraw: none, renderAt: none, play: none, pause: none, playing: () => false, time: () => 0, clock: () => 0, motionTime: () => null, document: () => null, setQuality: none, setStage: none, stats: () => null, gpu: () => null, compiled: () => Promise.resolve(), finish: none, destroy: none };
   }
 
   const onLost = (e) => {
@@ -246,6 +277,8 @@ export function createBackdrop(canvas, options = {}) {
       onError(e);
       return;
     }
+    // A new context holds nothing: every entry is drawn again, settled or not.
+    invalidate();
     if (playing) loop(); else if (doc) draw(lastT);
   };
   const sizer = typeof ResizeObserver === 'function' ? new ResizeObserver(([e]) => {
@@ -303,16 +336,17 @@ export function createBackdrop(canvas, options = {}) {
     return cssSize?.[0] > 0 && cssSize[1] > 0 ? cssSize.map(Math.round) : [canvas.clientWidth, canvas.clientHeight];
   }
 
+  /** The buffer's size for the canvas's CSS size: what `fit` makes it. */
+  function bufferSize() {
+    if (opts.size) return opts.size.map((n) => Math.max(2, Math.round(n)));
+    const [cssW, cssH] = cssWidthHeight();
+    const cw = cssW || canvas.width, ch = cssH || canvas.height;
+    return [Math.max(2, Math.round(cw * opts.resolution)), Math.max(2, Math.round(ch * opts.resolution))];
+  }
+
   /** Match the buffer to the canvas's CSS size. */
   function fit() {
-    let w, h;
-    if (opts.size) [w, h] = opts.size.map((n) => Math.max(2, Math.round(n)));
-    else {
-      const [cssW, cssH] = cssWidthHeight();
-      const cw = cssW || canvas.width, ch = cssH || canvas.height;
-      w = Math.max(2, Math.round(cw * opts.resolution));
-      h = Math.max(2, Math.round(ch * opts.resolution));
-    }
+    const [w, h] = bufferSize();
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
       canvas.height = h;
@@ -377,8 +411,30 @@ export function createBackdrop(canvas, options = {}) {
 
   /** Every entry drawn afresh at the next frame (what they are drawn with has changed). */
   function invalidate() {
-    for (const e of stack) e.drawnAt = 0;
+    for (const e of stack) {
+      e.drawnAt = 0;
+      e.look = undefined;
+    }
   }
+
+  /**
+   * What an entry's picture at its moment `m` is drawn from, as a string, on a buffer of
+   * `size`; null when it moves on by itself (on a clock of its own: Wave's travelling waves,
+   * Thermal's drift, an entry's `rates` or `drift`). Everything else an entry is drawn with
+   * stays as it was until `show` or `invalidate`. The same look is the same picture, so a
+   * frame in which every entry looks as it did when last drawn is not drawn again: the
+   * canvas holds it (the completion rate's shape, once lit to the rate, for the rest of the
+   * page; on a budget phone each of its frames cost 120 ms of the GPU's time).
+   */
+  function lookOf(e, m, size) {
+    if (e.rates || e.drift || drawsWith(e.doc, CLOCK_EFFECTS)) return null;
+    return `${documentTime(e.doc, timeline(e, m.at))},${m.opacity},${m.k},${size}`;
+  }
+  /** Whether an entry at its moment `m` would draw another picture than it last drew. */
+  const changed = (e, m, size) => {
+    const look = lookOf(e, m, size);
+    return look === null || look !== e.look;
+  };
 
   /**
    * Draw the moment `t`. `shown` is each entry's moment (see `moment`), when the caller has
@@ -389,7 +445,7 @@ export function createBackdrop(canvas, options = {}) {
     if (lost || destroyed || !doc) return;
     const started = performance.now();
     lastT = t;
-    shown ??= stack.map((e) => moment(e, t));
+    if (!shown) shown = stack.map((e) => moment(e, t));
     const [w, h] = fit();
     const { gl } = kit;
     const bg = hexToRgb(ground || doc.background);
@@ -406,19 +462,24 @@ export function createBackdrop(canvas, options = {}) {
       const o = { opacity, phase: e.phase, clock: at + e.phase, ramp: e.ramp ?? ramp, drift: drifted(e, at), values: e.values, rates: e.rates, pixels: e.pixels, px, outline: e.outline, text: e.text };
       e.placedKey = placeKey(e.place);
       e.drawnK = k;
+      const look = lookOf(e, m, `${w}x${h}`);
       // A canvas that covers the screen is drawn whole in a box of its own, as Creative Lab's
       // runtime draws it (Wave's mesh and ripple read across all of it), and cut at the screen.
       if (m.boxed) {
         const place = e.cover ? coverPlace(e, w, h, px) : e.place;
+        const was = e.drawnAt;
         drawBoxed(i, e, place, at, o, w, h, px, k, !caps || due(e, caps) ? now : 0);
+        // Drawn into its box afresh, or put again as it was last drawn (its look then).
+        if (e.drawnAt !== was) e.look = look;
         continue;
       }
       const F = e.place && !opts.authored
         ? placeFrame(w, h, e.doc.refWidth, e.doc.refHeight, e.place.x * px, e.place.y * px, e.place.unit * px * k)
-        : fitFrame(w, h, e.doc.refWidth, e.doc.refHeight, opts.authored ? e.doc.width : 0, e.fitCanvas ? [e.doc.width, e.doc.height] : null, opts.authored ? 1 : e.scale);
+        : fitFrame(w, h, e.doc.refWidth, e.doc.refHeight, opts.authored ? e.doc.width : 0, e.fitCanvas ? [e.doc.width, e.doc.height] : null, opts.authored ? 1 : e.scale, opts.authored ? w / 2 : centreOf(w, px));
       const { screen, local } = screenAt(e.doc, documentTime(e.doc, timeline(e, at)));
       drawLayers(e.doc, screen, local, F, o);
       e.drawnAt = now;
+      e.look = look;
     }
     lastShown = shownKey(shown);
     cpuMs = performance.now() - started;
@@ -433,14 +494,21 @@ export function createBackdrop(canvas, options = {}) {
     return [e.drift.rate[0] * s, e.drift.rate[1] * s];
   }
 
+  /** Where a document that is not placed is centred across a buffer `w` wide (`centre`, see `show`), in its pixels. */
+  function centreOf(w, px) {
+    return centre == null ? w / 2 : Math.min(w, Math.max(0, centre * px));
+  }
+
   /**
    * Where a canvas that covers the screen is (`fit: 'cover'`): the document's authored
-   * canvas in a box of its own, centred, as large as it takes to cover the screen (times
-   * the entry's `scale`), drawn to its edge.
+   * canvas in a box of its own, centred on the page's column (`centreOf`), as large as it
+   * takes to cover the screen on both sides of that (times the entry's `scale`), drawn to its
+   * edge.
    */
   function coverPlace(e, w, h, px) {
-    const unit = (Math.max(w / e.doc.width, h / e.doc.height) * e.scale) / px;
-    return { x: w / 2 / px, y: h / 2 / px, unit, box: true, canvas: true, edge: 0 };
+    const cx = centreOf(w, px);
+    const unit = (Math.max((2 * Math.max(cx, w - cx)) / e.doc.width, h / e.doc.height) * e.scale) / px;
+    return { x: cx / px, y: h / 2 / px, unit, box: true, canvas: true, edge: 0 };
   }
 
   /**
@@ -481,16 +549,23 @@ export function createBackdrop(canvas, options = {}) {
     let x1 = Math.min(Math.ceil(Bw + spill), Math.ceil(Math.max(...corners.map((q) => q[0])) + m));
     let y1 = Math.min(Math.ceil(Bh + spill), Math.ceil(Math.max(...corners.map((q) => q[1])) + m));
     if (x1 - x0 < 1 || y1 - y0 < 1) return;
+    // The part of the box on the canvas. The authored canvas, drawn whole for what its last
+    // pass reads (Wave's ripple: from anywhere in it), is finished there only: on a phone
+    // that part of Play again's is under half of it, and its ripple the cost of its frame.
+    const seen = place.canvas ? [x0, y0, x1, y1] : null;
     if (whole) [x0, y0, x1, y1] = [-spill, -spill, Math.ceil(Bw + spill), Math.ceil(Bh + spill)];
     const id = e.box ?? i;
     let box = boxes.get(id);
     if (!box) boxes.set(id, (box = { fx: {}, rt: null, drawn: null }));
+    box.usedAt = performance.now();
     // What was drawn into the box last, in its own pixels at its own scale (`unit`): the
-    // part of the box it holds, now `r` times as large.
+    // part of the box it holds (finished), now `r` times as large.
     const was = box.drawn;
     const r = was ? was.unit / unit : 1;
+    const [n0, m0, n1, m1] = seen ?? [x0, y0, x1, y1];
+    const [h0, k0, h1, k1] = was?.seen ?? (was ? [was.x0, was.y0, was.x1, was.y1] : []);
     const keep = !refresh && was?.entry === e && Math.abs(r - 1) < MAX_RESCALE
-      && x0 * r >= was.x0 && y0 * r >= was.y0 && x1 * r <= was.x1 && y1 * r <= was.y1;
+      && n0 * r >= h0 && m0 * r >= k0 && n1 * r <= h1 && m1 * r <= k1;
     if (!keep) {
       // A box resizing with what it is placed on (its `size`: the top month's bubbles) keeps
       // one target while it plays, with room for the largest it gets, until it is whole:
@@ -532,8 +607,11 @@ export function createBackdrop(canvas, options = {}) {
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       const F = placeFrame(bw, bh, e.doc.refWidth, e.doc.refHeight, Bw / 2 - x0, Bh / 2 - y0, unit);
-      drawLayers(e.doc, screen, local, F, { ...o, into: box, bounds: clip ? [-x0, -y0, Bw - x0, Bh - y0] : null });
-      box.drawn = { entry: e, unit, x0, y0, x1, y1 };
+      // What is seen, in the target's GL pixels (from its bottom left), two more all round
+      // for the placing's filter.
+      const finish = seen && [seen[0] - x0 - 2, y1 - seen[3] - 2, seen[2] - seen[0] + 4, seen[3] - seen[1] + 4];
+      drawLayers(e.doc, screen, local, F, { ...o, into: box, bounds: clip ? [-x0, -y0, Bw - x0, Bh - y0] : null, finish });
+      box.drawn = { entry: e, unit, x0, y0, x1, y1, seen };
       e.drawnAt = refresh || performance.now();
     }
     if (dry) return;
@@ -570,7 +648,7 @@ export function createBackdrop(canvas, options = {}) {
    * colour, Wave's travelling waves), and `text` the type a Thermal layer draws instead of
    * its document's.
    */
-  function drawLayers(d, screen, local, F, { opacity = 1, phase = 0, clock = local + phase, ramp = null, into = null, bounds = null, drift = null, values: set = null, rates = null, pixels = null, px = 1, outline = false, text = null } = {}) {
+  function drawLayers(d, screen, local, F, { opacity = 1, phase = 0, clock = local + phase, ramp = null, into = null, bounds = null, finish = null, drift = null, values: set = null, rates = null, pixels = null, px = 1, outline = false, text = null } = {}) {
     const { gl } = kit;
     for (const L of screen.layers) {
       if (L.type === 'solid') {
@@ -581,6 +659,7 @@ export function createBackdrop(canvas, options = {}) {
       }
       if (L.type !== 'effect') continue;   // covers and type are DOM, not pixels
       const effect = into ? into.fx[L.effect] : effects[L.effect];
+      if (effect && !into) usedAt.set(L.effect, performance.now());
       if (!effect) {
         if (!warned.has(L.effect)) { warned.add(L.effect); onWarning(`backdrop: effect "${L.effect}" is not implemented yet; layer skipped`); }
         continue;
@@ -598,6 +677,9 @@ export function createBackdrop(canvas, options = {}) {
         effect.render(values, {
           F,
           samples: Math.min(opts.samples, d.msaa),
+          ...(opts.walls > 0 ? { walls: opts.walls } : {}),
+          ...(opts.ripple > 0 ? { ripple: opts.ripple } : {}),
+          ...(opts.reads === false ? { reads: false } : {}),
           ramp: ramp || L.gradient,
           override: ramp,
           layer: L,
@@ -608,6 +690,7 @@ export function createBackdrop(canvas, options = {}) {
           opacity,
           target: into?.rt ?? null,
           bounds,
+          finish,
         });
       } catch (e) {
         // Once: the same layer fails the same way at every frame.
@@ -620,7 +703,7 @@ export function createBackdrop(canvas, options = {}) {
   function cadenceNow() {
     if (opts.fps !== undefined) return cappedFps(opts.fps);
     const t = clock();
-    const fps = stack.filter((e) => moment(e, t)).map((e) => e.doc.playbackFps ?? 0);
+    const fps = stack.filter((e) => moment(e, t) && !(playing && e.settled)).map((e) => e.doc.playbackFps ?? 0);
     return fps.length ? cappedFps(fps.includes(0) ? 0 : Math.max(...fps)) : null;
   }
 
@@ -640,6 +723,7 @@ export function createBackdrop(canvas, options = {}) {
     // one reads the time as it draws, the page's animations the frame's (`now`), so a frame
     // held up before this runs in it is late here at once and for them a frame on.
     const wall = performance.now();
+    if (wall - lastSweep >= 1000) sweep(wall);
     if (waits) {
       const iv = interval || 1000 / 60;
       const held = wall - (lastWall || started) - iv, late = now - (lastTick || started) - iv;
@@ -658,13 +742,18 @@ export function createBackdrop(canvas, options = {}) {
     // resizing (its `size`: the top month's bubbles, with their discs, at every display
     // frame, not at their document's 30). Otherwise the last frame holds (and with nothing
     // showing, nothing is drawn at all).
+    // An entry due a frame that would draw the picture it last drew (its look, see lookOf)
+    // asks for none: it is `settled`, and asks for no cadence (stats) until it changes.
     const t = clock();
     const shown = stack.map((e) => moment(e, t));
     const caps = beatsDue(now, shown);
+    const [w, h] = bufferSize();
     let wanted = shownKey(shown) !== lastShown;
     for (const [i, e] of stack.entries()) {
-      if (wanted) break;
-      if (shown[i]) wanted = due(e, caps) || (Boolean(e.track) && placeKey(e.place) !== e.placedKey) || shown[i].k !== e.drawnK;
+      if (!shown[i]) continue;
+      // Asked on its beat only: between them it stays as it was.
+      if (due(e, caps)) e.settled = !changed(e, shown[i], `${w}x${h}`);
+      wanted = wanted || (due(e, caps) && !e.settled) || (Boolean(e.track) && placeKey(e.place) !== e.placedKey) || shown[i].k !== e.drawnK;
     }
     if (!wanted) return;
     for (const cap of caps) beats.set(cap, now);
@@ -719,6 +808,44 @@ export function createBackdrop(canvas, options = {}) {
   function disposeBox(b) {
     b.rt?.dispose();
     for (const fx of Object.values(b.fx)) fx.dispose();
+  }
+
+  /** Whether an entry is drawn in a box of its own (see `moment`); one that is placed afresh at every frame may be either. */
+  const boxedEntry = (e) => !opts.authored && (e.cover || Boolean(e.place?.box));
+
+  /** Whether an entry will never draw again from playback time `t` on: faded out for good. */
+  function gone(e, t) {
+    if (opts.still || !e.fade || e.fade[2] > 0) return false;
+    return t - e.delay + e.from >= e.fade[1];
+  }
+
+  /**
+   * Let go of the targets of what nothing showing draws with, and has not drawn for
+   * IDLE_RELEASE_MS: an effect's own instance no entry draws with outside a box, and a box no
+   * entry draws in (by its stack index, or its key: one whose entries have all faded out, and
+   * that is not made ready for one; `show` lets go of a key it no longer names, see
+   * claimBoxes). Each is made again, and draws the same picture, if a page draws with it again.
+   */
+  function sweep(now = performance.now()) {
+    lastSweep = now;
+    if (lost || destroyed) return;
+    const t = clock();
+    const live = stack.filter((e) => !gone(e, t));
+    for (const [name, fx] of Object.entries(effects)) {
+      if (now - (usedAt.get(name) ?? -Infinity) < IDLE_RELEASE_MS) continue;
+      if (live.some((e) => (!boxedEntry(e) || e.track) && drawsWith(e.doc, EFFECT_SETS[name]))) continue;
+      fx.release?.();
+      usedAt.delete(name);
+    }
+    for (const [id, b] of boxes) {
+      if (now - (b.usedAt ?? 0) < IDLE_RELEASE_MS) continue;
+      if (typeof id === 'number') {
+        const e = stack[id];
+        if (e && !e.box && !gone(e, t) && (boxedEntry(e) || e.track)) continue;
+      } else if (live.some((e) => e.box === id) || prepared.some((e) => e.box === id)) continue;
+      disposeBox(b);
+      boxes.delete(id);
+    }
   }
 
   /** Make the next entry `prepare` was given ready, a frame at a time. */
@@ -801,8 +928,16 @@ export function createBackdrop(canvas, options = {}) {
      * of its own time between a and b seconds of the entry's (along a cubic-bezier's four
      * numbers, linear without), and holds it at `to` from then: a document whose clock is
      * a quantity (the completion rate's, the share revealed), moved to the user's.
+     *
+     * `centre` is the middle of the page's column across the canvas, in CSS px from its left
+     * edge (`setCentre` moves it): every entry that is not placed is centred on it rather
+     * than on the canvas's middle, the canvas still drawn edge to edge. Where a bar takes one
+     * side of the screen (the iPhone Duo's), the page lays itself out between the safe area's
+     * sides, and what a document draws about the middle (the intro's rings and blob, Play
+     * again's 12) stays on its copy.
      */
-    show(next, { ramp: r = null, ground: g = null, at = 0, hold: h = null, loop: looping = true, fit = 'frame', waits: wait = false } = {}) {
+    show(next, { ramp: r = null, ground: g = null, at = 0, hold: h = null, loop: looping = true, fit = 'frame', waits: wait = false, centre: c = null } = {}) {
+      centre = Number.isFinite(c) ? c : null;
       const entries = Array.isArray(next) ? next : next ? [{ document: next, hold: h, loop: looping, fit }] : [];
       try {
         stack = entries.map(entryOf);
@@ -813,6 +948,9 @@ export function createBackdrop(canvas, options = {}) {
       claimBoxes();
       cancelAnimationFrame(preparing);
       preparing = 0;
+      // Playing, the frames sweep (see tick); this one is for a show that does not play.
+      clearTimeout(sweeper);
+      sweeper = setTimeout(() => sweep(), IDLE_RELEASE_MS + 100);
       doc = stack[0]?.doc ?? null;
       ramp = r;
       ground = g;
@@ -840,6 +978,14 @@ export function createBackdrop(canvas, options = {}) {
         draw(at);
         loop();
       }
+    },
+    /** The page's column moved (see `show`'s `centre`): what is not placed follows it. */
+    setCentre(c) {
+      const next = Number.isFinite(c) ? c : null;
+      if (next === centre) return;
+      centre = next;
+      invalidate();
+      if (!playing && doc) draw(lastT);
     },
     /** Colour override for the current document (cover art), or null for its own. */
     setRamp(r) {
@@ -883,13 +1029,16 @@ export function createBackdrop(canvas, options = {}) {
      */
     motionTime: () => (stack.length === 1 ? clock() - stack[0].delay + stack[0].from + stack[0].phase : null),
     document: () => doc,
-    setQuality({ resolution, samples, fps, maxFps, size, authored } = {}) {
+    setQuality({ resolution, samples, fps, maxFps, size, authored, walls, ripple, reads } = {}) {
       if (resolution > 0) opts.resolution = Math.min(resolution, 4);
       if (size !== undefined) opts.size = size;
       if (authored !== undefined) opts.authored = !!authored;
       if (samples > 0) opts.samples = Math.max(1, Math.min(6, Math.round(samples)));
       if (fps !== undefined) opts.fps = fps === null ? undefined : Math.max(0, fps);
       if (maxFps !== undefined) opts.maxFps = maxFps > 0 ? maxFps : 0;
+      if (walls !== undefined) opts.walls = walls > 0 ? Math.round(walls) : 0;
+      if (ripple !== undefined) opts.ripple = ripple > 0 ? Math.round(ripple) : 0;
+      if (reads !== undefined) opts.reads = reads !== false;
       invalidate();
       if (!playing && doc) draw(lastT);
     },
@@ -926,6 +1075,10 @@ export function createBackdrop(canvas, options = {}) {
       if (!playing && doc) draw(lastT);
     },
     stats() {
+      // Draws in the last second, to now: a backdrop that has stopped drawing (nothing showing,
+      // or settled) drew none.
+      const now = performance.now();
+      while (drawn.length && now - drawn[0] > 1000) drawn.shift();
       return {
         fps: drawn.length,
         cpuMs: +cpuMs.toFixed(2),
@@ -938,6 +1091,20 @@ export function createBackdrop(canvas, options = {}) {
         time: +api.time().toFixed(3),
       };
     },
+    /** The GPU's name as the context gives it ("Adreno (TM) 610", "Apple GPU"), or null. */
+    gpu() {
+      if (lost) return null;
+      try {
+        const gl = kit.gl, ext = gl.getExtension('WEBGL_debug_renderer_info');
+        return String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '') || null;
+      } catch {
+        return null;
+      }
+    },
+    /** Resolves once the GPU has compiled every effect's programs, never making the page wait (gl.js `compiled`). */
+    compiled() {
+      return lost ? Promise.resolve() : kit.compiled();
+    },
     /** Wait for the GPU to finish everything submitted (benchmarks only). */
     finish() {
       if (lost) return;
@@ -949,6 +1116,7 @@ export function createBackdrop(canvas, options = {}) {
       playing = false;
       cancelAnimationFrame(raf);
       cancelAnimationFrame(preparing);
+      clearTimeout(sweeper);
       sizer?.disconnect();
       window.removeEventListener('resize', onWindowResize);
       canvas.removeEventListener('webglcontextlost', onLost);

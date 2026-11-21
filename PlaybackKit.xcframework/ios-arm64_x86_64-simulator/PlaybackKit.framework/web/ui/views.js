@@ -2,7 +2,8 @@
 // page, its quiz state, a translator, the dispatch function, `reduceMotion` and `rtl`.
 // A view can instead return `{article, update}`: its own page, updated in place for the
 // rest of the visit (the top show's carousel and reveal, the top month's grid, the
-// summary's cards), `loaded`, a function that returns a promise for what it still has
+// summary's cards), `stays`, told once a page that holds stays where it is instead (shared
+// from: shows and episodes' deck cycles on), `loaded`, a function that returns a promise for what it still has
 // to load (the top show's cover, which its answer waits for before it holds: ui/app.js), and
 // `pause(paused)`, told as the app goes into the background and comes back (the top show's
 // nudge waits only while it shows). Pages in FINAL have the Figma design; the rest are still wireframes
@@ -11,7 +12,7 @@
 
 import { h } from './dom.js';
 import { artwork } from './artwork.js';
-import { coverStack } from './stack.js';
+import { coverStack, cycleOn } from './stack.js';
 import { topShowView } from './top-show.js';
 import { topMonthView } from './top-month.js';
 import { summaryView } from './summary.js';
@@ -64,15 +65,16 @@ const views = {
     ];
   },
 
-  // The top shows' covers, #1 at the front, cycling through the deck (ui/stack.js).
-  // Fewer shows fill the front slots first.
+  // The top shows' covers, #1 at the front, going once round the deck and stopping with the
+  // top show back at the front for the page's hold (ui/stack.js). Fewer shows fill the front
+  // slots first. A page that stays (shared from) has no hold to wait out: its deck cycles on.
   'shows-and-episodes'(ctx) {
     const { t, page } = ctx;
     const { shows, episodes: eps, podcasts } = page.data;
-    return [
+    const article = h('article', { class: 'page page-shows-and-episodes', 'data-page': page.id },
       storyTitle(t('shows.title', { episodes: t('count.episodes', { count: eps }), shows: t('count.shows', { count: shows }) })),
-      h('div', { class: 'stack-wrap' }, coverStack(podcasts, { artwork, label: t('shows.artwork'), animate: !ctx.reduceMotion })),
-    ];
+      h('div', { class: 'stack-wrap' }, coverStack(podcasts, { artwork, label: t('shows.artwork'), animate: !ctx.reduceMotion })));
+    return { article, stays: () => cycleOn(article) };
   },
 
   // The guess on a carousel, then the reveal over Creative Lab's shape (ui/top-show.js).
@@ -221,6 +223,6 @@ export function renderPage(ctx) {
   const { kind } = ctx.page;
   const view = views[kind];
   const content = view ? view(ctx) : [heading(kind)];
-  if (content.article) return Object.assign(content.article, { update: content.update, loaded: content.loaded, pause: content.pause });
+  if (content.article) return Object.assign(content.article, { update: content.update, loaded: content.loaded, pause: content.pause, stays: content.stays });
   return h('article', { class: `page page-${kind}${FINAL.has(kind) ? '' : ' wireframe'}`, 'data-page': ctx.page.id, 'data-step': ctx.step?.id, 'data-after': ctx.page.data?.after }, content);
 }

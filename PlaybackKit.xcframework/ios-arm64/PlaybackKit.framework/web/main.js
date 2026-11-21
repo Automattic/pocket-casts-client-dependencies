@@ -20,11 +20,15 @@
 //   &delay=6000         the data comes late, as the apps' does (PCIOS-1324): the story opens
 //                       on the intro and the scenario arrives this many ms later (setData)
 
+// First: fills in what an old web view lacks before anything uses it.
+import { LEGACY } from './host/legacy.js';
 import { mountPlayback } from './ui/app.js';
 import { connectBackdrop } from './ui/backdrop.js';
 import { installApi } from './host/api.js';
 import { applyAccessibility } from './host/accessibility.js';
-import { parseTune, showProgress, showReport, startPerf } from './host/perf.js';
+
+/** On an old web view, the longest the story waits for its first stills before it shows. */
+const STILLS_WAIT_MS = 2000;
 
 function envFromQuery() {
   const q = new URLSearchParams(location.search);
@@ -37,6 +41,7 @@ function envFromQuery() {
   if (q.has('guess')) env.guess = q.get('guess');
   if (q.has('locale')) env.locale = q.get('locale');
   if (q.has('backdrop')) env.backdrop = q.get('backdrop') !== '0';
+  if (q.has('captureBackdrop')) env.captureBackdrop = q.get('captureBackdrop') !== '0';
   if (q.has('reduceMotion')) env.reduceMotion = q.get('reduceMotion') !== '0';
   if (q.has('textScale')) env.textScale = Number(q.get('textScale'));
   if (q.has('boldText')) env.boldText = q.get('boldText') !== '0';
@@ -64,6 +69,8 @@ async function loadPayload(env) {
 
 async function boot() {
   const env = { ...envFromQuery(), ...(globalThis.PLAYBACK_ENV || {}) };
+  // An old web view (host/legacy.js): the story holds still, on static backgrounds.
+  if (LEGACY) env.reduceMotion = true;
   const root = document.getElementById('app');
   let payload = null;
   // The rig's late data (`&delay=`): the scenario is read now and handed over later, as an app would.
@@ -77,22 +84,45 @@ async function boot() {
   // PLAYBACK_ENV.locale only fills in a payload that has none.
   const queryLocale = new URLSearchParams(location.search).get('locale');
   if (payload && (queryLocale || (env.locale && !payload.locale))) payload.locale = queryLocale || env.locale;
-  // The walk's tuning (what to change about the backdrop before measuring).
-  const tune = env.perf ? parseTune(env.perfTune) : null;
+  // The performance walk's code, loaded only for a walk; and its tuning (what to change about
+  // the backdrop before measuring).
+  const perf = env.perf ? await import('./host/perf.js') : null;
+  const tune = perf ? perf.parseTune(env.perfTune) : null;
   if (tune && env.backdrop !== false) env.backdrop = tune.backdrop;
   applyAccessibility(document, env);
   const controller = mountPlayback(root, { payload, env });
   if (controller.ok) {
-    const canvas = document.getElementById('backdrop');
-    const fx = connectBackdrop(controller, canvas, env);
+    let canvas = document.getElementById('backdrop');
+    let fx = { ok: false, destroy() {} };
+    let failed = false;
+    if (!LEGACY) fx = connectBackdrop(controller, canvas, env);
+    else if (canvas && env.backdrop !== false) {
+      // An old web view shows stills where the WebGL canvas would be (ui/static-backdrop.js),
+      // loaded only there.
+      const layer = Object.assign(document.createElement('div'), { id: 'backdrop', className: 'static-backdrop' });
+      layer.setAttribute('aria-hidden', 'true');
+      canvas.replaceWith(layer);
+      canvas = layer;
+      const stills = import('./ui/static-backdrop.js').then((m) => {
+        if (failed) return null;
+        fx = m.connectStaticBackdrop(controller, layer);
+        return fx.ready;
+      });
+      // The story shows once its first stills are there (the intro's blob with its title, not a
+      // beat after it), or after STILLS_WAIT_MS; the intro's clock waits as long.
+      root.style.visibility = 'hidden';
+      const shown = Promise.race([stills, new Promise((r) => setTimeout(r, STILLS_WAIT_MS))]).catch(() => {});
+      shown.then(() => { root.style.visibility = ''; });
+      controller.waitForIntro?.(shown);
+    }
     // A late payload the page cannot read: the error state shows on the bare page.
-    controller.onFail = () => { fx.destroy(); canvas?.remove(); };
+    controller.onFail = () => { failed = true; fx.destroy(); canvas?.remove(); };
     installApi(controller, env, fx.ok ? fx.backdrop : null);
     late?.then((data) => setTimeout(() => globalThis.Playback.setData(data), env.dataDelay), (e) => setTimeout(() => globalThis.Playback.setData({ error: String(e.message || e) }), env.dataDelay));
     if (env.perf) {
       // The performance walk (PCIOS-1257) plays the flow itself; nothing else may.
-      const progress = showProgress();
-      const walk = startPerf(controller, {
+      const progress = perf.showProgress();
+      const walk = perf.startPerf(controller, {
         dwellMs: (env.perf === true ? 15 : env.perf) * 1000,
         loops: Math.max(1, env.perfLoops || 1),
         only: tune.only,
@@ -102,7 +132,7 @@ async function boot() {
       });
       walk.done.then((report) => {
         progress.remove();
-        showReport(report);
+        perf.showReport(report);
         // The rig's host prints bridge messages, so a script can collect the run (`perf-report {json}`).
         controller.bridge.send({ type: 'warning', message: `perf-report ${JSON.stringify(report)}` });
       });
