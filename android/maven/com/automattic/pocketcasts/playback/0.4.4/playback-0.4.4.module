@@ -1,0 +1,104 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.automattic.pocketcasts",
+    "module": "playback",
+    "version": "0.4.4",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.6.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.24"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "playback-0.4.4.aar",
+          "url": "playback-0.4.4.aar",
+          "size": 1351667,
+          "sha512": "c9903893045ad35ea876ddcd4659a498347b4e1fc84ef628c333e4f7deceb6ccb1b98b42773499828076778f70c7b295964d421c323c41c78eba5ae4c47b89ce",
+          "sha256": "ce703748f95e2e38aedcb6570427dfddda03e17feaeece4a4fd0ba9f5ea3d7a3",
+          "sha1": "a76bf920b8e2932c4b0640c6a0d8a489d6651293",
+          "md5": "b22c18917775ebf227e8a4912921bb4a"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.core",
+          "module": "core-ktx",
+          "version": {
+            "requires": "1.13.1"
+          }
+        },
+        {
+          "group": "androidx.webkit",
+          "module": "webkit",
+          "version": {
+            "requires": "1.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.6.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.24"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "playback-0.4.4.aar",
+          "url": "playback-0.4.4.aar",
+          "size": 1351667,
+          "sha512": "c9903893045ad35ea876ddcd4659a498347b4e1fc84ef628c333e4f7deceb6ccb1b98b42773499828076778f70c7b295964d421c323c41c78eba5ae4c47b89ce",
+          "sha256": "ce703748f95e2e38aedcb6570427dfddda03e17feaeece4a4fd0ba9f5ea3d7a3",
+          "sha1": "a76bf920b8e2932c4b0640c6a0d8a489d6651293",
+          "md5": "b22c18917775ebf227e8a4912921bb4a"
+        }
+      ]
+    }
+  ]
+}

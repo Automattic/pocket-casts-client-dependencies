@@ -15,6 +15,14 @@
 // deck long), so the stack is a function of the page's clock alone: deterministic,
 // paused with the app like the intro, and seekable by the rig (shows-compare.mjs).
 // Positions are fractions of the front cover's size, so the stack scales with --u.
+//
+// A finger can take the deck (`deckControl`): dragged up or down anywhere on the stack, the
+// covers follow it, the front one under the finger, a cover a front cover's drop. Down moves the
+// deck on, the front cover dropping away as in the deck's own moves; up brings back the one
+// before. Let go, the deck carries on as far as the finger's speed takes it, as a scroll view
+// does, and lands with a cover at the front (`fling`), rests, then cycles on from there on its
+// own loop. Once taken, the page stays (no hold to move on after): it waits for a tap. A tap
+// on the stack is still the story's, and so is a sideways swipe.
 
 import { h } from './dom.js';
 
@@ -59,6 +67,21 @@ export const STACK_MOTION = {
   // The next cover grows in at the back from `enter` of the back slot, about its centre,
   // from behind the cover it replaces.
   enter: 0.78,
+};
+
+/** The deck under a finger (designed: the video has none), in seconds. */
+export const DRAG = {
+  // How far a finger moves, mostly up or down, before the deck is its (app.js TAP_SLOP_PX).
+  slop: 10,
+  // Let go, the deck goes on as a scroll view decelerates: about as far as the finger's speed
+  // would take it in `tau` (a fling of 1,000 px a second, eight covers' drop, goes 3 covers),
+  // to the nearest cover, on a critically damped spring starting at the finger's speed (`fling`);
+  // never more than once round.
+  tau: 0.35,
+  // The finger's speed over its last `sample` before it lets go (none if it stopped there).
+  sample: 0.08,
+  // Landed, the deck rests this long, the cover it landed on at the front, then cycles on.
+  rest: 3,
 };
 
 const r = (n, d = 4) => +n.toFixed(d);
@@ -106,7 +129,10 @@ export function cycleTiming({ localTime, delay, duration, iterations }) {
   return localTime == null || localTime <= stop ? { iterations: Infinity } : { iterations: Infinity, delay: localTime - duration * iterations };
 }
 
-/** Sets the stopped (or stopping) deck in `root` cycling on (`cycleTiming`), once. */
+/**
+ * Sets the stopped (or stopping) deck in `root` cycling on (`cycleTiming`), once. A deck a finger
+ * has taken (`deckControl`) cycles on by itself once it lands: nothing to do.
+ */
 export function cycleOn(root) {
   const list = root.querySelector('.stack:not(.stack-still)');
   if (!list || list.dataset.cycling) return;
@@ -220,6 +246,74 @@ export function deckFrames(j, E, V, M = STACK_MOTION, slots = SLOTS.slice(0, V))
 }
 
 /**
+ * A cover's pose `s` slots back from the front, anywhere on the loop of E covers (wrapped into
+ * [0, E)), as a finger holds the deck: whole, the pose `deckFrames` rests it in; between two
+ * slots, linear between them; past E − 1, leaving (E − s of the way out), dropping as the
+ * front cover does and fading as it does for the same drop; from V on, waiting unseen; between
+ * V − 1 and V, growing in from behind the back cover. `{y, scale, opacity, z}`. Pure.
+ */
+export function deckPose(s, E, V, M = STACK_MOTION, slots = SLOTS.slice(0, V)) {
+  s = ((s % E) + E) % E;
+  if (s > E - 1) {
+    const g = E - s;
+    return { y: M.exit.by * g, scale: 1, opacity: exitOpacity(g, M), z: V + 3 };
+  }
+  if (s >= V) return { ...enterPose(slots, M), opacity: 0, z: 1 };
+  const k = Math.floor(s), f = s - k;
+  const a = pose(slots, k), b = k + 1 < V ? pose(slots, k + 1) : enterPose(slots, M);
+  return { y: a.y + (b.y - a.y) * f, scale: a.scale + (b.scale - a.scale) * f, opacity: 1, z: 2 + V - k };
+}
+
+/** The leaving cover's opacity `g` of the way down: the drop's fade keyed by how far it has dropped by each key. */
+function exitOpacity(g, M) {
+  const { fade, ease, duration } = M.exit;
+  let x0 = 0, o0 = 1;
+  for (const [t, o] of fade) {
+    const x = easeAt(ease, t / duration);
+    if (g <= x) return x > x0 ? o0 + ((o - o0) * (g - x0)) / (x - x0) : o;
+    x0 = x;
+    o0 = o;
+  }
+  return o0;
+}
+
+/**
+ * How far the deck has gone `u` seconds into its loop, in moves: whole at rest, and a share of
+ * one while a move is on, as far as the covers in the slots have got on the move's curve.
+ */
+export function deckAt(u, M = STACK_MOTION) {
+  const t = u - EPS;
+  if (!(t > 0)) return 0;
+  const k = Math.floor(t / M.period);
+  const x = (t - k * M.period) / M.move;
+  return k + (x >= 1 ? 1 : easeAt(M.ease, x));
+}
+
+/**
+ * Where a deck let go of at `p` (in moves), going `v` moves a second, lands, and how it gets
+ * there (DRAG): `to`, the nearest whole move to where that speed would take it in `tau`, no
+ * more than `n` moves (once round) away; `where(t)`, where it is `t` seconds on: a critically
+ * damped spring that starts at the finger's speed and, flung, goes about as far as `tau` of
+ * it would (its time constant is half of `tau`); `duration`, when it is within a 500th of a
+ * move of `to` (a quarter of a pixel) for good. Pure.
+ */
+export function fling(p, v, n, D = DRAG) {
+  const w = 2 / D.tau, cap = n / D.tau;
+  v = Math.max(-cap, Math.min(cap, v || 0));
+  const to = Math.round(p + v * D.tau);
+  const A = p - to, B = v + w * A;
+  const spring = (t) => to + (A + B * t) * Math.exp(-w * t);
+  // Past its turn (if it overshoots) and its last bend, it only closes in.
+  const after = Math.max(0, B ? -A / B : 0) + 1 / w;
+  let duration = 0;
+  if (Math.abs(A) > 1e-6 || Math.abs(B) > 1e-6) {
+    duration = 1 / 120;
+    while (duration < 4 && (duration < after || Math.abs(spring(duration) - to) > 2e-3)) duration += 1 / 120;
+  }
+  return { to, where: (t) => (t >= duration ? to : spring(t)), duration };
+}
+
+/**
  * The keyframes of a loop, as two animations: the pose (transform and opacity, which
  * the compositor can run) and the stacking order, which changes as each move starts.
  */
@@ -294,6 +388,7 @@ export function coverStack(podcasts, { artwork, label, animate = true }) {
   const size = `--stack-h:${STACK_HEIGHT - base};--front-top:${slots[0].top - base}`;
   const fade = animate ? `;animation:pb-fade-in ${M.entry.fade}s linear ${r(M.start, 3)}s both` : '';
   const list = h('ul', { class: 'stack', style: `${size}${fade}`, 'aria-label': label }, items);
+  if (cycles) list.deck = deckControl(list, items, { n: deck.length, E, V, M, slots, loop: `pb-deck-${E}-${V}` });
   const out = css.length ? [h('style', null, css.join('\n')), list] : [list];
   // The share image shows the stack at rest, #1 at the front, as it opens and comes round (and
   // as the summary's stack card does), not wherever the deck has got to: it moves through the
@@ -302,6 +397,161 @@ export function coverStack(podcasts, { artwork, label, animate = true }) {
   // deck, which carries on underneath, so nothing replays once the image is taken.
   if (cycles) out.push(stillStack(deck, slots, size, artwork));
   return out;
+}
+
+/**
+ * The deck in `list` (its covers `items`, cover j starting in slot j of its loop `loop`) under a
+ * finger: `bind(surface, {onGrab})` lets a drag up or down on `surface` take it. On the deck's
+ * own loop (its CSS animations), where it is is `base` moves on from the loop's start; a finger
+ * takes it from there (`takeOver`), moving it itself (`layout`); let go, it is flung
+ * (`fling`, a sampled Web Animation per cover, so it runs on the compositor) and lands on a
+ * whole move, where its covers start their loops again, each from the slot it is in, after
+ * DRAG.rest. `onGrab` is told as it is first taken.
+ */
+function deckControl(list, items, { n, E, V, M, slots, loop }) {
+  const L = E * M.period;
+  let base = 0, touched = false, drag = null, flung = null;
+
+  const slotOf = (j, p) => (((j - p) % E) + E) % E;
+  function layout(p) {
+    items.forEach((item, j) => {
+      const q = deckPose(slotOf(j, p), E, V, M, slots);
+      Object.assign(item.style, { transform: transform(q), opacity: String(q.opacity), zIndex: String(q.z) });
+    });
+  }
+
+  /** Where the deck is now, in moves. */
+  function position() {
+    if (drag?.claimed) return drag.p;
+    if (flung) {
+      const t = (flung.anims[0]?.currentTime ?? 0) / 1000;
+      return flung.path.where(Math.min(t, flung.path.duration));
+    }
+    const a = items[0].getAnimations().find((x) => x.animationName?.startsWith(loop) && !x.animationName.endsWith('-z'));
+    const progress = a?.effect?.getComputedTiming().progress;
+    return base + (progress == null ? 0 : deckAt(progress * L, M));
+  }
+
+  function stopFling() {
+    for (const a of flung?.anims ?? []) a.cancel();
+    flung = null;
+  }
+
+  /** Off its loop, where it is, held by script from now on. */
+  function takeOver() {
+    const p = position();
+    stopFling();
+    for (const item of items) item.style.animation = 'none';
+    // Applied now: a loop set again later under the same name has to start afresh.
+    void getComputedStyle(items[0]).animationName;
+    layout(p);
+    if (!touched) {
+      touched = true;
+      // Its own loop now: the page staying has nothing to cycle on (cycleOn).
+      list.dataset.cycling = '';
+    }
+    return p;
+  }
+
+  /** Flung from `p` at `v` moves a second, sampled 60 times a second (the poses curve through every slot). */
+  function release(p, v) {
+    const path = fling(p, v, n);
+    if (!(path.duration > 0)) return land(path.to);
+    const N = Math.ceil(path.duration * 60);
+    const timing = { duration: path.duration * 1000, easing: 'linear', fill: 'forwards' };
+    const ps = Array.from({ length: N + 1 }, (_, i) => path.where((i / N) * path.duration));
+    const anims = [];
+    items.forEach((item, j) => {
+      const qs = ps.map((p) => deckPose(slotOf(j, p), E, V, M, slots));
+      if (qs.every((q) => q.opacity === 0)) return;
+      // The pose on the compositor; the stacking order apart, as on the loop, held between samples.
+      anims.push(item.animate(qs.map((q, i) => ({ transform: transform(q), opacity: String(q.opacity), offset: i / N })), timing));
+      anims.push(item.animate(qs.map((q, i) => ({ zIndex: String(q.z), offset: i / N, easing: 'steps(1, end)' })), timing));
+    });
+    flung = { anims, path };
+    const done = flung;
+    Promise.all(anims.map((a) => a.finished)).then(() => { if (flung === done) land(path.to); }, () => {});
+  }
+
+  /** At rest on move `k`: each cover's loop starts again from the slot it is in, after DRAG.rest. */
+  function land(k) {
+    stopFling();
+    layout(k);
+    base = k;
+    const timing = `${r(L, 3)}s linear ${DRAG.rest}s infinite both`;
+    items.forEach((item, j) => {
+      const name = `${loop}-${slotOf(j, k)}`;
+      item.style.animation = `${name} ${timing}, ${name}-z ${timing}`;
+    });
+  }
+
+  function bind(surface, { onGrab = () => {} } = {}) {
+    surface.dataset.drag = '';
+    const claim = (e) => {
+      drag.from = drag.p = takeOver();
+      drag.claimed = true;
+      drag.y = e.clientY;
+      drag.step = Math.max(1, M.exit.by * list.offsetWidth);
+      drag.samples = [{ t: performance.now(), y: e.clientY }];
+      // Gone already (lifted as it was taken), it has nothing to capture.
+      try { surface.setPointerCapture?.(e.pointerId); } catch { /* not active */ }
+      onGrab();
+    };
+    surface.addEventListener('pointerdown', (e) => {
+      if (!e.isPrimary || e.button > 0) return;
+      // One that never ended (its pointer lost): let go of it where it is.
+      if (drag) {
+        const d = drag;
+        drag = null;
+        if (d.claimed) release(d.p, 0);
+      }
+      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, claimed: false };
+      // A touch catches a flung deck where it is (and is no tap), as it would a scroll view.
+      if (flung) claim(e);
+    });
+    surface.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      if (!drag.claimed) {
+        const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+        if (Math.hypot(dx, dy) < DRAG.slop) return;
+        // Sideways is the story's swipe.
+        if (Math.abs(dy) <= Math.abs(dx)) { drag = null; return; }
+        claim(e);
+        return;
+      }
+      const t = performance.now();
+      drag.samples.push({ t, y: e.clientY });
+      while (drag.samples.length > 2 && t - drag.samples[0].t > DRAG.sample * 1000) drag.samples.shift();
+      drag.p = drag.from + (e.clientY - drag.y) / drag.step;
+      layout(drag.p);
+    });
+    const end = (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const d = drag;
+      drag = null;
+      if (!d.claimed) return;
+      let v = 0;
+      if (e.type === 'pointerup') {
+        d.p = d.from + (e.clientY - d.y) / d.step;
+        // The deck's gesture, neither a swipe nor a tap of the story's (app.js).
+        e.preventDefault();
+        const t = performance.now();
+        const s = d.samples.filter((x) => t - x.t <= DRAG.sample * 1000);
+        s.push({ t, y: e.clientY });
+        const a = s[0], b = s[s.length - 1];
+        if (b.t > a.t) v = ((b.y - a.y) / d.step) / ((b.t - a.t) / 1000);
+      }
+      release(d.p, v);
+    };
+    surface.addEventListener('pointerup', end);
+    surface.addEventListener('pointercancel', end);
+    // Its own capture only: a touch's first, on the cover under it, goes as the surface takes it.
+    surface.addEventListener('lostpointercapture', (e) => { if (e.target === surface) end(e); });
+    // A mouse would drag a cover's image away instead, and no pointer event would come after.
+    surface.addEventListener('dragstart', (e) => e.preventDefault());
+  }
+
+  return { bind, position };
 }
 
 /** The deck's first `slots.length` shows in their slots, as Reduced Motion draws them. */

@@ -695,9 +695,11 @@ export const SUMMARY_BACKDROP = summaryBackdrop();
  * minutes' is: the summary fades out (SUMMARY_OUT), its cards' backgrounds under the wave
  * (`replaces`), and as it does (OUTRO_IN) the wave fades in from the ground on the curve
  * the top 5's wave does, the copy, then Play again, coming in as total minutes' do (playback.css);
- * 12 reaches its own start, the video's first frame, as the page has come in (OUTRO_SETTLED). The
- * way out is Play again's (OUTRO_OUT, above); closing is the host's. Reduced Motion: a still, the
- * video's first frame.
+ * 12 reaches its own start, the video's first frame, as the page has come in (OUTRO_SETTLED).
+ * As it fades in, its rings run out from the middle, a little stronger than 12's, and settle
+ * where 12 has them (OUTRO_RIPPLE), and the disc opens out a little (playback.css): the last
+ * screen comes in as a ripple, softly. The way out is Play again's (OUTRO_OUT, above); closing
+ * is the host's. Reduced Motion: a still, the video's first frame.
  */
 export const OUTRO_IN = OVERLAP_IN;
 /** The page has come in, from OUTRO_IN: Play again's rise ends (playback.css `.ou-pill`). */
@@ -705,6 +707,13 @@ export const OUTRO_SETTLED = 1.643;
 /** 12's loop (s): it starts this far before its end, so it is at its own start once the page has come in. */
 const PLAY_AGAIN_LOOP = 10;
 const OUTRO_FROM = PLAY_AGAIN_LOOP - OUTRO_SETTLED;
+/**
+ * Play again's rings coming in (the user's pick, of three strengths shown): half a ring runs out
+ * from the middle over `duration` seconds from the wave's first frame, on `ease`, the ripple
+ * `splash` times 12's at the start, settling on 12's own Phase and Amount (`phase`, `amount`,
+ * its statics), so the screen settles on the picture it had before (0.16 s after Play again's rise).
+ */
+export const OUTRO_RIPPLE = { duration: 1.8, rings: 0.5, splash: 1.15, ease: [0.2, 0.65, 0.3, 1], phase: 22, amount: 13.9 };
 export const OUTRO_BACKDROP = {
   document: 'play-again',
   fit: 'cover',
@@ -713,6 +722,11 @@ export const OUTRO_BACKDROP = {
   fade: [OUTRO_FROM, OUTRO_FROM + TOP_SHOWS_FADE_IN.duration, 1, 0, TOP_SHOWS_FADE_IN.ease],
   stillAt: PLAY_AGAIN_LOOP,
   replaces: [0, SUMMARY_OUT],
+  // Phase in hundredths of a ring (Wave's ripple: one turn is one ring), so rising runs them out.
+  tweens: {
+    ripplePhase: [OUTRO_FROM, OUTRO_FROM + OUTRO_RIPPLE.duration, OUTRO_RIPPLE.phase - 100 * OUTRO_RIPPLE.rings, OUTRO_RIPPLE.phase, OUTRO_RIPPLE.ease],
+    rippleAmt: [OUTRO_FROM, OUTRO_FROM + OUTRO_RIPPLE.duration, OUTRO_RIPPLE.amount * OUTRO_RIPPLE.splash, OUTRO_RIPPLE.amount, OUTRO_RIPPLE.ease],
+  },
 };
 
 /**

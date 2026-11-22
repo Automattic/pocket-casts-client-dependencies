@@ -4,7 +4,8 @@
 //
 // Navigation is story-style: tap the leading third to go back and the rest to go
 // forward, or swipe (except where the page swipes for itself: the top show's carousel,
-// and the middle of its screen). Quiz pages block going forward until revealed (the flow decides).
+// and the middle of its screen; and where a page takes a drag up or down, shows and
+// episodes' covers). Quiz pages block going forward until revealed (the flow decides).
 // Back/Next buttons stay in the DOM for keyboards and screen readers, out of sight
 // until focused.
 //
@@ -501,6 +502,9 @@ export function mountPlayback(root, { payload, env = {}, bridge = createBridge(e
   };
   const onPointerUp = (e) => {
     if (!press || !e.isPrimary) return;
+    // A gesture a page took for itself (the shows' covers dragged up or down: ui/stack.js lets
+    // go with preventDefault) is neither a swipe nor a tap, wherever it ends.
+    if (e.defaultPrevented) { press.moved = true; return; }
     const dx = e.clientX - press.x;
     const dy = e.clientY - press.y;
     press.moved = Math.hypot(dx, dy) >= TAP_SLOP_PX;

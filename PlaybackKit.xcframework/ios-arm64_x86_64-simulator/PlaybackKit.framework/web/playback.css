@@ -313,6 +313,9 @@ body { touch-action: pan-y; }
 /* Figma centres the stack between the title and the share button (1.5 px above), not
    above the stage's bottom padding: the wrap reaches down to the button. */
 .stack-wrap { flex: 1; min-height: 0; margin-bottom: -13.5px; display: grid; place-items: center; container-type: size; }
+/* A finger dragging up or down there moves the deck (ui/stack.js), not the page; sideways is
+   still the story's swipe, which script decides. */
+.stack-wrap[data-drag] { touch-action: none; }
 .stack {
   --u: 1px;
   position: relative;
@@ -998,7 +1001,8 @@ body { touch-action: pan-y; }
    Figma's radius; to 1.6 pt and 0.016 of the wave's contrast on the video's). Play again where
    Figma has it, 3 pt below the share line. The close is the story's; no progress (above).
    The way in is designed (the video opens on the page settled): as the summary fades out
-   (`--in-at`, pages.js OUTRO_IN), the disc fades in over its cards, the title comes in as total
+   (`--in-at`, pages.js OUTRO_IN), the disc fades in over its cards, opening out from 0.85 of its
+   size as the wave's rings run out (pages.js OUTRO_RIPPLE, on its curve), the title comes in as total
    minutes' does, the line 0.116 s after it (as roles intro's), Play again as the share button does.
    Not enough listening (POC-1016) is this screen with its own copy and Close for Play again,
    coming in the same way as it opens (pages.js EMPTY_BACKDROP). */
@@ -1029,7 +1033,7 @@ body { touch-action: pan-y; }
 .ou-copy .story-title { width: 100%; }
 .ou-body { margin: 0; max-width: 279px; font: 600 calc(16px * var(--text-scale))/calc(20px * var(--text-scale)) var(--pb-font); }
 .ou-pill { bottom: calc(var(--share-bottom) - 3.08px); left: calc(50% - 54.5px); }
-.page-outro .ou-disc { animation: ou-in 0.45s linear var(--in-at) both; }
+.page-outro .ou-disc { animation: ou-in 0.45s linear var(--in-at) both, ou-open 1.2s cubic-bezier(0.2, 0.65, 0.3, 1) var(--in-at) both; }
 
 /* Figma sizes the buttons to its English labels. A longer label (a translation) widens its
    button rather than wrapping, centred where Figma centres it; the English is unchanged. */
@@ -1038,6 +1042,7 @@ body { touch-action: pan-y; }
 :is(.pill, .tp-confirm, .tm-confirm, .sc-skip) { width: max-content; padding-inline: 16px; white-space: nowrap; left: 0; right: 0; margin-inline: auto; }
 @keyframes ou-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ou-rise { from { translate: 0 var(--rise); } to { translate: 0 0; } }
+@keyframes ou-open { from { scale: 0.85; } to { scale: 1; } }
 :is(.page-outro, .page-empty) .story-title { --rise: 16.79px; animation: ou-in 0.214s linear calc(var(--in-at) + 0.2s) both, ou-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.2s) both; }
 :is(.page-outro, .page-empty) .ou-body { --rise: 16.79px; animation: ou-in 0.214s linear calc(var(--in-at) + 0.316s) both, ou-rise 0.899s cubic-bezier(0.098, 0.65, 0.361, 1.011) calc(var(--in-at) + 0.316s) both; }
 :is(.page-outro, .page-empty) .ou-pill { --rise: 7.48px; animation: ou-in 0.272s linear calc(var(--in-at) + 0.866s) both, ou-rise 0.712s cubic-bezier(0.235, 0.816, 0.646, 0.989) calc(var(--in-at) + 0.931s) both; }

@@ -21,7 +21,7 @@ import { createGL, DITHER } from './gl.js';
 import { createPatternEffect, MAX_BLUR_LEVEL } from './pattern.js';
 import { createWaveEffect } from './wave.js';
 import { createThermalEffect } from './thermal.js';
-import { loadDocument, documentTime, fadeLevel, holdTime, screenAt, scrubTime, sizeLevel, valuesAt } from './document.js';
+import { loadDocument, documentTime, fadeLevel, holdTime, screenAt, scrubTime, sizeLevel, tweenValue, valuesAt } from './document.js';
 import { fitFrame, placeFrame } from './frame.js';
 
 const FS_SOLID = `#version 300 es
@@ -427,7 +427,7 @@ export function createBackdrop(canvas, options = {}) {
    * page; on a budget phone each of its frames cost 120 ms of the GPU's time).
    */
   function lookOf(e, m, size) {
-    if (e.rates || e.drift || drawsWith(e.doc, CLOCK_EFFECTS)) return null;
+    if (e.rates || e.tweens || e.drift || drawsWith(e.doc, CLOCK_EFFECTS)) return null;
     return `${documentTime(e.doc, timeline(e, m.at))},${m.opacity},${m.k},${size}`;
   }
   /** Whether an entry at its moment `m` would draw another picture than it last drew. */
@@ -459,7 +459,7 @@ export function createBackdrop(canvas, options = {}) {
       const m = shown[i];
       if (!m) continue;
       const { at, opacity, k } = m;
-      const o = { opacity, phase: e.phase, clock: at + e.phase, ramp: e.ramp ?? ramp, drift: drifted(e, at), values: e.values, rates: e.rates, pixels: e.pixels, px, outline: e.outline, text: e.text };
+      const o = { opacity, phase: e.phase, clock: at + e.phase, ramp: e.ramp ?? ramp, drift: drifted(e, at), values: e.values, rates: e.rates, tweens: e.tweens, pixels: e.pixels, px, outline: e.outline, text: e.text };
       e.placedKey = placeKey(e.place);
       e.drawnK = k;
       const look = lookOf(e, m, `${w}x${h}`);
@@ -645,10 +645,11 @@ export function createBackdrop(canvas, options = {}) {
    * `pixels` set them in CSS pixels (`px` buffer pixels each), whatever the frame's scale.
    * `rates` move parameters on from there, that much a second of `clock`, the entry's own
    * time plus its `phase`, unwrapped (a rate's: Thermal's drift, the comparison circles'
-   * colour, Wave's travelling waves), and `text` the type a Thermal layer draws instead of
+   * colour, Wave's travelling waves), `tweens` move them from one value to another over a
+   * stretch of `clock` (Play again's rings running out as it comes in), and `text` the type a Thermal layer draws instead of
    * its document's.
    */
-  function drawLayers(d, screen, local, F, { opacity = 1, phase = 0, clock = local + phase, ramp = null, into = null, bounds = null, finish = null, drift = null, values: set = null, rates = null, pixels = null, px = 1, outline = false, text = null } = {}) {
+  function drawLayers(d, screen, local, F, { opacity = 1, phase = 0, clock = local + phase, ramp = null, into = null, bounds = null, finish = null, drift = null, values: set = null, rates = null, tweens = null, pixels = null, px = 1, outline = false, text = null } = {}) {
     const { gl } = kit;
     for (const L of screen.layers) {
       if (L.type === 'solid') {
@@ -668,6 +669,7 @@ export function createBackdrop(canvas, options = {}) {
         const values = valuesAt(L, local);
         if (set) Object.assign(values, set);
         if (rates) for (const [id, r] of Object.entries(rates)) values[id] = (values[id] ?? 0) + r * clock;
+        if (tweens) for (const [id, tw] of Object.entries(tweens)) values[id] = tweenValue(tw, clock, opts.still);
         if (pixels) for (const [id, v] of Object.entries(pixels)) values[id] = (v * px) / F.unit;
         if (outline && Math.round(values.shape) === 0 && Math.round(values.fxSpace) !== 1 && values.mRounding > 0 && values.shapeSize > 0) {
           const r = (values.shapeSize / 100) * Math.min(d.refWidth, d.refHeight) / 2;
@@ -782,6 +784,7 @@ export function createBackdrop(canvas, options = {}) {
       outline: e.outline === true,
       values: numbers(e.values),
       rates: numbers(e.rates),
+      tweens: tweensOf(e.tweens),
       pixels: numbers(e.pixels),
       size: Array.isArray(e.size) && e.size[1] > e.size[0] && Number(e.size[2]) >= 0 ? [Number(e.size[0]), Number(e.size[1]), Number(e.size[2]), ...(isEase(e.size[3]) ? [e.size[3].map(Number)] : isSegments(e.size[3]) ? [e.size[3].map(([x, y, b]) => [Number(x), Number(y), ...(isEase(b) ? [b.map(Number)] : [])])] : [])] : null,
       scrub: Array.isArray(e.scrub) && e.scrub[1] > e.scrub[0] && [e.scrub[2], e.scrub[3]].every((v) => Number.isFinite(Number(v))) ? [...e.scrub.slice(0, 4).map(Number), ...(isEase(e.scrub[4]) ? [e.scrub[4].map(Number)] : [])] : null,
@@ -854,7 +857,7 @@ export function createBackdrop(canvas, options = {}) {
     const e = prepared.find((p) => !boxes.get(p.box)?.ready);
     if (!e || lost || destroyed) return;
     const at = e.from;
-    const o = { opacity: 1, phase: e.phase, clock: at + e.phase, ramp: e.ramp ?? ramp, values: e.values, rates: e.rates, pixels: e.pixels, px: e.px, outline: e.outline, text: e.text };
+    const o = { opacity: 1, phase: e.phase, clock: at + e.phase, ramp: e.ramp ?? ramp, values: e.values, rates: e.rates, tweens: e.tweens, pixels: e.pixels, px: e.px, outline: e.outline, text: e.text };
     // At every scale its `size` takes it through (where it starts, ends and turns, and steps
     // of √2 between): an effect's own targets can depend on it (Pattern's edge blur, on a
     // coarser copy as the box gets smaller). Anywhere on a canvas it fits on: only its box's
@@ -915,7 +918,11 @@ export function createBackdrop(canvas, options = {}) {
      * its own way), and `pixels` set them in CSS pixels whatever the entry's scale (a bevel
      * as wide on a small disc as on a large one). `rates` move parameters on at that much a
      * second of the entry's own time, never wrapped with its document's loop (a colour that
-     * drifts for as long as the page shows, with no jump). `size: [a, b, start, ease]` scales a
+     * drifts for as long as the page shows, with no jump). `tweens: {id: [a, b, from, to,
+     * ease]}` move a parameter from `from` at a to `to` at b seconds of the entry's own time
+     * (along a cubic-bezier's four numbers, linear without), and hold it at `to` from then (Play
+     * again's rings running out from the middle and settling on 12's own); a still shows it at
+     * `to`. `size: [a, b, start, ease]` scales a
      * placed entry from `start` at a to whole at b seconds of its own time (along a
      * cubic-bezier's four numbers, or segments `[[x, y, bezier], …]`: past whole and back, a
      * bounce; linear without), as what it is placed on resizes.
@@ -1188,6 +1195,20 @@ function placedRect([x, y, bw, bh], cx, cy, hx, hy, cos, sin, within, px, w, h) 
 function numbers(o) {
   if (!o || typeof o !== 'object') return null;
   const out = Object.fromEntries(Object.entries(o).filter(([, v]) => Number.isFinite(Number(v))).map(([k, v]) => [k, Number(v)]));
+  return Object.keys(out).length ? out : null;
+}
+
+/**
+ * An entry's `tweens` ({id: [a, b, from, to, ease?]}), each kept as `scrub` is (b past a, from
+ * and to numbers, an optional cubic-bezier), or null when none is.
+ */
+function tweensOf(o) {
+  if (!o || typeof o !== 'object') return null;
+  const out = {};
+  for (const [id, tw] of Object.entries(o)) {
+    if (!Array.isArray(tw) || !(Number(tw[1]) > Number(tw[0])) || !tw.slice(0, 4).every((v) => Number.isFinite(Number(v)))) continue;
+    out[id] = [...tw.slice(0, 4).map(Number), ...(isEase(tw[4]) ? [tw[4].map(Number)] : [])];
+  }
   return Object.keys(out).length ? out : null;
 }
 

@@ -139,6 +139,14 @@ export function easeAt(ease, x) {
  * to, ease]`: `from` until `a`, `to` from `b`, between them along `ease` (linear without
  * it). No scrub is `t` itself.
  */
+/**
+ * A tween's value (`[a, b, from, to, ease?]`, as a scrub) at `t`; a still (Reduced Motion)
+ * shows it where it ends: a way in is motion, not the picture.
+ */
+export function tweenValue(tween, t, still = false) {
+  return still ? tween[3] : scrubTime(tween, t);
+}
+
 export function scrubTime(scrub, t) {
   if (!scrub) return t;
   const [a, b, from, to, ease] = scrub;

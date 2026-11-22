@@ -68,12 +68,16 @@ const views = {
   // The top shows' covers, #1 at the front, going once round the deck and stopping with the
   // top show back at the front for the page's hold (ui/stack.js). Fewer shows fill the front
   // slots first. A page that stays (shared from) has no hold to wait out: its deck cycles on.
+  // Dragged up or down anywhere on the stack, the deck follows the finger, and the page stays
+  // from then on, waiting for a tap.
   'shows-and-episodes'(ctx) {
     const { t, page } = ctx;
     const { shows, episodes: eps, podcasts } = page.data;
+    const wrap = h('div', { class: 'stack-wrap' }, coverStack(podcasts, { artwork, label: t('shows.artwork'), animate: !ctx.reduceMotion }));
+    wrap.querySelector('.stack:not(.stack-still)')?.deck?.bind(wrap, { onGrab: () => ctx.dispatch({ type: 'stay' }) });
     const article = h('article', { class: 'page page-shows-and-episodes', 'data-page': page.id },
       storyTitle(t('shows.title', { episodes: t('count.episodes', { count: eps }), shows: t('count.shows', { count: shows }) })),
-      h('div', { class: 'stack-wrap' }, coverStack(podcasts, { artwork, label: t('shows.artwork'), animate: !ctx.reduceMotion })));
+      wrap);
     return { article, stays: () => cycleOn(article) };
   },
 

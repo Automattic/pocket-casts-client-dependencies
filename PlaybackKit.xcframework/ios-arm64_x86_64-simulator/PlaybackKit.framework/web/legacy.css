@@ -385,6 +385,9 @@ body {
   contain: size layout style;
   --legacy-container: size;
 }
+.stack-wrap[data-drag] {
+  touch-action: none;
+}
 .stack {
   --u: 1px;
   position: relative;
@@ -1996,7 +1999,7 @@ body {
   left: calc(50% - 54.5px);
 }
 .page-outro .ou-disc {
-  animation: ou-in 0.45s linear var(--in-at) both;
+  animation: ou-in 0.45s linear var(--in-at) both, ou-open 1.2s cubic-bezier(0.2, 0.65, 0.3, 1) var(--in-at) both;
 }
 .pill,
 .tp-confirm,
@@ -2026,6 +2029,10 @@ body {
 @keyframes ou-rise {
   from { transform: translate(0, var(--rise)); }
   to { transform: translate(0, 0); }
+}
+@keyframes ou-open {
+  from { transform: scale(0.85); }
+  to { transform: scale(1); }
 }
 .page-outro .story-title,
 .page-empty .story-title {
