@@ -1385,12 +1385,16 @@ body { touch-action: pan-y; }
    the image down again), the three labels one size. The columns grow with it (by --grow, the
    labels' and the list's 12.867 over 11.867 pt), so a show or a label that fit at the frames'
    size still does, and the role is as much further under the minutes as they grow (Figma's
-   68.32 pt, now 69.5), so the gap between them stays the frames'. */
-.capture .sc-card { --grow: 1.0843; }
+   68.32 pt, now 69.5), so the gap between them stays the frames'.
+   Across, the copy keeps --copy-x from both sides of the image and the columns --copy-gap apart
+   (the frames' 39.39 and 29.62 pt in from the sides, 42.66 apart, cut a show as common as
+   "Accidental Tech Podcast" short): the minutes and the role keep their column (--col2), and
+   the list has the rest, 181 pt where it had 156. */
+.capture .sc-card { --grow: 1.0843; --copy-x: 28; --copy-gap: 30; --col2: calc(115.87 * var(--grow)); }
 .capture .sc-card .sc-label { font-size: calc((11.867 + 1) * var(--u)); }
-.capture .sc-card .sc-top { inset-inline-start: calc(var(--x0) + 39.39 * var(--u)); top: calc(var(--copy-y) * var(--u)); width: calc(143.59 * var(--grow) * var(--u)); gap: calc(6.61 * var(--u)); }
+.capture .sc-card .sc-top { inset-inline-start: calc(var(--x0) + var(--copy-x) * var(--u)); top: calc(var(--copy-y) * var(--u)); width: calc((393 - 2 * var(--copy-x) - var(--copy-gap) - var(--col2)) * var(--u)); gap: calc(6.61 * var(--u)); }
 .capture .sc-card .sc-shows { gap: calc(3.56 * var(--u)); font-size: calc((11.867 + 1) * var(--u)); }
-.capture .sc-card :is(.sc-minutes, .sc-role) { inset-inline-start: calc(var(--x0) + 237.74 * var(--u)); width: calc(115.87 * var(--grow) * var(--u)); gap: calc(6.83 * var(--u)); }
+.capture .sc-card :is(.sc-minutes, .sc-role) { inset-inline-start: calc(var(--x0) + (393 - var(--copy-x) - var(--col2)) * var(--u)); width: calc(var(--col2) * var(--u)); gap: calc(6.83 * var(--u)); }
 .capture .sc-card .sc-minutes { top: calc(var(--copy-y) * var(--u)); }
 .capture .sc-card .sc-role { top: calc((var(--copy-y) + 69.5) * var(--u)); }
 .capture .sc-card .sc-number { font-size: calc((32.945 + 1) * var(--u) * var(--fit, 1)); }
