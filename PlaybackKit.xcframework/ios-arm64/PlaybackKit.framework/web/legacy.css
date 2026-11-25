@@ -2606,19 +2606,22 @@ body {
 }
 .capture .sc-card {
   --grow: 1.0843;
+  --copy-x: 28;
+  --copy-gap: 30;
+  --col2: calc(115.87 * var(--grow));
 }
 .capture .sc-card .sc-label {
   font-size: calc((11.867 + 1) * var(--u));
 }
 .capture .sc-card .sc-top {
-  left: calc(var(--x0) + 39.39 * var(--u));
+  left: calc(var(--x0) + var(--copy-x) * var(--u));
   top: calc(var(--copy-y) * var(--u));
-  width: calc(143.59 * var(--grow) * var(--u));
+  width: calc((393 - 2 * var(--copy-x) - var(--copy-gap) - var(--col2)) * var(--u));
   gap: calc(6.61 * var(--u));
 }
 .capture [dir='rtl'] .sc-card .sc-top {
   left: auto;
-  right: calc(var(--x0) + 39.39 * var(--u));
+  right: calc(var(--x0) + var(--copy-x) * var(--u));
 }
 .capture .sc-card .sc-shows {
   gap: calc(3.56 * var(--u));
@@ -2626,14 +2629,14 @@ body {
 }
 .capture .sc-card .sc-minutes,
 .capture .sc-card .sc-role {
-  left: calc(var(--x0) + 237.74 * var(--u));
-  width: calc(115.87 * var(--grow) * var(--u));
+  left: calc(var(--x0) + (393 - var(--copy-x) - var(--col2)) * var(--u));
+  width: calc(var(--col2) * var(--u));
   gap: calc(6.83 * var(--u));
 }
 .capture [dir='rtl'] .sc-card .sc-minutes,
 .capture [dir='rtl'] .sc-card .sc-role {
   left: auto;
-  right: calc(var(--x0) + 237.74 * var(--u));
+  right: calc(var(--x0) + (393 - var(--copy-x) - var(--col2)) * var(--u));
 }
 .capture .sc-card .sc-minutes {
   top: calc(var(--copy-y) * var(--u));

@@ -16,6 +16,7 @@ Binary dependencies for the Pocket Casts clients: prebuilt libraries that iOS (S
 | `0.4.2` | 0.4.2 |
 | `0.4.3` | 0.4.3 |
 | `0.4.4` | 0.4.4 |
+| `0.4.5` | 0.4.5 |
 
 ## iOS (SwiftPM)
 

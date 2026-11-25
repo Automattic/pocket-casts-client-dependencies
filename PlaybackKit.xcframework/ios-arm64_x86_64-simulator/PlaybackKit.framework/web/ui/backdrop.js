@@ -395,6 +395,8 @@ export function connectBackdrop(controller, canvas, env = {}) {
       capturing = sharing;
       backdrop.setQuality({ resolution: resolutionFor({ sharp: current?.sharp }) });
     }
+    // At once: a frame on the resized canvas with the old column's centre can fit its frame to nothing (fx/wave.js buildMesh then never ends).
+    backdrop.setCentre(centreOnCanvas());
     cancelAnimationFrame(relayout);
     relayout = requestAnimationFrame(() => {
       if (current?.entries.some((e) => e.anchor)) show(backdrop.clock());
